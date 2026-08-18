@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex, nofollow">
+    <title>Your One-Time Password</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin:0;
+            padding:0;
+            background:#fdfaf8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        table,td {border-collapse:collapse;}
+        img {border:0;height:auto;outline:0;}
+        p,h1,h2,h3,h4,h5,h6 {margin:0;}
+        a {text-decoration:none;}
+        ul,ol {margin:0;padding:0;list-style-position:inside;}
+        .container {max-width:600px;margin:0 auto;background:#fdfaf8;}
+        .content-padding {padding:10px 30px;}
+        .main-content-padding {padding:40px 30px 20px 30px;}
+        .heading {font-size:30px;color:#4a2c2a;font-weight:bold;padding:10px;}
+        .sub-heading {font-size:16px;color:#5c4b4a;padding-bottom:20px;}
+        .text-md {font-size:16px;color:#4a2c2a;}
+        .text-sm {font-size:14px;color:#7f706f;}
+        .card {
+            max-width:560px;
+            margin:0 auto;
+            background:#fff;
+            border-radius:8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            animation: fadeInCard 0.8s ease;
+        }
+        @keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(30px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .center {text-align:center;}
+        .otp-box {
+            margin:0 auto;
+            font-family:monospace;
+            font-size:36px;
+            font-weight:700;
+            letter-spacing:6px;
+            color:#4a2c2a;
+            background:#fdfaf8;
+            border:1px solid #f0e9e8;
+            border-radius:6px;
+            width:220px;
+            padding:18px 12px;
+            transition: box-shadow 0.3s, transform 0.3s, background 0.3s;
+        }
+        .otp-box:hover {
+            box-shadow: 0 4px 16px #A0522D33;
+            background: #fff6f3;
+            transform: scale(1.04) rotate(-2deg);
+        }
+        .footer {
+            background: linear-gradient(to right, #f99497 0%, #A0522D 100%);
+            padding: 18px 0 10px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .footer-social a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            text-decoration: none;
+            border-radius: 50%;
+            box-sizing: border-box;
+            transition: box-shadow 0.2s, transform 0.2s, background 0.3s;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            overflow: hidden;
+            background: none; /* remove background */
+        }
+        .footer-social a img {
+            width: 28px; /* increased size */
+            height: 28px; /* increased size */
+            display: block;
+            margin: 0;
+            padding: 0;
+            object-fit: contain;
+        }
+        /* Animate social icons */
+        .footer-social a i {
+            transition: transform 0.3s;
+        }
+        .footer-social a:hover i {
+            transform: rotate(-10deg) scale(1.2);
+        }
+        @media (max-width:480px) {
+            .container,.card {width:100%; border-radius: 0;}
+            .otp-box {width: 180px; font-size: 28px; letter-spacing: 4px;}
+            .main-content-padding {padding: 30px 20px 10px 20px;}
+            .content-padding {padding: 10px 20px;}
+        }
+    </style>
+</head>
+
+<body>
+<div class="container" style="padding: 20px 0;">
+    <div class="card">
+        <div class="main-content-padding">
+            <div class="center" style="padding:10px;max-width:175px;margin:0 auto;">
+                <img alt="Image" src="https://res.cloudinary.com/mailmodo/image/upload/v1658134862/editor/p/2c28dec6-c21c-4385-a91f-96e9a90c404f/af840cec2fb4c4a8d7ed0299db40f3ea_bwd6jy.png" width="175" height="175">
+            </div>
+            <div class="center heading">Your One-Time Password</div>
+            <div class="center sub-heading">
+                Use the code below to complete your sign-in. For your security, this code will expire in 10 minutes.
+            </div>
+            <div class="center">
+                <div class="otp-box">{{OTP}}</div>
+            </div>
+            <div style="height:40px;"></div>
+            <div class="text-md">
+                <strong>Need assistance?</strong><br>
+                If you have any questions, reply to this email or contact our support team at <a href="mailto:di.internal@digitalsindia.com" style="color:#A0522D; text-decoration: none;">di.internal@digitalsindia.com</a>.
+            </div>
+        </div>
+        <div class="content-padding">
+            <div class="text-sm">
+                If you didn't request this code, you can safely ignore this email. For any security concerns, please contact our support team immediately.
+            </div>
+            <div class="text-sm" style="margin-top: 8px;">
+                <a href="tel:08800023150" style="color:#A0522D; text-decoration: none;"><strong>Call us at 08800023150</strong></a>
+                <span> or write to us at </span>
+                <a href="mailto:di.internal@digitalsindia.com" style="color:#A0522D; text-decoration: none;"><strong>di.internal@digitalsindia.com</strong></a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:20px;">
+          <tr>
+            <td class="footer">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 10px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <a href="tel:08800023150" style="color: #ffd9cc; font-size: 12px; margin-right: 18px; text-decoration: none;">
+                      <img src="https://cdn-icons-png.flaticon.com/512/597/597177.png" alt="Phone" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;">
+                      08800023150
+                    </a>
+                    <a href="mailto:di.internal@digitalsindia.com" style="color: #ffd9cc; font-size: 12px; text-decoration: none;">
+                      <img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Envelope" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;">
+                      di.internal@digitalsindia.com
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <div style="text-align: center; margin-bottom: 8px;" class="footer-social">
+                <a href="https://www.facebook.com/DigitalsIndia/" style="width: 28px; height: 28px; color: #3b5998; font-size: 13px;">
+                  <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="Facebook">
+                </a>
+                <a href="https://www.instagram.com/explore/locations/9113820730/digitals-india-security-products-pvt-ltd/" style="width: 28px; height: 28px; color: #E1306C; font-size: 13px;">
+                  <img src="https://cdn-icons-png.flaticon.com/512/15707/15707749.png" alt="Instagram">
+                </a>
+                <a href="https://www.linkedin.com/company/digitals-india-security-products-p-ltd/" style="width: 28px; height: 28px; color: #0077b5; font-size: 13px;">
+                  <img src="https://cdn-icons-png.flaticon.com/512/4494/4494497.png" alt="LinkedIn">
+                </a>
+              </div>
+              <div style="text-align: center; margin-bottom: 6px;">
+                <a href="#" style="color: #ffe6df; margin: 0 8px; font-size: 12px;">Privacy Policy</a> |
+                <a href="#" style="color: #ffe6df; margin: 0 8px; font-size: 12px;">Terms</a> |
+                <a href="#" style="color: #ffe6df; margin: 0 8px; font-size: 12px;">Help</a>
+              </div>
+              <p style="margin: 0; color: #ffdfd4; font-size: 11px; text-align: center;">
+                © 2025 Digitals India Security Products Pvt Ltd. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>
