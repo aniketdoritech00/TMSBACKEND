@@ -13,6 +13,8 @@ public interface ProductCategoryService {
 
 	ResponseEntity createProductCategory(@Valid List<ProductCategoryRequest> productCategoryRequest);
 
-	ResponseEntity getAllProductCategory();
+	ResponseEntity getAllProductCategory(int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity deleteProductCategory(Long id);
 
 }

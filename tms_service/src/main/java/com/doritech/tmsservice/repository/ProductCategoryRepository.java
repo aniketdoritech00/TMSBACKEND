@@ -7,5 +7,5 @@ import com.doritech.tmsservice.entity.ProductCategory;
 
 @Repository
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Long> {
-
+	boolean existsByProductCategoryCode(String productCategoryCode);
 }
