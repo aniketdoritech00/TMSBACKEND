@@ -29,9 +29,6 @@ public class ProductCategory {
 	@Column(name = "product_category_description", columnDefinition = "TEXT")
 	private String productCategoryDescription;
 
-	@Column(name = "product_category_image_url", length = 500)
-	private String productCategoryImageUrl;
-
 	@Column(name = "product_category_display_order")
 	private Integer productCategoryDisplayOrder = 0;
 
@@ -96,14 +93,6 @@ public class ProductCategory {
 		this.productCategoryDescription = productCategoryDescription;
 	}
 
-	public String getProductCategoryImageUrl() {
-		return productCategoryImageUrl;
-	}
-
-	public void setProductCategoryImageUrl(String productCategoryImageUrl) {
-		this.productCategoryImageUrl = productCategoryImageUrl;
-	}
-
 	public Integer getProductCategoryDisplayOrder() {
 		return productCategoryDisplayOrder;
 	}
@@ -140,8 +129,8 @@ public class ProductCategory {
 	public String toString() {
 		return "ProductCategory [productCategoryId=" + productCategoryId + ", productCategoryName="
 				+ productCategoryName + ", productCategoryCode=" + productCategoryCode + ", productCategoryDescription="
-				+ productCategoryDescription + ", productCategoryImageUrl=" + productCategoryImageUrl
-				+ ", productCategoryDisplayOrder=" + productCategoryDisplayOrder + ", isActive=" + isActive
-				+ ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
+				+ productCategoryDescription + ", productCategoryDisplayOrder=" + productCategoryDisplayOrder
+				+ ", isActive=" + isActive + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
 	}
+
 }
