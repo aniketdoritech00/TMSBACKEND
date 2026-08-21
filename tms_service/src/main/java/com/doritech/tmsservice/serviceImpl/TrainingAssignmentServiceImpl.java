@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,8 +34,11 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 
 	private static final Logger log = LoggerFactory.getLogger(TrainingAssignmentServiceImpl.class);
 
-	@Autowired
-	private TrainingAssignmentRepository trainingAssignmentRepository;
+	private final TrainingAssignmentRepository trainingAssignmentRepository;
+
+	public TrainingAssignmentServiceImpl(TrainingAssignmentRepository trainingAssignmentRepository) {
+		this.trainingAssignmentRepository = trainingAssignmentRepository;
+	}
 
 	@Override
 	public ResponseEntity createTrainingAssignment(TrainingAssignmentRequest request) {

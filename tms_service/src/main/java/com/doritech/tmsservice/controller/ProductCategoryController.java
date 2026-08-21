@@ -25,8 +25,11 @@ public class ProductCategoryController {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductCategoryController.class);
 
-	@Autowired
-	private ProductCategoryService productCategoryService;
+	private final ProductCategoryService productCategoryService;
+	
+	public ProductCategoryController(ProductCategoryService productCategoryService) {
+		this.productCategoryService = productCategoryService;
+	}
 
 	@PostMapping("/createProductCategory")
 	public ResponseEntity createProductCategory(
