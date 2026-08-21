@@ -17,7 +17,7 @@ import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.service.VideoService;
 
 @RestController
-@RequestMapping("/tmsService/api/videos")
+@RequestMapping("/api/tms/videos")
 public class VideoController {
 
     private static final Logger log = LoggerFactory.getLogger(VideoController.class);

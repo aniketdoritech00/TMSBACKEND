@@ -19,7 +19,7 @@ import com.doritech.tmsservice.service.DocumentSubProductService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/tmsService/api/document-sub-products")
+@RequestMapping("/api/tms/document-sub-products")
 public class DocumentSubProductController {
 
 	private static final Logger log = LoggerFactory.getLogger(DocumentSubProductController.class);

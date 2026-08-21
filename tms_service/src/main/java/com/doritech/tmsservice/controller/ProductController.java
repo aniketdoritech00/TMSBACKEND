@@ -21,7 +21,7 @@ import com.doritech.tmsservice.service.ProductService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/tmsService/api/products")
+@RequestMapping("/api/tms/products")
 public class ProductController {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductController.class);
