@@ -1,11 +1,18 @@
 package com.doritech.tmsservice.serviceImpl;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +26,7 @@ import com.doritech.tmsservice.repository.ProductRepository;
 import com.doritech.tmsservice.request.ProductRequest;
 import com.doritech.tmsservice.response.ProductResponse;
 import com.doritech.tmsservice.service.ProductService;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PropertyReferenceException;
+
 @Service
 public class ProductServiceImpl implements ProductService {
 
@@ -105,54 +106,53 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public ResponseEntity getAllProduct(int page, int size, String sortBy, String sortDir) {
 
-	    log.info("getAllProduct :: request received with page={}, size={}, sortBy={}, sortDir={}",
-	            page, size, sortBy, sortDir);
+		log.info("getAllProduct :: request received with page={}, size={}, sortBy={}, sortDir={}", page, size, sortBy,
+				sortDir);
 
-	    if (page < 0) {
-	        log.error("getAllProduct :: page cannot be negative");
-	        throw new BadRequestException("Page number can not be negative");
-	    }
+		if (page < 0) {
+			log.error("getAllProduct :: page cannot be negative");
+			throw new BadRequestException("Page number can not be negative");
+		}
 
-	    if (size <= 0) {
-	        log.error("getAllProduct :: size must be greater than 0");
-	        throw new BadRequestException("Page size must be greater than 0");
-	    }
+		if (size <= 0) {
+			log.error("getAllProduct :: size must be greater than 0");
+			throw new BadRequestException("Page size must be greater than 0");
+		}
 
-	    if (size > 100) {
-	        log.error("getAllProduct :: size exceeds max limit={}", size);
-	        throw new BadRequestException("Page size can not exceed 100");
-	    }
+		if (size > 100) {
+			log.error("getAllProduct :: size exceeds max limit={}", size);
+			throw new BadRequestException("Page size can not exceed 100");
+		}
 
-	    Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-	    Pageable pageable = PageRequest.of(page, size, sort);
+		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+		Pageable pageable = PageRequest.of(page, size, sort);
 
-	    Page<Product> productPage;
-	    try {
-	        productPage = productRepository.findAll(pageable);
-	    } catch (PropertyReferenceException e) {
-	        log.error("getAllProduct :: invalid sort field={}", sortBy);
-	        throw new BadRequestException("Invalid sort field: " + sortBy);
-	    } catch (Exception e) {
-	        log.error("getAllProduct :: error while fetching - {}", e.getMessage(), e);
-	        throw new DatabaseOperationException("Something went wrong while fetching products");
-	    }
+		Page<Product> productPage;
+		try {
+			productPage = productRepository.findAll(pageable);
+		} catch (PropertyReferenceException e) {
+			log.error("getAllProduct :: invalid sort field={}", sortBy);
+			throw new BadRequestException("Invalid sort field: " + sortBy);
+		} catch (Exception e) {
+			log.error("getAllProduct :: error while fetching - {}", e.getMessage(), e);
+			throw new DatabaseOperationException("Something went wrong while fetching products");
+		}
 
-	    List<ProductResponse> responseList = productPage.getContent().stream()
-	            .map(this::mapToResponse)
-	            .collect(Collectors.toList());
+		List<ProductResponse> responseList = productPage.getContent().stream().map(this::mapToResponse)
+				.collect(Collectors.toList());
 
-	    Map<String, Object> pageData = new LinkedHashMap<>();
-	    pageData.put("content", responseList);
-	    pageData.put("pageNumber", productPage.getNumber());
-	    pageData.put("pageSize", productPage.getSize());
-	    pageData.put("totalElements", productPage.getTotalElements());
-	    pageData.put("totalPages", productPage.getTotalPages());
-	    pageData.put("isLast", productPage.isLast());
+		Map<String, Object> pageData = new LinkedHashMap<>();
+		pageData.put("content", responseList);
+		pageData.put("pageNumber", productPage.getNumber());
+		pageData.put("pageSize", productPage.getSize());
+		pageData.put("totalElements", productPage.getTotalElements());
+		pageData.put("totalPages", productPage.getTotalPages());
+		pageData.put("isLast", productPage.isLast());
 
-	    log.info("getAllProduct :: {} of {} products fetched successfully",
-	            responseList.size(), productPage.getTotalElements());
+		log.info("getAllProduct :: {} of {} products fetched successfully", responseList.size(),
+				productPage.getTotalElements());
 
-	    return new ResponseEntity("Product fetch successfully", HttpStatus.OK.value(), pageData);
+		return new ResponseEntity("Product fetch successfully", HttpStatus.OK.value(), pageData);
 	}
 
 	@Override
