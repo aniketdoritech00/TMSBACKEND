@@ -19,7 +19,7 @@ import com.doritech.tmsservice.service.InTrainingQuestionService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/tmsService/api/in-training-questions")
+@RequestMapping("/api/tms/in-training-questions")
 public class InTrainingQuestionController {
 
 	private static final Logger log = LoggerFactory.getLogger(InTrainingQuestionController.class);

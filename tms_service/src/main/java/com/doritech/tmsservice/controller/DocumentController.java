@@ -17,7 +17,7 @@ import com.doritech.tmsservice.request.DocumentRequest;
 import com.doritech.tmsservice.service.DocumentService;
 
 @RestController
-@RequestMapping("/tmsService/api/documents")
+@RequestMapping("/api/tms/documents")
 public class DocumentController {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentController.class);

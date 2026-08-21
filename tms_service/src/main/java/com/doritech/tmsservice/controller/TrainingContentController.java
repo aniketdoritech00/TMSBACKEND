@@ -17,7 +17,7 @@ import com.doritech.tmsservice.request.TrainingContentRequest;
 import com.doritech.tmsservice.service.TrainingContentService;
 
 @RestController
-@RequestMapping("/tmsService/api/training-content")
+@RequestMapping("/api/tms/training-content")
 public class TrainingContentController {
 
     private static final Logger log = LoggerFactory.getLogger(TrainingContentController.class);
