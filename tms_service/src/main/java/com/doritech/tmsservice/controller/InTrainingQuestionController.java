@@ -23,9 +23,13 @@ import jakarta.validation.Valid;
 public class InTrainingQuestionController {
 
 	private static final Logger log = LoggerFactory.getLogger(InTrainingQuestionController.class);
-
-	@Autowired
-	private InTrainingQuestionService inTrainingQuestionService;
+	
+	private final InTrainingQuestionService inTrainingQuestionService;
+	
+	public InTrainingQuestionController(InTrainingQuestionService inTrainingQuestionService) {
+		this.inTrainingQuestionService = inTrainingQuestionService;
+		
+	}
 
 	@PostMapping("/createInTrainingQuestion")
 	public ResponseEntity createInTrainingQuestion(@Valid @RequestBody InTrainingQuestionRequest request) {

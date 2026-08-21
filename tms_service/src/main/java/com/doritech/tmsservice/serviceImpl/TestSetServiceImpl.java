@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,8 +33,11 @@ public class TestSetServiceImpl implements TestSetService {
 
 	private static final Logger log = LoggerFactory.getLogger(TestSetServiceImpl.class);
 
-	@Autowired
-	private TestSetRepository testSetRepository;
+	private final TestSetRepository testSetRepository;
+
+	public TestSetServiceImpl(TestSetRepository testSetRepository) {
+		this.testSetRepository = testSetRepository;
+	}
 
 	@Override
 	public ResponseEntity createTestSet(TestSetRequest request) {

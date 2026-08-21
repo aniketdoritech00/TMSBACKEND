@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,8 +32,11 @@ public class TestQuestionServiceImpl implements TestQuestionService {
 
 	private static final Logger log = LoggerFactory.getLogger(TestQuestionServiceImpl.class);
 
-	@Autowired
-	private TestQuestionRepository testQuestionRepository;
+	private final TestQuestionRepository testQuestionRepository;
+
+	public TestQuestionServiceImpl(TestQuestionRepository testQuestionRepository) {
+		this.testQuestionRepository = testQuestionRepository;
+	}
 
 	@Override
 	public ResponseEntity createTestQuestion(TestQuestionRequest request) {

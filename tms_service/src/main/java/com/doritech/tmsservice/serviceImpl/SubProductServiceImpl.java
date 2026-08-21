@@ -1,11 +1,17 @@
 package com.doritech.tmsservice.serviceImpl;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -19,20 +25,17 @@ import com.doritech.tmsservice.repository.SubProductRepository;
 import com.doritech.tmsservice.request.SubProductRequest;
 import com.doritech.tmsservice.response.SubProductResponse;
 import com.doritech.tmsservice.service.SubProductService;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PropertyReferenceException;
+
 @Service
 public class SubProductServiceImpl implements SubProductService {
 
 	private static final Logger log = LoggerFactory.getLogger(SubProductServiceImpl.class);
 
-	@Autowired
-	private SubProductRepository subProductRepository;
+	private final SubProductRepository subProductRepository;
+
+	public SubProductServiceImpl(SubProductRepository subProductRepository) {
+		this.subProductRepository = subProductRepository;
+	}
 
 	@Override
 	public ResponseEntity createSubProduct(List<SubProductRequest> subProductRequestList) {
@@ -106,54 +109,53 @@ public class SubProductServiceImpl implements SubProductService {
 	@Override
 	public ResponseEntity getAllSubProduct(int page, int size, String sortBy, String sortDir) {
 
-	    log.info("getAllSubProduct :: request received with page={}, size={}, sortBy={}, sortDir={}",
-	            page, size, sortBy, sortDir);
+		log.info("getAllSubProduct :: request received with page={}, size={}, sortBy={}, sortDir={}", page, size,
+				sortBy, sortDir);
 
-	    if (page < 0) {
-	        log.error("getAllSubProduct :: page cannot be negative");
-	        throw new BadRequestException("Page number can not be negative");
-	    }
+		if (page < 0) {
+			log.error("getAllSubProduct :: page cannot be negative");
+			throw new BadRequestException("Page number can not be negative");
+		}
 
-	    if (size <= 0) {
-	        log.error("getAllSubProduct :: size must be greater than 0");
-	        throw new BadRequestException("Page size must be greater than 0");
-	    }
+		if (size <= 0) {
+			log.error("getAllSubProduct :: size must be greater than 0");
+			throw new BadRequestException("Page size must be greater than 0");
+		}
 
-	    if (size > 100) {
-	        log.error("getAllSubProduct :: size exceeds max limit={}", size);
-	        throw new BadRequestException("Page size can not exceed 100");
-	    }
+		if (size > 100) {
+			log.error("getAllSubProduct :: size exceeds max limit={}", size);
+			throw new BadRequestException("Page size can not exceed 100");
+		}
 
-	    Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-	    Pageable pageable = PageRequest.of(page, size, sort);
+		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+		Pageable pageable = PageRequest.of(page, size, sort);
 
-	    Page<SubProduct> subProductPage;
-	    try {
-	        subProductPage = subProductRepository.findAll(pageable);
-	    } catch (PropertyReferenceException e) {
-	        log.error("getAllSubProduct :: invalid sort field={}", sortBy);
-	        throw new BadRequestException("Invalid sort field: " + sortBy);
-	    } catch (Exception e) {
-	        log.error("getAllSubProduct :: error while fetching - {}", e.getMessage(), e);
-	        throw new DatabaseOperationException("Something went wrong while fetching sub products");
-	    }
+		Page<SubProduct> subProductPage;
+		try {
+			subProductPage = subProductRepository.findAll(pageable);
+		} catch (PropertyReferenceException e) {
+			log.error("getAllSubProduct :: invalid sort field={}", sortBy);
+			throw new BadRequestException("Invalid sort field: " + sortBy);
+		} catch (Exception e) {
+			log.error("getAllSubProduct :: error while fetching - {}", e.getMessage(), e);
+			throw new DatabaseOperationException("Something went wrong while fetching sub products");
+		}
 
-	    List<SubProductResponse> responseList = subProductPage.getContent().stream()
-	            .map(this::mapToResponse)
-	            .collect(Collectors.toList());
+		List<SubProductResponse> responseList = subProductPage.getContent().stream().map(this::mapToResponse)
+				.collect(Collectors.toList());
 
-	    Map<String, Object> pageData = new LinkedHashMap<>();
-	    pageData.put("content", responseList);
-	    pageData.put("pageNumber", subProductPage.getNumber());
-	    pageData.put("pageSize", subProductPage.getSize());
-	    pageData.put("totalElements", subProductPage.getTotalElements());
-	    pageData.put("totalPages", subProductPage.getTotalPages());
-	    pageData.put("isLast", subProductPage.isLast());
+		Map<String, Object> pageData = new LinkedHashMap<>();
+		pageData.put("content", responseList);
+		pageData.put("pageNumber", subProductPage.getNumber());
+		pageData.put("pageSize", subProductPage.getSize());
+		pageData.put("totalElements", subProductPage.getTotalElements());
+		pageData.put("totalPages", subProductPage.getTotalPages());
+		pageData.put("isLast", subProductPage.isLast());
 
-	    log.info("getAllSubProduct :: {} of {} sub products fetched successfully",
-	            responseList.size(), subProductPage.getTotalElements());
+		log.info("getAllSubProduct :: {} of {} sub products fetched successfully", responseList.size(),
+				subProductPage.getTotalElements());
 
-	    return new ResponseEntity("Sub product fetch successfully", HttpStatus.OK.value(), pageData);
+		return new ResponseEntity("Sub product fetch successfully", HttpStatus.OK.value(), pageData);
 	}
 
 	@Override

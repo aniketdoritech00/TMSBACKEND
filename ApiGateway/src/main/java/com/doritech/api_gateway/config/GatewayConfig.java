@@ -99,7 +99,7 @@ public class GatewayConfig {
 										"/item-service/item/api/${segment}"))
 								.uri("http://localhost:8080"))
 				.route("tms-service",
-				        r -> r.path("/tmsService/api/**")
+				        r -> r.path("/api/tms/**")
 				                .filters(f -> f
 				                        .filter(jwtAuthenticationFilter.apply(
 				                                new JwtAuthenticationFilter.Config())))

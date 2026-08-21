@@ -25,8 +25,11 @@ public class TestSetController {
 
 	private static final Logger log = LoggerFactory.getLogger(TestSetController.class);
 
-	@Autowired
-	private TestSetService testSetService;
+	private final TestSetService testSetService;
+	
+	public TestSetController(TestSetService testSetService) {
+		this.testSetService = testSetService;
+	}
 
 	@PostMapping("/createTestSet")
 	public ResponseEntity createTestSet(@Valid @RequestBody TestSetRequest request) {

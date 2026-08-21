@@ -2,7 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,42 +22,44 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/trainings")
 public class TrainingController {
 
-    private static final Logger log = LoggerFactory.getLogger(TrainingController.class);
+	private static final Logger log = LoggerFactory.getLogger(TrainingController.class);
 
-    @Autowired
-    private TrainingService trainingService;
+	private final TrainingService trainingService;
 
-    @PostMapping("/createTraining")
-    public ResponseEntity createTraining(@Valid @RequestBody TrainingRequest request) {
-        log.info("createTraining :: request received for code={}", request.getTrainingCode());
-        return trainingService.createTraining(request);
-    }
+	public TrainingController(TrainingService trainingService) {
+		this.trainingService = trainingService;
+	}
 
-    @GetMapping("/getTrainingById/{id}")
-    public ResponseEntity getTrainingById(@PathVariable("id") Long id) {
-        log.info("getTrainingById :: request received for id={}", id);
-        return trainingService.getTrainingById(id);
-    }
+	@PostMapping("/createTraining")
+	public ResponseEntity createTraining(@Valid @RequestBody TrainingRequest request) {
+		log.info("createTraining :: request received for code={}", request.getTrainingCode());
+		return trainingService.createTraining(request);
+	}
 
-    @GetMapping("/getAllTraining")
-    public ResponseEntity getAllTraining(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "sortBy", defaultValue = "trainingId") String sortBy,
-            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-        log.info("getAllTraining :: request received with page={}, size={}", page, size);
-        return trainingService.getAllTraining(page, size, sortBy, sortDir);
-    }
+	@GetMapping("/getTrainingById/{id}")
+	public ResponseEntity getTrainingById(@PathVariable("id") Long id) {
+		log.info("getTrainingById :: request received for id={}", id);
+		return trainingService.getTrainingById(id);
+	}
 
-    @DeleteMapping("/deleteTraining/{id}")
-    public ResponseEntity deleteTraining(@PathVariable("id") Long id) {
-        log.info("deleteTraining :: request received for id={}", id);
-        return trainingService.deleteTraining(id);
-    }
+	@GetMapping("/getAllTraining")
+	public ResponseEntity getAllTraining(@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "trainingId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+		log.info("getAllTraining :: request received with page={}, size={}", page, size);
+		return trainingService.getAllTraining(page, size, sortBy, sortDir);
+	}
 
-    @PutMapping("/publishTraining/{id}")
-    public ResponseEntity publishTraining(@PathVariable("id") Long id) {
-        log.info("publishTraining :: request received for id={}", id);
-        return trainingService.publishTraining(id);
-    }
+	@DeleteMapping("/deleteTraining/{id}")
+	public ResponseEntity deleteTraining(@PathVariable("id") Long id) {
+		log.info("deleteTraining :: request received for id={}", id);
+		return trainingService.deleteTraining(id);
+	}
+
+	@PutMapping("/publishTraining/{id}")
+	public ResponseEntity publishTraining(@PathVariable("id") Long id) {
+		log.info("publishTraining :: request received for id={}", id);
+		return trainingService.publishTraining(id);
+	}
 }
