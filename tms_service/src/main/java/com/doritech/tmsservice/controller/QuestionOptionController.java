@@ -42,14 +42,12 @@ public class QuestionOptionController {
 		return questionOptionService.getQuestionOptionById(id);
 	}
 
-	// ADMIN endpoint - includes isCorrect - use for review/edit screens only
 	@GetMapping("/getOptionsByQuestionId/{testQuestionId}")
 	public ResponseEntity getOptionsByQuestionId(@PathVariable("testQuestionId") Long testQuestionId) {
 		log.info("getOptionsByQuestionId :: request received for testQuestionId={}", testQuestionId);
 		return questionOptionService.getOptionsByQuestionId(testQuestionId);
 	}
 
-	// STUDENT endpoint - isCorrect hidden - use for test attempt screens
 	@GetMapping("/getOptionsForAttempt/{testQuestionId}")
 	public ResponseEntity getOptionsForAttempt(@PathVariable("testQuestionId") Long testQuestionId) {
 		log.info("getOptionsForAttempt :: request received for testQuestionId={}", testQuestionId);
