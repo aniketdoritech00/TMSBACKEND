@@ -2,7 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,8 +24,11 @@ public class UserVideoController {
 
 	private static final Logger log = LoggerFactory.getLogger(UserVideoController.class);
 
-	@Autowired
-	private UserVideoService userVideoService;
+	private final UserVideoService userVideoService;
+
+	public UserVideoController(UserVideoService userVideoService) {
+		this.userVideoService = userVideoService;
+	}
 
 	@PostMapping("/createUserVideo")
 	public ResponseEntity createUserVideo(@Valid @RequestBody UserVideoRequest request) {

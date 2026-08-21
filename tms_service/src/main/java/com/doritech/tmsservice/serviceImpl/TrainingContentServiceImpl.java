@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,14 +34,16 @@ public class TrainingContentServiceImpl implements TrainingContentService {
 
 	private static final Logger log = LoggerFactory.getLogger(TrainingContentServiceImpl.class);
 
-	@Autowired
-	private TrainingContentRepository trainingContentRepository;
+	private final TrainingContentRepository trainingContentRepository;
+	private final FileStorageService fileStorageService;
+	private final FileStorageProperties fileStorageProperties;
 
-	@Autowired
-	private FileStorageService fileStorageService;
-
-	@Autowired
-	private FileStorageProperties fileStorageProperties;
+	public TrainingContentServiceImpl(TrainingContentRepository trainingContentRepository,
+			FileStorageService fileStorageService, FileStorageProperties fileStorageProperties) {
+		this.trainingContentRepository = trainingContentRepository;
+		this.fileStorageService = fileStorageService;
+		this.fileStorageProperties = fileStorageProperties;
+	}
 
 	@Override
 	public ResponseEntity createTrainingContent(TrainingContentRequest request, MultipartFile file) {

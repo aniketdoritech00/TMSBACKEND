@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,14 +34,16 @@ public class DocumentServiceImpl implements DocumentService {
 
 	private static final Logger log = LoggerFactory.getLogger(DocumentServiceImpl.class);
 
-	@Autowired
-	private DocumentRepository documentRepository;
+	private final DocumentRepository documentRepository;
+	private final FileStorageService fileStorageService;
+	private final FileStorageProperties fileStorageProperties;
 
-	@Autowired
-	private FileStorageService fileStorageService;
-
-	@Autowired
-	private FileStorageProperties fileStorageProperties;
+	public DocumentServiceImpl(DocumentRepository documentRepository, FileStorageService fileStorageService,
+			FileStorageProperties fileStorageProperties) {
+		this.documentRepository = documentRepository;
+		this.fileStorageService = fileStorageService;
+		this.fileStorageProperties = fileStorageProperties;
+	}
 
 	@Override
 	public ResponseEntity createDocument(DocumentRequest documentRequest, MultipartFile file) {

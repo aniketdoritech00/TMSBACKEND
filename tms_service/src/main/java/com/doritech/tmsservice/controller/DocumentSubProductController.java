@@ -2,7 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +23,11 @@ public class DocumentSubProductController {
 
 	private static final Logger log = LoggerFactory.getLogger(DocumentSubProductController.class);
 
-	@Autowired
-	private DocumentSubProductService documentSubProductService;
+	private final DocumentSubProductService documentSubProductService;
+
+	public DocumentSubProductController(DocumentSubProductService documentSubProductService) {
+		this.documentSubProductService = documentSubProductService;
+	}
 
 	@PostMapping("/assignDocumentToSubProduct")
 	public ResponseEntity assignDocumentToSubProduct(@Valid @RequestBody DocumentSubProductRequest request) {

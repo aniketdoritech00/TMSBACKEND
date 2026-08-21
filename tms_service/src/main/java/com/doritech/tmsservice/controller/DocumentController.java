@@ -22,8 +22,11 @@ public class DocumentController {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
 
-    @Autowired
-    private DocumentService documentService;
+    private final DocumentService documentService;
+    
+    public DocumentController(DocumentService documentService) {
+    	this.documentService = documentService;
+    }
 
     @PostMapping(value = "/createDocument", consumes = "multipart/form-data")
     public ResponseEntity createDocument(
