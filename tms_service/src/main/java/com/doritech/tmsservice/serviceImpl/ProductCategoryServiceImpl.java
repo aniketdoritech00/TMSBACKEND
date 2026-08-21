@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import com.doritech.tmsservice.entity.ProductCategory;
 import com.doritech.tmsservice.entity.ResponseEntity;
@@ -22,7 +21,6 @@ import com.doritech.tmsservice.service.ProductCategoryService;
 import jakarta.validation.Valid;
 
 @Service
-@Validated
 public class ProductCategoryServiceImpl implements ProductCategoryService {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductCategoryServiceImpl.class);
@@ -90,37 +88,36 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		return new ResponseEntity("Fetch Data By Id", HttpStatus.OK.value(), categoryResponse);
 	}
 
-
 	@Override
 	public ResponseEntity getAllProductCategory() {
 
-	    log.info("getAllProductCategory :: request received");
+		log.info("getAllProductCategory :: request received");
 
-	    List<ProductCategory> categoryList = productCategoryRepository.findAll();
+		List<ProductCategory> categoryList = productCategoryRepository.findAll();
 
-	    List<ProductCategoryResponse> categoryResponses = categoryList.stream().map(entity -> {
+		List<ProductCategoryResponse> categoryResponses = categoryList.stream().map(entity -> {
 
-	        ProductCategoryResponse categoryResponse = new ProductCategoryResponse();
+			ProductCategoryResponse categoryResponse = new ProductCategoryResponse();
 
-	        categoryResponse.setProductCategoryId(entity.getProductCategoryId());
-	        categoryResponse.setProductCategoryCode(entity.getProductCategoryCode());
-	        categoryResponse.setProductCategoryName(entity.getProductCategoryName());
-	        categoryResponse.setProductCategoryDescription(entity.getProductCategoryDescription());
-	        categoryResponse.setProductCategoryImageUrl(entity.getProductCategoryImageUrl());
-	        categoryResponse.setProductCategoryDisplayOrder(entity.getProductCategoryDisplayOrder());
-	        categoryResponse.setIsActive(entity.getIsActive());
-	        categoryResponse.setCreatedAt(entity.getCreatedAt());
-	        categoryResponse.setUpdatedAt(entity.getUpdatedAt());
+			categoryResponse.setProductCategoryId(entity.getProductCategoryId());
+			categoryResponse.setProductCategoryCode(entity.getProductCategoryCode());
+			categoryResponse.setProductCategoryName(entity.getProductCategoryName());
+			categoryResponse.setProductCategoryDescription(entity.getProductCategoryDescription());
+			categoryResponse.setProductCategoryImageUrl(entity.getProductCategoryImageUrl());
+			categoryResponse.setProductCategoryDisplayOrder(entity.getProductCategoryDisplayOrder());
+			categoryResponse.setIsActive(entity.getIsActive());
+			categoryResponse.setCreatedAt(entity.getCreatedAt());
+			categoryResponse.setUpdatedAt(entity.getUpdatedAt());
 
-	        return categoryResponse;
+			return categoryResponse;
 
-	    }).collect(Collectors.toList());
+		}).collect(Collectors.toList());
 
-	    log.info("getAllProductCategory :: {} categories fetched successfully", categoryResponses.size());
+		log.info("getAllProductCategory :: {} categories fetched successfully", categoryResponses.size());
 
-	    return new ResponseEntity("Product category fetch successfully", HttpStatus.OK.value(), categoryResponses);
+		return new ResponseEntity("Product category fetch successfully", HttpStatus.OK.value(), categoryResponses);
 	}
-	
+
 	private ProductCategoryResponse mapToResponse(ProductCategory entity) {
 		return new ProductCategoryResponse(entity.getProductCategoryId(), entity.getProductCategoryName(),
 				entity.getProductCategoryCode(), entity.getProductCategoryDescription(),

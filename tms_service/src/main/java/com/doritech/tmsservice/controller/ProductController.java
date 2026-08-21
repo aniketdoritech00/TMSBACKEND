@@ -25,8 +25,9 @@ public class ProductController {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
-	@Autowired
-	private ProductService productService;
+	 @Autowired
+	    private ProductService productService;
+
 
 	@PostMapping("/createProduct")
 	public ResponseEntity createProduct(@Valid @RequestBody List<ProductRequest> productRequest) {
