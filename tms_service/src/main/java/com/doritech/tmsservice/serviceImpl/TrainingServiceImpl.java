@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,8 +32,11 @@ public class TrainingServiceImpl implements TrainingService {
 
 	private static final Logger log = LoggerFactory.getLogger(TrainingServiceImpl.class);
 
-	@Autowired
-	private TrainingRepository trainingRepository;
+	private final TrainingRepository trainingRepository;
+
+	public TrainingServiceImpl(TrainingRepository trainingRepository) {
+		this.trainingRepository = trainingRepository;
+	}
 
 	@Override
 	public ResponseEntity createTraining(TrainingRequest request) {

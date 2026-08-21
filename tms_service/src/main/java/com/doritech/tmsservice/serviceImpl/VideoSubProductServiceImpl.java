@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +25,11 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 
 	private static final Logger log = LoggerFactory.getLogger(VideoSubProductServiceImpl.class);
 
-	@Autowired
-	private VideoSubProductRepository videoSubProductRepository;
+	private final VideoSubProductRepository videoSubProductRepository;
+
+	public VideoSubProductServiceImpl(VideoSubProductRepository videoSubProductRepository) {
+		this.videoSubProductRepository = videoSubProductRepository;
+	}
 
 	@Override
 	public ResponseEntity assignVideoToSubProduct(VideoSubProductRequest request) {

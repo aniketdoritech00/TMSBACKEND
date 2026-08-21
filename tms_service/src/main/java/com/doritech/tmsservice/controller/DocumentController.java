@@ -2,7 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,51 +19,52 @@ import com.doritech.tmsservice.service.DocumentService;
 @RequestMapping("/api/tms/documents")
 public class DocumentController {
 
-    private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
+	private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
 
-    @Autowired
-    private DocumentService documentService;
+	private final DocumentService documentService;
 
-    @PostMapping(value = "/createDocument", consumes = "multipart/form-data")
-    public ResponseEntity createDocument(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("documentName") String documentName,
-            @RequestParam(value = "documentDescription", required = false) String documentDescription,
-            @RequestParam(value = "documentType", required = false) String documentType,
-            @RequestParam(value = "isSecure", required = false) Boolean isSecure,
-            @RequestParam("uploadedBy") Long uploadedBy) {
+	public DocumentController(DocumentService documentService) {
+		this.documentService = documentService;
+	}
 
-        log.info("createDocument :: request received for name={}", documentName);
+	@PostMapping(value = "/createDocument", consumes = "multipart/form-data")
+	public ResponseEntity createDocument(@RequestParam("file") MultipartFile file,
+			@RequestParam("documentName") String documentName,
+			@RequestParam(value = "documentDescription", required = false) String documentDescription,
+			@RequestParam(value = "documentType", required = false) String documentType,
+			@RequestParam(value = "isSecure", required = false) Boolean isSecure,
+			@RequestParam("uploadedBy") Long uploadedBy) {
 
-        DocumentRequest request = new DocumentRequest();
-        request.setDocumentName(documentName);
-        request.setDocumentDescription(documentDescription);
-        request.setDocumentType(documentType);
-        request.setIsSecure(isSecure);
-        request.setUploadedBy(uploadedBy);
+		log.info("createDocument :: request received for name={}", documentName);
 
-        return documentService.createDocument(request, file);
-    }
+		DocumentRequest request = new DocumentRequest();
+		request.setDocumentName(documentName);
+		request.setDocumentDescription(documentDescription);
+		request.setDocumentType(documentType);
+		request.setIsSecure(isSecure);
+		request.setUploadedBy(uploadedBy);
 
-    @GetMapping("/getDocumentById/{id}")
-    public ResponseEntity getDocumentById(@PathVariable("id") Long id) {
-        log.info("getDocumentById :: request received for id={}", id);
-        return documentService.getDocumentById(id);
-    }
+		return documentService.createDocument(request, file);
+	}
 
-    @GetMapping("/getAllDocument")
-    public ResponseEntity getAllDocument(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "sortBy", defaultValue = "documentId") String sortBy,
-            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-        log.info("getAllDocument :: request received with page={}, size={}", page, size);
-        return documentService.getAllDocument(page, size, sortBy, sortDir);
-    }
+	@GetMapping("/getDocumentById/{id}")
+	public ResponseEntity getDocumentById(@PathVariable("id") Long id) {
+		log.info("getDocumentById :: request received for id={}", id);
+		return documentService.getDocumentById(id);
+	}
 
-    @DeleteMapping("/deleteDocument/{id}")
-    public ResponseEntity deleteDocument(@PathVariable("id") Long id) {
-        log.info("deleteDocument :: request received for id={}", id);
-        return documentService.deleteDocument(id);
-    }
+	@GetMapping("/getAllDocument")
+	public ResponseEntity getAllDocument(@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "documentId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+		log.info("getAllDocument :: request received with page={}, size={}", page, size);
+		return documentService.getAllDocument(page, size, sortBy, sortDir);
+	}
+
+	@DeleteMapping("/deleteDocument/{id}")
+	public ResponseEntity deleteDocument(@PathVariable("id") Long id) {
+		log.info("deleteDocument :: request received for id={}", id);
+		return documentService.deleteDocument(id);
+	}
 }

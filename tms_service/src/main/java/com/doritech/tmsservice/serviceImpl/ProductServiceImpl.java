@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,8 +31,11 @@ public class ProductServiceImpl implements ProductService {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
 
-	@Autowired
-	private ProductRepository productRepository;
+	private final ProductRepository productRepository;
+
+	public ProductServiceImpl(ProductRepository productRepository) {
+		this.productRepository = productRepository;
+	}
 
 	@Override
 	public ResponseEntity createProduct(List<ProductRequest> productRequestList) {

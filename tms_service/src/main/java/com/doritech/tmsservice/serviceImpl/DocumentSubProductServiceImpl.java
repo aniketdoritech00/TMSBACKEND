@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +25,11 @@ public class DocumentSubProductServiceImpl implements DocumentSubProductService 
 
 	private static final Logger log = LoggerFactory.getLogger(DocumentSubProductServiceImpl.class);
 
-	@Autowired
-	private DocumentSubProductRepository documentSubProductRepository;
+	private final DocumentSubProductRepository documentSubProductRepository;
+
+	public DocumentSubProductServiceImpl(DocumentSubProductRepository documentSubProductRepository) {
+		this.documentSubProductRepository = documentSubProductRepository;
+	}
 
 	@Override
 	public ResponseEntity assignDocumentToSubProduct(DocumentSubProductRequest request) {

@@ -2,7 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +23,11 @@ public class TestQuestionController {
 
 	private static final Logger log = LoggerFactory.getLogger(TestQuestionController.class);
 
-	@Autowired
-	private TestQuestionService testQuestionService;
+	private final TestQuestionService testQuestionService;
+
+	public TestQuestionController(TestQuestionService testQuestionService) {
+		this.testQuestionService = testQuestionService;
+	}
 
 	@PostMapping("/createTestQuestion")
 	public ResponseEntity createTestQuestion(@Valid @RequestBody TestQuestionRequest request) {
