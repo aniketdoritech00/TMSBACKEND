@@ -20,41 +20,41 @@ import com.doritech.tmsservice.service.QuestionOptionService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/tms/question-options")
+@RequestMapping("/tmsService/api/question-options")
 public class QuestionOptionController {
 
-	private static final Logger log = LoggerFactory.getLogger(QuestionOptionController.class);
+    private static final Logger log = LoggerFactory.getLogger(QuestionOptionController.class);
 
-	@Autowired
-	private QuestionOptionService questionOptionService;
+    @Autowired
+    private QuestionOptionService questionOptionService;
 
-	@PostMapping("/createQuestionOptions")
-	public ResponseEntity createQuestionOptions(@Valid @RequestBody List<QuestionOptionRequest> requestList) {
-		log.info("createQuestionOptions :: request received with size={}", requestList.size());
-		return questionOptionService.createQuestionOptions(requestList);
-	}
+    @PostMapping("/createQuestionOptions")
+    public ResponseEntity createQuestionOptions(@Valid @RequestBody List<QuestionOptionRequest> requestList) {
+        log.info("createQuestionOptions :: request received with size={}", requestList.size());
+        return questionOptionService.createQuestionOptions(requestList);
+    }
 
-	@GetMapping("/getQuestionOptionById/{id}")
-	public ResponseEntity getQuestionOptionById(@PathVariable("id") Long id) {
-		log.info("getQuestionOptionById :: request received for id={}", id);
-		return questionOptionService.getQuestionOptionById(id);
-	}
+    @GetMapping("/getQuestionOptionById/{id}")
+    public ResponseEntity getQuestionOptionById(@PathVariable("id") Long id) {
+        log.info("getQuestionOptionById :: request received for id={}", id);
+        return questionOptionService.getQuestionOptionById(id);
+    }
 
-	@GetMapping("/getOptionsByQuestionId/{testQuestionId}")
-	public ResponseEntity getOptionsByQuestionId(@PathVariable("testQuestionId") Long testQuestionId) {
-		log.info("getOptionsByQuestionId :: request received for testQuestionId={}", testQuestionId);
-		return questionOptionService.getOptionsByQuestionId(testQuestionId);
-	}
+    @GetMapping("/getOptionsByQuestionId/{testQuestionId}")
+    public ResponseEntity getOptionsByQuestionId(@PathVariable("testQuestionId") Long testQuestionId) {
+        log.info("getOptionsByQuestionId :: request received for testQuestionId={}", testQuestionId);
+        return questionOptionService.getOptionsByQuestionId(testQuestionId);
+    }
 
-	@GetMapping("/getOptionsForAttempt/{testQuestionId}")
-	public ResponseEntity getOptionsForAttempt(@PathVariable("testQuestionId") Long testQuestionId) {
-		log.info("getOptionsForAttempt :: request received for testQuestionId={}", testQuestionId);
-		return questionOptionService.getOptionsForAttempt(testQuestionId);
-	}
+    @GetMapping("/getOptionsForAttempt/{testQuestionId}")
+    public ResponseEntity getOptionsForAttempt(@PathVariable("testQuestionId") Long testQuestionId) {
+        log.info("getOptionsForAttempt :: request received for testQuestionId={}", testQuestionId);
+        return questionOptionService.getOptionsForAttempt(testQuestionId);
+    }
 
-	@DeleteMapping("/deleteQuestionOption/{id}")
-	public ResponseEntity deleteQuestionOption(@PathVariable("id") Long id) {
-		log.info("deleteQuestionOption :: request received for id={}", id);
-		return questionOptionService.deleteQuestionOption(id);
-	}
+    @DeleteMapping("/deleteQuestionOption/{id}")
+    public ResponseEntity deleteQuestionOption(@PathVariable("id") Long id) {
+        log.info("deleteQuestionOption :: request received for id={}", id);
+        return questionOptionService.deleteQuestionOption(id);
+    }
 }
