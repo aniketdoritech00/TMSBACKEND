@@ -8,181 +8,143 @@ import jakarta.validation.constraints.Size;
 
 public class VideoRequest {
 
-    @NotNull(message = "{video.title.notnull}")
-    @NotBlank(message = "{video.title.notblank}")
-    @Size(min = 2, max = 255, message = "{video.title.size}")
-    private String videoTitle;
+	@NotNull(message = "{video.title.notnull}")
+	@NotBlank(message = "{video.title.notblank}")
+	@Size(min = 2, max = 255, message = "{video.title.size}")
+	private String videoTitle;
 
-    @Size(max = 2000, message = "{video.description.size}")
-    private String videoDescription;
+	@Size(max = 2000, message = "{video.description.size}")
+	private String videoDescription;
 
-    @NotNull(message = "{video.url.notnull}")
-    @NotBlank(message = "{video.url.notblank}")
-    @Size(max = 500, message = "{video.url.size}")
-    @Pattern(regexp = "^(https?://).+$", message = "{video.url.pattern}")
-    private String videoUrl;
+	@Size(max = 500, message = "{video.thumbnailUrl.size}")
+	@Pattern(regexp = "^(https?://).*$", message = "{video.thumbnailUrl.pattern}")
+	private String thumbnailUrl;
 
-    @Size(max = 500, message = "{video.thumbnailUrl.size}")
-    @Pattern(regexp = "^(https?://).+$", message = "{video.thumbnailUrl.pattern}")
-    private String thumbnailUrl;
+	@Min(value = 0, message = "{video.durationSeconds.min}")
+	private Integer durationSeconds;
 
-    @Min(value = 0, message = "{video.durationSeconds.min}")
-    private Integer durationSeconds;
+	@Size(max = 20, message = "{video.format.size}")
+	private String videoFormat;
 
-    @Min(value = 0, message = "{video.fileSizeBytes.min}")
-    private Long fileSizeBytes;
+	@Size(max = 20, message = "{video.resolution.size}")
+	private String resolution;
 
-    @Size(max = 20, message = "{video.format.size}")
-    private String videoFormat;
+	private Boolean isSecure;
 
-    @Size(max = 20, message = "{video.resolution.size}")
-    private String resolution;
+	private Boolean allowDownload;
 
-    private Boolean isSecure;
+	private Boolean allowScreenRecord;
 
-    private Boolean allowDownload;
+	private Boolean allowScreenshot;
 
-    private Boolean allowScreenRecord;
+	@NotNull(message = "{video.status.notnull}")
+	@Pattern(regexp = "^(ACTIVE|INACTIVE|ARCHIVED)$", message = "{video.status.pattern}")
+	private String status;
 
-    private Boolean allowScreenshot;
+	@NotNull(message = "{video.uploadedBy.notnull}")
+	private Long uploadedBy;
 
-    @NotNull(message = "{video.status.notnull}")
-    @Pattern(regexp = "^(ACTIVE|INACTIVE|ARCHIVED)$", message = "{video.status.pattern}")
-    private String status;
+	public VideoRequest() {
+	}
 
-    @NotNull(message = "{video.uploadedBy.notnull}")
-    private Long uploadedBy;
+	public String getVideoTitle() {
+		return videoTitle;
+	}
 
-    public VideoRequest() {
-    }
+	public void setVideoTitle(String videoTitle) {
+		this.videoTitle = videoTitle;
+	}
 
-    public String getVideoTitle() {
-        return videoTitle;
-    }
+	public String getVideoDescription() {
+		return videoDescription;
+	}
 
-    public void setVideoTitle(String videoTitle) {
-        this.videoTitle = videoTitle;
-    }
+	public void setVideoDescription(String videoDescription) {
+		this.videoDescription = videoDescription;
+	}
 
-    public String getVideoDescription() {
-        return videoDescription;
-    }
+	public String getThumbnailUrl() {
+		return thumbnailUrl;
+	}
 
-    public void setVideoDescription(String videoDescription) {
-        this.videoDescription = videoDescription;
-    }
+	public void setThumbnailUrl(String thumbnailUrl) {
+		this.thumbnailUrl = thumbnailUrl;
+	}
 
-    public String getVideoUrl() {
-        return videoUrl;
-    }
+	public Integer getDurationSeconds() {
+		return durationSeconds;
+	}
 
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
-    }
+	public void setDurationSeconds(Integer durationSeconds) {
+		this.durationSeconds = durationSeconds;
+	}
 
-    public String getThumbnailUrl() {
-        return thumbnailUrl;
-    }
+	public String getVideoFormat() {
+		return videoFormat;
+	}
 
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
-    }
+	public void setVideoFormat(String videoFormat) {
+		this.videoFormat = videoFormat;
+	}
 
-    public Integer getDurationSeconds() {
-        return durationSeconds;
-    }
+	public String getResolution() {
+		return resolution;
+	}
 
-    public void setDurationSeconds(Integer durationSeconds) {
-        this.durationSeconds = durationSeconds;
-    }
+	public void setResolution(String resolution) {
+		this.resolution = resolution;
+	}
 
-    public Long getFileSizeBytes() {
-        return fileSizeBytes;
-    }
+	public Boolean getIsSecure() {
+		return isSecure;
+	}
 
-    public void setFileSizeBytes(Long fileSizeBytes) {
-        this.fileSizeBytes = fileSizeBytes;
-    }
+	public void setIsSecure(Boolean isSecure) {
+		this.isSecure = isSecure;
+	}
 
-    public String getVideoFormat() {
-        return videoFormat;
-    }
+	public Boolean getAllowDownload() {
+		return allowDownload;
+	}
 
-    public void setVideoFormat(String videoFormat) {
-        this.videoFormat = videoFormat;
-    }
+	public void setAllowDownload(Boolean allowDownload) {
+		this.allowDownload = allowDownload;
+	}
 
-    public String getResolution() {
-        return resolution;
-    }
+	public Boolean getAllowScreenRecord() {
+		return allowScreenRecord;
+	}
 
-    public void setResolution(String resolution) {
-        this.resolution = resolution;
-    }
+	public void setAllowScreenRecord(Boolean allowScreenRecord) {
+		this.allowScreenRecord = allowScreenRecord;
+	}
 
-    public Boolean getIsSecure() {
-        return isSecure;
-    }
+	public Boolean getAllowScreenshot() {
+		return allowScreenshot;
+	}
 
-    public void setIsSecure(Boolean isSecure) {
-        this.isSecure = isSecure;
-    }
+	public void setAllowScreenshot(Boolean allowScreenshot) {
+		this.allowScreenshot = allowScreenshot;
+	}
 
-    public Boolean getAllowDownload() {
-        return allowDownload;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    public void setAllowDownload(Boolean allowDownload) {
-        this.allowDownload = allowDownload;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-    public Boolean getAllowScreenRecord() {
-        return allowScreenRecord;
-    }
+	public Long getUploadedBy() {
+		return uploadedBy;
+	}
 
-    public void setAllowScreenRecord(Boolean allowScreenRecord) {
-        this.allowScreenRecord = allowScreenRecord;
-    }
+	public void setUploadedBy(Long uploadedBy) {
+		this.uploadedBy = uploadedBy;
+	}
 
-    public Boolean getAllowScreenshot() {
-        return allowScreenshot;
-    }
-
-    public void setAllowScreenshot(Boolean allowScreenshot) {
-        this.allowScreenshot = allowScreenshot;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Long getUploadedBy() {
-        return uploadedBy;
-    }
-
-    public void setUploadedBy(Long uploadedBy) {
-        this.uploadedBy = uploadedBy;
-    }
-
-    @Override
-    public String toString() {
-        return "VideoRequest [videoTitle=" + videoTitle
-                + ", videoDescription=" + videoDescription
-                + ", videoUrl=" + videoUrl
-                + ", thumbnailUrl=" + thumbnailUrl
-                + ", durationSeconds=" + durationSeconds
-                + ", fileSizeBytes=" + fileSizeBytes
-                + ", videoFormat=" + videoFormat
-                + ", resolution=" + resolution
-                + ", isSecure=" + isSecure
-                + ", allowDownload=" + allowDownload
-                + ", allowScreenRecord=" + allowScreenRecord
-                + ", allowScreenshot=" + allowScreenshot
-                + ", status=" + status
-                + ", uploadedBy=" + uploadedBy + "]";
-    }
+	@Override
+	public String toString() {
+		return "VideoRequest [videoTitle=" + videoTitle + ", status=" + status + ", uploadedBy=" + uploadedBy + "]";
+	}
 }
