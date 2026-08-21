@@ -19,7 +19,7 @@ import com.doritech.tmsservice.service.QuestionOptionService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/tms/question-options")
+@RequestMapping("/tmsService/api/question-options")
 public class QuestionOptionController {
 
 	private static final Logger log = LoggerFactory.getLogger(QuestionOptionController.class);
