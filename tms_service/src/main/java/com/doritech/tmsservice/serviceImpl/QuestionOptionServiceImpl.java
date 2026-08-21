@@ -43,8 +43,7 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
 			throw new BadRequestException("Options list must not be empty");
 		}
 
-		// Sab options ek hi question ke honge - pehle wale se testQuestionId nikal ke
-		// validate karo
+		
 		Long testQuestionId = requestList.get(0).getTestQuestionId();
 
 		boolean allSameQuestion = requestList.stream().allMatch(r -> testQuestionId.equals(r.getTestQuestionId()));
@@ -152,8 +151,6 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
 		List<QuestionOption> optionList = questionOptionRepository
 				.findByTestQuestionIdOrderByDisplayOrderAsc(testQuestionId);
 
-		// SECURITY: isCorrect NEVER exposed here - this endpoint is used by the student
-		// attempting the test.
 		List<QuestionOptionSecureResponse> responseList = optionList.stream().map(this::mapToSecureResponse)
 				.collect(Collectors.toList());
 
