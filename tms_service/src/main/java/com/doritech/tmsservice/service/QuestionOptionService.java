@@ -1,4 +1,4 @@
-package com.doritech.tmsservice.serviceImpl;
+package com.doritech.tmsservice.service;
 
 import java.util.List;
 
