@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.service.VideoService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/tms/videos")

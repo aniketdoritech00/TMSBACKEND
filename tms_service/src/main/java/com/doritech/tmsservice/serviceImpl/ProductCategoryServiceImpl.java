@@ -15,16 +15,16 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.ProductCategory;
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.ProductCategoryRepository;
 import com.doritech.tmsservice.request.ProductCategoryRequest;
 import com.doritech.tmsservice.response.ProductCategoryResponse;
 import com.doritech.tmsservice.service.ProductCategoryService;
+import com.doritech.tmsservice.tms.entity.ProductCategory;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.repository.ProductCategoryRepository;
 
 @Service
 public class ProductCategoryServiceImpl implements ProductCategoryService {

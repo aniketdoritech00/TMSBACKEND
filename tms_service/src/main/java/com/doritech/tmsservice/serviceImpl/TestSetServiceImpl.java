@@ -16,17 +16,17 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.TestSet;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.TestSetRepository;
 import com.doritech.tmsservice.request.TestSetRequest;
 import com.doritech.tmsservice.response.TestSetListResponse;
 import com.doritech.tmsservice.response.TestSetResponse;
 import com.doritech.tmsservice.service.TestSetService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TestSet;
+import com.doritech.tmsservice.tms.repository.TestSetRepository;
 
 @Service
 public class TestSetServiceImpl implements TestSetService {
