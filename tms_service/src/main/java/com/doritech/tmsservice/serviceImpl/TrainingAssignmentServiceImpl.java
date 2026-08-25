@@ -17,17 +17,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.doritech.tmsservice.config.CurrentUser;
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.TrainingAssignment;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.TrainingAssignmentRepository;
 import com.doritech.tmsservice.request.TrainingAssignmentRequest;
 import com.doritech.tmsservice.response.TrainingAssignmentListResponse;
 import com.doritech.tmsservice.response.TrainingAssignmentResponse;
 import com.doritech.tmsservice.service.TrainingAssignmentService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TrainingAssignment;
+import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
 
 @Service
 public class TrainingAssignmentServiceImpl implements TrainingAssignmentService {

@@ -18,15 +18,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.tmsservice.config.FileStorageProperties;
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.Video;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.VideoRepository;
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.response.VideoListResponse;
 import com.doritech.tmsservice.response.VideoResponse;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.Video;
+import com.doritech.tmsservice.tms.repository.VideoRepository;
 
 @Service
 public class VideoServiceImpl implements VideoService {

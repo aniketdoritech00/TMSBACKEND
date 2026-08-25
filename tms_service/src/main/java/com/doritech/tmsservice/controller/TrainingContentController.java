@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.request.TrainingContentRequest;
 import com.doritech.tmsservice.service.TrainingContentService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/tms/training-content")
