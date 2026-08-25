@@ -1,11 +1,9 @@
 package com.doritech.tmsservice.serviceImpl;
 
-import java.util.HashSet;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +18,7 @@ import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.ProductCategoryRequest;
 import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.ProductCategoryResponse;
+import com.doritech.tmsservice.service.ParamService;
 import com.doritech.tmsservice.service.ProductCategoryService;
 import com.doritech.tmsservice.tms.entity.ProductCategory;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
@@ -31,71 +30,51 @@ import jakarta.transaction.Transactional;
 public class ProductCategoryServiceImpl implements ProductCategoryService {
 
 	private final ProductCategoryRepository productCategoryRepository;
+	private final ParamService paramService;
 
-	public ProductCategoryServiceImpl(ProductCategoryRepository productCategoryRepository) {
+	public ProductCategoryServiceImpl(ProductCategoryRepository productCategoryRepository, ParamService paramService) {
 		this.productCategoryRepository = productCategoryRepository;
+		this.paramService = paramService;
 	}
 
 	@Override
-	public ResponseEntity createProductCategory(List<ProductCategoryRequest> productCategoryRequestList) {
-
-		if (productCategoryRequestList == null || productCategoryRequestList.isEmpty()) {
-			return new ResponseEntity("Product category list cannot be empty", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		Set<String> requestCodes = new HashSet<>();
-		for (ProductCategoryRequest request : productCategoryRequestList) {
-			String categoryCode = request.getProductCategoryCode();
-			if (categoryCode != null && !categoryCode.isBlank()) {
-				if (!requestCodes.add(categoryCode)) {
-					return new ResponseEntity("Duplicate product category code in request: " + categoryCode,
-							HttpStatus.CONFLICT.value(), null);
-				}
-				if (productCategoryRepository.existsByProductCategoryCode(categoryCode)) {
-					return new ResponseEntity("Product category already exists with code: " + categoryCode,
-							HttpStatus.CONFLICT.value(), null);
-				}
-			}
-		}
-
-		List<ProductCategory> categoryList = productCategoryRequestList.stream().map(request -> {
-			ProductCategory productCategory = new ProductCategory();
-			productCategory.setProductCategoryName(request.getProductCategoryName());
-			productCategory.setProductCategoryCode(request.getProductCategoryCode());
-			productCategory.setProductCategoryDescription(request.getProductCategoryDescription());
-			productCategory.setProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder());
-			productCategory.setIsActive(request.getIsActive());
-			return productCategory;
-		}).toList();
-
+	public ResponseEntity createProductCategory(ProductCategoryRequest request) {
 		try {
-			List<ProductCategory> savedList = productCategoryRepository.saveAll(categoryList);
-			List<ProductCategoryResponse> responseList = savedList.stream().map(this::mapToResponse).toList();
-			return new ResponseEntity("Product category saved successfully", HttpStatus.CREATED.value(), responseList);
-		} catch (DataIntegrityViolationException e) {
-			return new ResponseEntity("Product category code already exists", HttpStatus.CONFLICT.value(), null);
-
+			if (productCategoryRepository.existsByProductCategoryCode(request.getProductCategoryCode())) {
+				return new ResponseEntity("Product category code already exists!", HttpStatus.CONFLICT.value(), null);
+			}
+			if (productCategoryRepository.existsByProductCategoryName(request.getProductCategoryName())) {
+				return new ResponseEntity("Product category name already exists!", HttpStatus.CONFLICT.value(), null);
+			}
+			if (productCategoryRepository
+					.existsByProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder())) {
+				return new ResponseEntity("Product category display order already exists!", HttpStatus.CONFLICT.value(),
+						null);
+			}
+			ProductCategory productCategory = mapToEntity(request);
+			ProductCategory savedProductCategory = productCategoryRepository.save(productCategory);
+			try {
+				paramService.updateCodeValue(savedProductCategory.getProductCategoryCode());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return new ResponseEntity("Product category created successfully!", HttpStatus.CREATED.value(),
+					savedProductCategory);
 		} catch (Exception e) {
-			throw new DatabaseOperationException("Something went wrong while saving product category");
+			e.printStackTrace();
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
 	public ResponseEntity getProductCategoryById(Long id) {
 		try {
-			if (id == null) {
-				return new ResponseEntity("Category id cannot be null!", HttpStatus.BAD_REQUEST.value(), null);
-			}
-
 			Optional<ProductCategory> categoryOptional = productCategoryRepository.findById(id);
-
 			if (categoryOptional.isEmpty()) {
 				return new ResponseEntity("Product category not found with id: " + id, HttpStatus.NOT_FOUND.value(),
 						null);
 			}
-
 			ProductCategoryResponse categoryResponse = mapToResponse(categoryOptional.get());
-
 			return new ResponseEntity("Product category fetched successfully", HttpStatus.OK.value(), categoryResponse);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -119,7 +98,6 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		}
 
 		if (!"asc".equalsIgnoreCase(sortDir) && !"desc".equalsIgnoreCase(sortDir)) {
-
 			throw new BadRequestException("Sort direction must be either 'asc' or 'desc'");
 		}
 
@@ -130,25 +108,17 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		Page<ProductCategory> categoryPage;
 
 		try {
-
 			categoryPage = productCategoryRepository.findAll(pageable);
-
 		} catch (PropertyReferenceException e) {
-
 			throw new BadRequestException("Invalid sort field: " + sortBy);
-
 		} catch (Exception e) {
-
 			throw new DatabaseOperationException("Something went wrong while fetching product categories");
 		}
-
 		List<ProductCategoryResponse> responseList = categoryPage.getContent().stream().map(this::mapToResponse)
 				.toList();
-
 		PageResponse<ProductCategoryResponse> pageResponse = new PageResponse<>(responseList, categoryPage.getNumber(),
 				categoryPage.getSize(), categoryPage.getTotalElements(), categoryPage.getTotalPages(),
 				categoryPage.isLast());
-
 		return new ResponseEntity("Product categories fetched successfully", HttpStatus.OK.value(), pageResponse);
 	}
 
@@ -172,6 +142,22 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		}
 	}
 
+	private ProductCategory mapToEntity(ProductCategoryRequest request) {
+
+		ProductCategory productCategory = new ProductCategory();
+
+		productCategory.setProductCategoryName(request.getProductCategoryName());
+		productCategory.setProductCategoryCode(request.getProductCategoryCode());
+		productCategory.setProductCategoryDescription(request.getProductCategoryDescription());
+		productCategory.setProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder());
+		productCategory.setIsActive(request.getIsActive());
+
+		productCategory.setCreatedAt(LocalDateTime.now());
+		productCategory.setUpdatedAt(LocalDateTime.now());
+
+		return productCategory;
+	}
+
 	private ProductCategoryResponse mapToResponse(ProductCategory entity) {
 		ProductCategoryResponse response = new ProductCategoryResponse();
 		response.setProductCategoryId(entity.getProductCategoryId());
@@ -183,5 +169,21 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		response.setCreatedAt(entity.getCreatedAt());
 		response.setUpdatedAt(entity.getUpdatedAt());
 		return response;
+	}
+
+	@Override
+	public ResponseEntity getAllProductCategory() {
+		try {
+			List<ProductCategory> categories = productCategoryRepository.findAll();
+			if (categories.isEmpty()) {
+				return new ResponseEntity("Product category not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+			List<ProductCategoryResponse> categoryResponse = categories.stream().map(this::mapToResponse).toList();
+			return new ResponseEntity("Product category fetched successfully", HttpStatus.OK.value(), categoryResponse);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+
 	}
 }
