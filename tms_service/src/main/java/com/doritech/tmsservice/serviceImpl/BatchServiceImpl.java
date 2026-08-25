@@ -21,16 +21,20 @@ import com.doritech.tmsservice.service.ParamService;
 import com.doritech.tmsservice.tms.entity.Batch;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.repository.BatchRepository;
+import com.doritech.tmsservice.tms.repository.UserBatchRepository;
 
 @Service
 public class BatchServiceImpl implements BatchService {
 
 	private final BatchRepository batchRepository;
 	private final ParamService paramService;
+	private final UserBatchRepository userBatchRepository;
 
-	public BatchServiceImpl(BatchRepository batchRepository, ParamService paramService) {
+	public BatchServiceImpl(BatchRepository batchRepository, ParamService paramService,
+			UserBatchRepository userBatchRepository) {
 		this.batchRepository = batchRepository;
 		this.paramService = paramService;
+		this.userBatchRepository = userBatchRepository;
 	}
 
 	@Override
@@ -267,6 +271,13 @@ public class BatchServiceImpl implements BatchService {
 			if (!batchRepository.existsById(batchId)) {
 				response.setMessage("Batch not found!");
 				response.setStatusCode(HttpStatus.NOT_FOUND.value());
+				response.setPayload(null);
+				return response;
+			}
+			
+			if (userBatchRepository.existsByBatch_BatchId(batchId)) {
+				response.setMessage("Batch cannot be deleted because it's associated with another child table!");
+				response.setStatusCode(HttpStatus.CONFLICT.value());
 				response.setPayload(null);
 				return response;
 			}
