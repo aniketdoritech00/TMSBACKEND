@@ -13,8 +13,8 @@ public interface ProductService {
 
 	ResponseEntity getProductById(Long id);
 
-
 	ResponseEntity getAllProduct(int page, int size, String sortBy, String sortDir);
+
 	ResponseEntity deleteProductDetails(Long id);
 
 	ResponseEntity getProductsByCategoryId(Long categoryId);
