@@ -44,7 +44,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
