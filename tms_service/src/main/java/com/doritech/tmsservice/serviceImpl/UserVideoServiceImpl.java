@@ -17,17 +17,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.doritech.tmsservice.config.CurrentUser;
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.UserVideo;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.UserVideoRepository;
 import com.doritech.tmsservice.request.UserVideoRequest;
 import com.doritech.tmsservice.response.UserVideoListResponse;
 import com.doritech.tmsservice.response.UserVideoResponse;
 import com.doritech.tmsservice.service.UserVideoService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.UserVideo;
+import com.doritech.tmsservice.tms.repository.UserVideoRepository;
 
 @Service
 public class UserVideoServiceImpl implements UserVideoService {

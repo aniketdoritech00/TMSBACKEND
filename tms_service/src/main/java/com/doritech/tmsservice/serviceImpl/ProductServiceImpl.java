@@ -15,16 +15,16 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.Product;
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.ProductRepository;
 import com.doritech.tmsservice.request.ProductRequest;
 import com.doritech.tmsservice.response.ProductResponse;
 import com.doritech.tmsservice.service.ProductService;
+import com.doritech.tmsservice.tms.entity.Product;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.repository.ProductRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {

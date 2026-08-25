@@ -15,17 +15,17 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.TestQuestion;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.TestQuestionRepository;
 import com.doritech.tmsservice.request.TestQuestionRequest;
 import com.doritech.tmsservice.response.TestQuestionListResponse;
 import com.doritech.tmsservice.response.TestQuestionResponse;
 import com.doritech.tmsservice.response.TestQuestionSecureResponse;
 import com.doritech.tmsservice.service.TestQuestionService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TestQuestion;
+import com.doritech.tmsservice.tms.repository.TestQuestionRepository;
 
 @Service
 public class TestQuestionServiceImpl implements TestQuestionService {

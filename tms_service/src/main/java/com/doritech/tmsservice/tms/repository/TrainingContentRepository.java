@@ -1,0 +1,14 @@
+package com.doritech.tmsservice.tms.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.doritech.tmsservice.tms.entity.TrainingContent;
+
+@Repository
+public interface TrainingContentRepository extends JpaRepository<TrainingContent, Long> {
+
+	List<TrainingContent> findByTrainingIdOrderByDisplayOrderAsc(Long trainingId);
+}

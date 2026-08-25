@@ -17,17 +17,17 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.VideoAccessControl;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.VideoAccessControlRepository;
 import com.doritech.tmsservice.request.VideoAccessControlRequest;
 import com.doritech.tmsservice.response.VideoAccessControlListResponse;
 import com.doritech.tmsservice.response.VideoAccessControlResponse;
 import com.doritech.tmsservice.service.VideoAccessControlService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.VideoAccessControl;
+import com.doritech.tmsservice.tms.repository.VideoAccessControlRepository;
 
 @Service
 public class VideoAccessControlServiceImpl implements VideoAccessControlService {

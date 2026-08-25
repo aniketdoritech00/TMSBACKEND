@@ -17,17 +17,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.tmsservice.config.FileStorageProperties;
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.TrainingContent;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.TrainingContentRepository;
 import com.doritech.tmsservice.request.TrainingContentRequest;
 import com.doritech.tmsservice.response.TrainingContentListResponse;
 import com.doritech.tmsservice.response.TrainingContentResponse;
 import com.doritech.tmsservice.service.FileStorageService;
 import com.doritech.tmsservice.service.TrainingContentService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TrainingContent;
+import com.doritech.tmsservice.tms.repository.TrainingContentRepository;
 
 @Service
 public class TrainingContentServiceImpl implements TrainingContentService {

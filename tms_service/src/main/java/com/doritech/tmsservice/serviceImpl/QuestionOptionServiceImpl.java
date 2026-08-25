@@ -9,17 +9,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.QuestionOption;
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.TestQuestionRepository;
 import com.doritech.tmsservice.request.QuestionOptionRequest;
 import com.doritech.tmsservice.response.QuestionOptionResponse;
 import com.doritech.tmsservice.response.QuestionOptionSecureResponse;
 import com.doritech.tmsservice.service.QuestionOptionRepository;
 import com.doritech.tmsservice.service.QuestionOptionService;
+import com.doritech.tmsservice.tms.entity.QuestionOption;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.repository.TestQuestionRepository;
 
 @Service
 public class QuestionOptionServiceImpl implements QuestionOptionService {

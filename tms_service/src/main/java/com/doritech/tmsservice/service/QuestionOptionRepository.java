@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.doritech.tmsservice.entity.QuestionOption;
+import com.doritech.tmsservice.tms.entity.QuestionOption;
 @Repository
 public interface QuestionOptionRepository extends JpaRepository<QuestionOption, Long> {
 

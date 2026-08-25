@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.request.QuestionOptionRequest;
 import com.doritech.tmsservice.service.QuestionOptionService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 import jakarta.validation.Valid;
 

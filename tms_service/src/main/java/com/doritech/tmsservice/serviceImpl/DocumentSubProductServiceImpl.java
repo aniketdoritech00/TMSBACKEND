@@ -8,17 +8,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.DocumentSubProduct;
-import com.doritech.tmsservice.entity.DocumentSubProduct.DocumentSubProductId;
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.DocumentSubProductRepository;
 import com.doritech.tmsservice.request.DocumentSubProductRequest;
 import com.doritech.tmsservice.response.DocumentSubProductResponse;
 import com.doritech.tmsservice.service.DocumentSubProductService;
+import com.doritech.tmsservice.tms.entity.DocumentSubProduct;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.DocumentSubProduct.DocumentSubProductId;
+import com.doritech.tmsservice.tms.repository.DocumentSubProductRepository;
 
 @Service
 public class DocumentSubProductServiceImpl implements DocumentSubProductService {
