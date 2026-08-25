@@ -15,4 +15,6 @@ public interface BatchService {
 
 	ResponseEntity deleteBatchbyId(Long batchId);
 
+	ResponseEntity getAllBatches();
+
 }
