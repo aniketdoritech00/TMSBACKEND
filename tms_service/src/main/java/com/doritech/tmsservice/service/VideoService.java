@@ -2,8 +2,8 @@ package com.doritech.tmsservice.service;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.request.VideoRequest;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface VideoService {
 

@@ -8,17 +8,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.VideoSubProduct;
-import com.doritech.tmsservice.entity.VideoSubProduct.VideoSubProductId;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.VideoSubProductRepository;
 import com.doritech.tmsservice.request.VideoSubProductRequest;
 import com.doritech.tmsservice.response.VideoSubProductResponse;
 import com.doritech.tmsservice.service.VideoSubProductService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.VideoSubProduct;
+import com.doritech.tmsservice.tms.entity.VideoSubProduct.VideoSubProductId;
+import com.doritech.tmsservice.tms.repository.VideoSubProductRepository;
 
 @Service
 public class VideoSubProductServiceImpl implements VideoSubProductService {

@@ -17,17 +17,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.tmsservice.config.FileStorageProperties;
-import com.doritech.tmsservice.entity.Document;
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.DocumentRepository;
 import com.doritech.tmsservice.request.DocumentRequest;
 import com.doritech.tmsservice.response.DocumentListResponse;
 import com.doritech.tmsservice.response.DocumentResponse;
 import com.doritech.tmsservice.service.DocumentService;
 import com.doritech.tmsservice.service.FileStorageService;
+import com.doritech.tmsservice.tms.entity.Document;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.repository.DocumentRepository;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {

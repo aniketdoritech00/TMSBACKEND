@@ -1,7 +1,7 @@
 package com.doritech.tmsservice.service;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
 import com.doritech.tmsservice.request.TrainingRequest;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface TrainingService {
 

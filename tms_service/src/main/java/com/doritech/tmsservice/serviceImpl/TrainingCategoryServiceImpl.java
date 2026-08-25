@@ -15,16 +15,16 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.entity.ResponseEntity;
-import com.doritech.tmsservice.entity.TrainingCategory;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
-import com.doritech.tmsservice.repository.TrainingCategoryRepository;
 import com.doritech.tmsservice.request.TrainingCategoryRequest;
 import com.doritech.tmsservice.response.TrainingCategoryResponse;
 import com.doritech.tmsservice.service.TrainingCategoryService;
+import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TrainingCategory;
+import com.doritech.tmsservice.tms.repository.TrainingCategoryRepository;
 
 @Service
 public class TrainingCategoryServiceImpl implements TrainingCategoryService {
