@@ -1,6 +1,5 @@
 package com.doritech.tmsservice.controller;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,7 +16,6 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/tms/batch")
-@CrossOrigin(allowedHeaders  = "*")
 public class BatchController {
 
 	private final BatchService batchService;
