@@ -274,7 +274,7 @@ public class BatchServiceImpl implements BatchService {
 				response.setPayload(null);
 				return response;
 			}
-			
+
 			if (userBatchRepository.existsByBatch_BatchId(batchId)) {
 				response.setMessage("Batch cannot be deleted because it's associated with another child table!");
 				response.setStatusCode(HttpStatus.CONFLICT.value());
@@ -325,6 +325,37 @@ public class BatchServiceImpl implements BatchService {
 
 		return response;
 
+	}
+
+	@Override
+	public ResponseEntity getAllBatches() {
+		ResponseEntity response = new ResponseEntity();
+
+		try {
+			List<Batch> batches = batchRepository.findAll();
+
+			if (batches.isEmpty()) {
+				response.setMessage("No batches found!");
+				response.setStatusCode(HttpStatus.NOT_FOUND.value());
+				response.setPayload(null);
+				return response;
+			}
+
+			List<BatchResponse> batchResponses = batches.stream().map(this::convertToResponse).toList();
+
+			response.setMessage("Batches found successfully!");
+			response.setStatusCode(HttpStatus.OK.value());
+			response.setPayload(batchResponses);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			response.setMessage("Internal server error!");
+			response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			response.setPayload(null);
+		}
+
+		return response;
 	}
 
 }
