@@ -2,9 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,10 +20,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/product-categories")
 public class ProductCategoryController {
 
-	private static final Logger log = LoggerFactory.getLogger(ProductCategoryController.class);
-
 	private final ProductCategoryService productCategoryService;
-	
+
 	public ProductCategoryController(ProductCategoryService productCategoryService) {
 		this.productCategoryService = productCategoryService;
 	}
@@ -34,26 +29,19 @@ public class ProductCategoryController {
 	@PostMapping("/createProductCategory")
 	public ResponseEntity createProductCategory(
 			@Valid @RequestBody List<ProductCategoryRequest> productCategoryRequest) {
-		log.info("createProductCategory :: request received for code={}");
-
 		return productCategoryService.createProductCategory(productCategoryRequest);
-
 	}
 
 	@GetMapping("/getAllProductCategory")
-	public ResponseEntity getAllProductCategory(@RequestParam(value = "page", defaultValue = "0") int page,
-			@RequestParam(value = "size", defaultValue = "10") int size,
-			@RequestParam(value = "sortBy", defaultValue = "productCategoryId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllProductCategory :: request received with page={}, size={}", page, size);
+	public ResponseEntity getAllProductCategory(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "productCategoryId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir) {
 		return productCategoryService.getAllProductCategory(page, size, sortBy, sortDir);
 	}
 
 	@GetMapping("/getProductCategoryById/{id}")
-	public ResponseEntity getProductCategoryById(@PathVariable("id") Long id) {
-
-		log.info("getProductCategoryById :: request received for id={}", id);
-
+	public ResponseEntity getProductCategoryById(@PathVariable Long id) {
 		return productCategoryService.getProductCategoryById(id);
 	}
 }

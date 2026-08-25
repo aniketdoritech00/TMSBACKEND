@@ -13,22 +13,6 @@ public class ProductCategoryResponse {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 
-	public ProductCategoryResponse() {
-	}
-
-	public ProductCategoryResponse(Long productCategoryId, String productCategoryName, String productCategoryCode,
-			String productCategoryDescription, String productCategoryImageUrl, Integer productCategoryDisplayOrder,
-			Boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt) {
-		this.productCategoryId = productCategoryId;
-		this.productCategoryName = productCategoryName;
-		this.productCategoryCode = productCategoryCode;
-		this.productCategoryDescription = productCategoryDescription;
-		this.productCategoryDisplayOrder = productCategoryDisplayOrder;
-		this.isActive = isActive;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-	}
-
 	public Long getProductCategoryId() {
 		return productCategoryId;
 	}
@@ -91,14 +75,6 @@ public class ProductCategoryResponse {
 
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
-	}
-
-	@Override
-	public String toString() {
-		return "ProductCategoryResponse [productCategoryId=" + productCategoryId + ", productCategoryName="
-				+ productCategoryName + ", productCategoryCode=" + productCategoryCode + ", productCategoryDescription="
-				+ productCategoryDescription + ", productCategoryDisplayOrder=" + productCategoryDisplayOrder
-				+ ", isActive=" + isActive + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
 	}
 
 }

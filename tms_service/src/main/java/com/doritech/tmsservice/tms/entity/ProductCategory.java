@@ -7,8 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -40,26 +38,6 @@ public class ProductCategory {
 
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
-
-	public ProductCategory() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-		this.updatedAt = LocalDateTime.now();
-		if (this.productCategoryDisplayOrder == null) {
-			this.productCategoryDisplayOrder = 0;
-		}
-		if (this.isActive == null) {
-			this.isActive = true;
-		}
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedAt = LocalDateTime.now();
-	}
 
 	public Long getProductCategoryId() {
 		return productCategoryId;
@@ -123,14 +101,6 @@ public class ProductCategory {
 
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
-	}
-
-	@Override
-	public String toString() {
-		return "ProductCategory [productCategoryId=" + productCategoryId + ", productCategoryName="
-				+ productCategoryName + ", productCategoryCode=" + productCategoryCode + ", productCategoryDescription="
-				+ productCategoryDescription + ", productCategoryDisplayOrder=" + productCategoryDisplayOrder
-				+ ", isActive=" + isActive + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
 	}
 
 }
