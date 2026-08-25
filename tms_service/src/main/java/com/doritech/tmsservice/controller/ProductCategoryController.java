@@ -1,7 +1,6 @@
 package com.doritech.tmsservice.controller;
 
-import java.util.List;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,8 +26,7 @@ public class ProductCategoryController {
 	}
 
 	@PostMapping("/createProductCategory")
-	public ResponseEntity createProductCategory(
-			@Valid @RequestBody List<ProductCategoryRequest> productCategoryRequest) {
+	public ResponseEntity createProductCategory(@Valid @RequestBody ProductCategoryRequest productCategoryRequest) {
 		return productCategoryService.createProductCategory(productCategoryRequest);
 	}
 
@@ -44,4 +42,16 @@ public class ProductCategoryController {
 	public ResponseEntity getProductCategoryById(@PathVariable Long id) {
 		return productCategoryService.getProductCategoryById(id);
 	}
+
+	@DeleteMapping("/deleteProductCategoryByCategoryId/{id}")
+	public ResponseEntity deleteProductCategoryByCategoryId(@PathVariable Long id) {
+		return productCategoryService.deleteProductCategory(id);
+	}
+
+	@GetMapping("/getAllproductcategory")
+	public ResponseEntity getAllProductCategory(){
+		return productCategoryService.getAllProductCategory();
+		
+	}
+
 }
