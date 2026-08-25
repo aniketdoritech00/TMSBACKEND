@@ -14,4 +14,6 @@ public interface UserBatchRepository extends JpaRepository<UserBatch, Long> {
 
 	boolean existsByUserIdAndBatch_BatchId(Long userId, Long batchId);
 
+	boolean existsByBatch_BatchId(Long batchId);
+
 }
