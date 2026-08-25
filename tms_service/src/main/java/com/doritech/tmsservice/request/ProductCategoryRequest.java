@@ -29,9 +29,6 @@ public class ProductCategoryRequest {
 	@NotNull(message = "{productCategory.isActive.notnull}")
 	private Boolean isActive;
 
-	public ProductCategoryRequest() {
-	}
-
 	public String getProductCategoryName() {
 		return productCategoryName;
 	}
@@ -70,13 +67,6 @@ public class ProductCategoryRequest {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
-	}
-
-	@Override
-	public String toString() {
-		return "ProductCategoryRequest [productCategoryName=" + productCategoryName + ", productCategoryCode="
-				+ productCategoryCode + ", productCategoryDescription=" + productCategoryDescription
-				+ ", productCategoryDisplayOrder=" + productCategoryDisplayOrder + ", isActive=" + isActive + "]";
 	}
 
 }
