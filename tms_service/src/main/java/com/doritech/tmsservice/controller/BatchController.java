@@ -51,5 +51,10 @@ public class BatchController {
 	public ResponseEntity deleteBatchbyId(@PathVariable Long batchId) {
 		return batchService.deleteBatchbyId(batchId);
 	}
+	@GetMapping("/getallBatch")
+	public ResponseEntity getallbatches() {
+		return  batchService.getAllBatches();
+		
+	}
 
 }
