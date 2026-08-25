@@ -36,10 +36,10 @@ public class Batch {
 	@Column(name = "updated_by")
 	private Long updatedBy;
 
-	@Column(name = "created_at", insertable = false, updatable = false)
+	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 
-	@Column(name = "updated_at", insertable = false, updatable = false)
+	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
 	@OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
