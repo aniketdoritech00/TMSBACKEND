@@ -215,13 +215,6 @@ public class BatchServiceImpl implements BatchService {
 		ResponseEntity response = new ResponseEntity();
 		try {
 
-			if (batchId == null) {
-				response.setMessage("Batch ID is required!");
-				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-				response.setPayload(null);
-				return response;
-			}
-
 			Optional<Batch> optionalBatch = batchRepository.findById(batchId);
 
 			if (optionalBatch.isEmpty()) {

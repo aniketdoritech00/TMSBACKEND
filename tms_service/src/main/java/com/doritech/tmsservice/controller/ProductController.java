@@ -2,8 +2,6 @@ package com.doritech.tmsservice.controller;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,8 +21,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/products")
 public class ProductController {
 
-	private static final Logger log = LoggerFactory.getLogger(ProductController.class);
-
 	private final ProductService productService;
 
 	public ProductController(ProductService productService) {
@@ -33,13 +29,11 @@ public class ProductController {
 
 	@PostMapping("/createProduct")
 	public ResponseEntity createProduct(@Valid @RequestBody List<ProductRequest> productRequest) {
-		log.info("createProduct :: request received with size={}", productRequest.size());
 		return productService.createProduct(productRequest);
 	}
 
 	@GetMapping("/getProductById/{id}")
-	public ResponseEntity getProductById(@PathVariable("id") Long id) {
-		log.info("getProductById :: request received for id={}", id);
+	public ResponseEntity getProductById(@PathVariable Long id) {
 		return productService.getProductById(id);
 	}
 
@@ -48,13 +42,11 @@ public class ProductController {
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "productId") String sortBy,
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllProduct :: request received with page={}, size={}", page, size);
 		return productService.getAllProduct(page, size, sortBy, sortDir);
 	}
 
 	@DeleteMapping("/deleteProductDetails/{id}")
 	public ResponseEntity deleteProductDetails(@PathVariable("id") Long id) {
-		log.info("deleteProductDetails :: request received");
 		return productService.deleteProductDetails(id);
 	}
 }
