@@ -1,11 +1,9 @@
 package com.doritech.tmsservice.controller;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,12 +26,17 @@ public class ProductController {
 	}
 
 	@PostMapping("/createProduct")
-	public ResponseEntity createProduct(@Valid @RequestBody List<ProductRequest> productRequest) {
+	public ResponseEntity createProduct(@Valid @RequestBody ProductRequest productRequest) {
 		return productService.createProduct(productRequest);
 	}
 
-	@GetMapping("/getProductById/{id}")
-	public ResponseEntity getProductById(@PathVariable Long id) {
+	@PutMapping("/updateProduct")
+	public ResponseEntity updateProduct(@RequestParam Long id, @Valid @RequestBody ProductRequest productRequest) {
+		return productService.updateProduct(id, productRequest);
+	}
+
+	@GetMapping("/getProductById")
+	public ResponseEntity getProductById(@RequestParam Long id) {
 		return productService.getProductById(id);
 	}
 
@@ -42,11 +45,22 @@ public class ProductController {
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "productId") String sortBy,
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+
 		return productService.getAllProduct(page, size, sortBy, sortDir);
 	}
 
-	@DeleteMapping("/deleteProductDetails/{id}")
-	public ResponseEntity deleteProductDetails(@PathVariable("id") Long id) {
+	@GetMapping("/getProductsByCategoryId")
+	public ResponseEntity getProductsByCategoryId(@RequestParam Long categoryId) {
+		return productService.getProductsByCategoryId(categoryId);
+	}
+
+	@DeleteMapping("/deleteProductDetails")
+	public ResponseEntity deleteProductDetails(@RequestParam Long id) {
 		return productService.deleteProductDetails(id);
+	}
+
+	@GetMapping("/getAllProductWithoutPagination")
+	public ResponseEntity getAllProduct() {
+		return productService.getAllProduct();
 	}
 }

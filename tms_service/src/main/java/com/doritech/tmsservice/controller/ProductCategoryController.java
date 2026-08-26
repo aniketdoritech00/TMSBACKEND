@@ -1,9 +1,11 @@
 package com.doritech.tmsservice.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,15 +45,23 @@ public class ProductCategoryController {
 		return productCategoryService.getProductCategoryById(id);
 	}
 
-	@DeleteMapping("/deleteProductCategoryByCategoryId/{id}")
-	public ResponseEntity deleteProductCategoryByCategoryId(@PathVariable Long id) {
+	@DeleteMapping("/deleteProductCategoryByCategoryId")
+	public ResponseEntity deleteProductCategoryByCategoryId(@RequestParam(required = false) Long id) {
+		if (id == null) {
+			return new ResponseEntity("Product category ID is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
 		return productCategoryService.deleteProductCategory(id);
 	}
 
 	@GetMapping("/getAllproductcategory")
-	public ResponseEntity getAllProductCategory(){
+	public ResponseEntity getAllProductCategory() {
 		return productCategoryService.getAllProductCategory();
-		
 	}
 
+	@PutMapping("/updateProductCategory/{id}")
+	public ResponseEntity updateProductCategory(
+	        @PathVariable Long id,
+	        @Valid @RequestBody ProductCategoryRequest request) {
+	    return productCategoryService.updateProductCategory(id, request);
+	}
 }

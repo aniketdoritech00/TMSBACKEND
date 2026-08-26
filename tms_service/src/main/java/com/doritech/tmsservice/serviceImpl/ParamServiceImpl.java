@@ -94,31 +94,90 @@ public class ParamServiceImpl implements ParamService {
 	@Override
 	public ResponseEntity updateCodeValue(String code) {
 
+	    ResponseEntity response = new ResponseEntity();
+
+	    try {
+
+	        if (code == null || code.trim().isEmpty()) {
+	            response.setMessage("Code cannot be null or empty");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            return response;
+	        }
+
+	        code = code.trim();
+
+	        // Extract prefix: CAT001 -> CAT
+	        String prefix = code.replaceAll("\\d", "");
+
+	        // Extract number: CAT001 -> 001
+	        String numericPart = code.replaceAll("\\D", "");
+
+	        if (prefix.isEmpty() || numericPart.isEmpty()) {
+	            response.setMessage("Invalid code format: " + code);
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            return response;
+	        }
+
+	        Optional<ParamEntity> optional =
+	                repository.findByDesp1IgnoreCase(prefix);
+
+	        if (optional.isEmpty()) {
+	            response.setMessage("Code not found or inactive: " + prefix);
+	            response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	            return response;
+	        }
+
+	        ParamEntity param = optional.get();
+
+	        // Store the number received from request
+	        Integer codeNumber = Integer.parseInt(numericPart);
+
+	        param.setDesp2(String.valueOf(codeNumber));
+
+	        repository.save(param);
+
+	        response.setMessage("Code updated successfully");
+	        response.setStatusCode(HttpStatus.OK.value());
+
+	        // Return the same code that was received
+	        response.setPayload(code);
+
+	    } catch (NumberFormatException e) {
+
+	        response.setMessage("Invalid number format in code");
+	        response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage("Error while updating code");
+	        response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+	        response.setPayload(e.getMessage());
+	    }
+
+	    return response;
+	}
+
+	@Override
+	public ResponseEntity updateCodeValueOnDelete(String code) {
 		ResponseEntity response = new ResponseEntity();
-
 		try {
-
 			if (code == null || code.trim().isEmpty()) {
 				response.setMessage("Code cannot be null or empty");
 				response.setStatusCode(400);
 				return response;
 			}
-
 			String prefix = code.replaceAll("\\d", "");
-
 			Optional<ParamEntity> optional = repository.findByDesp1IgnoreCase(prefix);
-
 			if (optional.isEmpty()) {
 				response.setMessage("Code not found or inactive: " + prefix);
 				response.setStatusCode(404);
 				return response;
 			}
-
 			ParamEntity param = optional.get();
-
 			Integer current = param.getDesp2() != null ? Integer.parseInt(param.getDesp2()) : 0;
-
-			Integer updated = current + 1;
+			Integer updated = current - 1;
 
 			param.setDesp2(String.valueOf(updated));
 
@@ -142,5 +201,6 @@ public class ParamServiceImpl implements ParamService {
 
 		return response;
 	}
-
+	
+	
 }

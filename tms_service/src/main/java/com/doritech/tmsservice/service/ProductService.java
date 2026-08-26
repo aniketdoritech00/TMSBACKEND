@@ -1,15 +1,9 @@
 package com.doritech.tmsservice.service;
 
-import java.util.List;
-
 import com.doritech.tmsservice.request.ProductRequest;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
-import jakarta.validation.Valid;
-
 public interface ProductService {
-
-	ResponseEntity createProduct(@Valid List<ProductRequest> productRequest);
 
 	ResponseEntity getProductById(Long id);
 
@@ -18,5 +12,11 @@ public interface ProductService {
 	ResponseEntity deleteProductDetails(Long id);
 
 	ResponseEntity getProductsByCategoryId(Long categoryId);
+
+	ResponseEntity createProduct(ProductRequest request);
+
+	ResponseEntity updateProduct(Long id, ProductRequest request);
+
+	ResponseEntity getAllProduct();
 
 }

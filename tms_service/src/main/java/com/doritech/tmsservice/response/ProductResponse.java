@@ -4,126 +4,105 @@ import java.time.LocalDateTime;
 
 public class ProductResponse {
 
-    private Long productId;
-    private Long productCategoryId;
-    private String productName;
-    private String productCode;
-    private String productDescription;
-    private String productImageUrl;
-    private Integer displayOrder;
-    private Boolean isActive;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+	private Long productId;
+	private Long productCategoryId;
+	private String productName;
+	private String productCode;
+	private String productDescription;
+//    private String productImageUrl;
+	private Integer displayOrder;
+	private Boolean isActive;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
 
-    public ProductResponse() {
-    }
+	public Long getProductId() {
+		return productId;
+	}
 
-    public ProductResponse(Long productId, Long productCategoryId, String productName, String productCode,
-            String productDescription, String productImageUrl, Integer displayOrder, Boolean isActive,
-            LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.productId = productId;
-        this.productCategoryId = productCategoryId;
-        this.productName = productName;
-        this.productCode = productCode;
-        this.productDescription = productDescription;
-        this.productImageUrl = productImageUrl;
-        this.displayOrder = displayOrder;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
+	public void setProductId(Long productId) {
+		this.productId = productId;
+	}
 
-    public Long getProductId() {
-        return productId;
-    }
+	public Long getProductCategoryId() {
+		return productCategoryId;
+	}
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
+	public void setProductCategoryId(Long productCategoryId) {
+		this.productCategoryId = productCategoryId;
+	}
 
-    public Long getProductCategoryId() {
-        return productCategoryId;
-    }
+	public String getProductName() {
+		return productName;
+	}
 
-    public void setProductCategoryId(Long productCategoryId) {
-        this.productCategoryId = productCategoryId;
-    }
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
 
-    public String getProductName() {
-        return productName;
-    }
+	public String getProductCode() {
+		return productCode;
+	}
 
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
+	public void setProductCode(String productCode) {
+		this.productCode = productCode;
+	}
 
-    public String getProductCode() {
-        return productCode;
-    }
+	public String getProductDescription() {
+		return productDescription;
+	}
 
-    public void setProductCode(String productCode) {
-        this.productCode = productCode;
-    }
+	public void setProductDescription(String productDescription) {
+		this.productDescription = productDescription;
+	}
 
-    public String getProductDescription() {
-        return productDescription;
-    }
+	public Integer getDisplayOrder() {
+		return displayOrder;
+	}
 
-    public void setProductDescription(String productDescription) {
-        this.productDescription = productDescription;
-    }
+	public void setDisplayOrder(Integer displayOrder) {
+		this.displayOrder = displayOrder;
+	}
 
-    public String getProductImageUrl() {
-        return productImageUrl;
-    }
+	public Boolean getIsActive() {
+		return isActive;
+	}
 
-    public void setProductImageUrl(String productImageUrl) {
-        this.productImageUrl = productImageUrl;
-    }
+	public void setIsActive(Boolean isActive) {
+		this.isActive = isActive;
+	}
 
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    public Boolean getIsActive() {
-        return isActive;
-    }
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public ProductResponse() {
+		super();
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "ProductResponse [productId=" + productId
-                + ", productCategoryId=" + productCategoryId
-                + ", productName=" + productName
-                + ", productCode=" + productCode
-                + ", productDescription=" + productDescription
-                + ", productImageUrl=" + productImageUrl
-                + ", displayOrder=" + displayOrder
-                + ", isActive=" + isActive
-                + ", createdAt=" + createdAt
-                + ", updatedAt=" + updatedAt + "]";
-    }
+	public ProductResponse(Long productId, Long productCategoryId, String productName, String productCode,
+			String productDescription, Integer displayOrder, Boolean isActive, LocalDateTime createdAt,
+			LocalDateTime updatedAt) {
+		super();
+		this.productId = productId;
+		this.productCategoryId = productCategoryId;
+		this.productName = productName;
+		this.productCode = productCode;
+		this.productDescription = productDescription;
+		this.displayOrder = displayOrder;
+		this.isActive = isActive;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+	}
 }

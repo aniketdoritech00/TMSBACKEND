@@ -1,12 +1,19 @@
 package com.doritech.tmsservice.tms.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -38,6 +45,39 @@ public class ProductCategory {
 
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
+
+	@Column(name = "created_by")
+	private Long createdBy;
+
+	@Column(name = "updated_by")
+	private Long updatedBy;
+
+	@OneToMany(mappedBy = "productCategory")
+	@JsonIgnore
+	private List<Product> products = new ArrayList<>();
+
+	public ProductCategory() {
+	}
+
+	@PrePersist
+	protected void onCreate() {
+
+		this.createdAt = LocalDateTime.now();
+		this.updatedAt = LocalDateTime.now();
+
+		if (this.productCategoryDisplayOrder == null) {
+			this.productCategoryDisplayOrder = 0;
+		}
+
+		if (this.isActive == null) {
+			this.isActive = true;
+		}
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.updatedAt = LocalDateTime.now();
+	}
 
 	public Long getProductCategoryId() {
 		return productCategoryId;
@@ -103,4 +143,27 @@ public class ProductCategory {
 		this.updatedAt = updatedAt;
 	}
 
+	public Long getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public List<Product> getProducts() {
+		return products;
+	}
+
+	public void setProducts(List<Product> products) {
+		this.products = products;
+	}
 }

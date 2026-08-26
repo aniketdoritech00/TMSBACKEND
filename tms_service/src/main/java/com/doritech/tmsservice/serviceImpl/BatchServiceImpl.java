@@ -247,6 +247,8 @@ public class BatchServiceImpl implements BatchService {
 		ResponseEntity response = new ResponseEntity();
 		try {
 
+			Batch batch = batchRepository.getById(batchId);
+
 			if (batchId == null) {
 				response.setMessage("Batch ID is required!");
 				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -269,6 +271,8 @@ public class BatchServiceImpl implements BatchService {
 			}
 
 			batchRepository.deleteById(batchId);
+
+			paramService.updateCodeValueOnDelete(batch.getBatchCode());
 
 			response.setMessage("Batch deleted successfully!");
 			response.setStatusCode(HttpStatus.OK.value());
