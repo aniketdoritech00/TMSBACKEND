@@ -41,16 +41,9 @@ public class BatchServiceImpl implements BatchService {
 	public ResponseEntity createBatch(BatchRequest request) {
 		Long currentUserId = CurrentUser.getUserId();
 		ResponseEntity response = new ResponseEntity();
-
-		if (request == null) {
-
-			response.setMessage("Request is  null");
-			response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-		}
 		try {
 
 			if (batchRepository.findByBatchName(request.getBatchName()).isPresent()) {
-
 				response.setMessage("Batch name already exists!");
 				response.setStatusCode(HttpStatus.CONFLICT.value());
 				response.setPayload(null);
