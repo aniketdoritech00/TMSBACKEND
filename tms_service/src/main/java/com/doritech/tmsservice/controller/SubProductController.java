@@ -1,10 +1,10 @@
 package com.doritech.tmsservice.controller;
 
-import java.util.List;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,8 +27,13 @@ public class SubProductController {
 	}
 
 	@PostMapping("/createSubProduct")
-	public ResponseEntity createSubProduct(@Valid @RequestBody List<SubProductRequest> subProductRequest) {
+	public ResponseEntity createSubProduct(@Valid @RequestBody SubProductRequest subProductRequest) {
 		return subProductService.createSubProduct(subProductRequest);
+	}
+
+	@PutMapping("/updateSubProduct")
+	public ResponseEntity updateSubProduct(@RequestParam Long id, @Valid @RequestBody SubProductRequest request) {
+		return subProductService.updateSubProduct(id, request);
 	}
 
 	@GetMapping("/getSubProductById/{id}")
@@ -47,5 +52,10 @@ public class SubProductController {
 	@GetMapping("/getSubProductsByProductId/{productId}")
 	public ResponseEntity getSubProductsByProductId(@PathVariable("productId") Long productId) {
 		return subProductService.getSubProductsByProductId(productId);
+	}
+
+	@DeleteMapping("/deleteSubProduct")
+	public ResponseEntity deleteSubProduct(@RequestParam Long id) {
+		return subProductService.deleteSubProduct(id);
 	}
 }

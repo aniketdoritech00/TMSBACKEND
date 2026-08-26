@@ -12,6 +12,7 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
@@ -23,8 +24,6 @@ import com.doritech.tmsservice.service.ProductCategoryService;
 import com.doritech.tmsservice.tms.entity.ProductCategory;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.repository.ProductCategoryRepository;
-
-import jakarta.transaction.Transactional;
 
 @Service
 public class ProductCategoryServiceImpl implements ProductCategoryService {
@@ -40,6 +39,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 	@Override
 	public ResponseEntity createProductCategory(ProductCategoryRequest request) {
 		try {
+			Long currentUserId = CurrentUser.getUserId();
 			if (productCategoryRepository.existsByProductCategoryCode(request.getProductCategoryCode())) {
 				return new ResponseEntity("Product category code already exists!", HttpStatus.CONFLICT.value(), null);
 			}
@@ -51,8 +51,12 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 				return new ResponseEntity("Product category display order already exists!", HttpStatus.CONFLICT.value(),
 						null);
 			}
+
 			ProductCategory productCategory = mapToEntity(request);
+			productCategory.setCreatedBy(currentUserId);
+
 			ProductCategory savedProductCategory = productCategoryRepository.save(productCategory);
+			paramService.updateCodeValue(savedProductCategory.getProductCategoryCode());
 			try {
 				paramService.updateCodeValue(savedProductCategory.getProductCategoryCode());
 			} catch (Exception e) {
@@ -123,22 +127,21 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 	}
 
 	@Override
-	@Transactional
 	public ResponseEntity deleteProductCategory(Long id) {
 		try {
-			if (id == null) {
-				throw new BadRequestException("Product category ID cannot be null");
-			}
+
 			ProductCategory category = productCategoryRepository.findById(id)
 					.orElseThrow(() -> new ResourceNotFoundException("Product category not found with id: " + id));
 
 			productCategoryRepository.delete(category);
 			productCategoryRepository.flush();
+			paramService.updateCodeValueOnDelete(category.getProductCategoryCode());
+			return new ResponseEntity("Product category deleted successfully", 200, null);
 
-			return new ResponseEntity("Product category deleted successfully", HttpStatus.OK.value(), null);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new ResponseEntity(e.getMessage(), HttpStatus.OK.value(), null);
+
+			return new ResponseEntity(e.getMessage(), 500, null);
 		}
 	}
 
@@ -185,5 +188,49 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 			return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 
+	}
+
+	@Override
+	public ResponseEntity updateProductCategory(Long id, ProductCategoryRequest request) {
+		try {
+			Long currentUserId = CurrentUser.getUserId();
+			Optional<ProductCategory> optionalProductCategory = productCategoryRepository.findById(id);
+			if (optionalProductCategory.isEmpty()) {
+				return new ResponseEntity("Product category not found!", HttpStatus.NOT_FOUND.value(), null);
+			}
+			ProductCategory productCategory = optionalProductCategory.get();
+			if (productCategoryRepository
+					.existsByProductCategoryCodeAndProductCategoryIdNot(request.getProductCategoryCode(), id)) {
+				return new ResponseEntity("Product category code already exists!", HttpStatus.CONFLICT.value(), null);
+			}
+			if (productCategoryRepository
+					.existsByProductCategoryNameAndProductCategoryIdNot(request.getProductCategoryName(), id)) {
+				return new ResponseEntity("Product category name already exists!", HttpStatus.CONFLICT.value(), null);
+			}
+			if (productCategoryRepository.existsByProductCategoryDisplayOrderAndProductCategoryIdNot(
+					request.getProductCategoryDisplayOrder(), id)) {
+				return new ResponseEntity("Product category display order already exists!", HttpStatus.CONFLICT.value(),
+						null);
+			}
+
+			productCategory.setProductCategoryName(request.getProductCategoryName());
+			productCategory.setProductCategoryDescription(request.getProductCategoryDescription());
+			productCategory.setProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder());
+			productCategory.setIsActive(request.getIsActive());
+			productCategory.setUpdatedBy(currentUserId);
+			productCategory.setUpdatedAt(LocalDateTime.now());
+			ProductCategory updatedProductCategory = productCategoryRepository.save(productCategory);
+
+			try {
+				paramService.updateCodeValue(updatedProductCategory.getProductCategoryCode());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return new ResponseEntity("Product category updated successfully!", HttpStatus.OK.value(),
+					updatedProductCategory);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 }

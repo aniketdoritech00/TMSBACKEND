@@ -11,4 +11,6 @@ public interface ParamService {
 	ResponseEntity generateCode(String type);
 	
 	ResponseEntity updateCodeValue(String code);
+
+	ResponseEntity updateCodeValueOnDelete(String code);
 }
