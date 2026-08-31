@@ -1,5 +1,9 @@
 package com.doritech.tmsservice.serviceImpl;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,17 +11,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.doritech.tmsservice.config.CurrentUser;
+import com.doritech.tmsservice.config.FileStorageProperties;
+import com.doritech.tmsservice.enums.VideoStatus;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
+import com.doritech.tmsservice.request.VideoMetadata;
+import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.request.VideoSubProductRequest;
+import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.response.VideoSubProductResponse;
+import com.doritech.tmsservice.service.FileStorageService;
+import com.doritech.tmsservice.service.VideoMetadataService;
 import com.doritech.tmsservice.service.VideoSubProductService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.Video;
 import com.doritech.tmsservice.tms.entity.VideoSubProduct;
 import com.doritech.tmsservice.tms.entity.VideoSubProduct.VideoSubProductId;
+import com.doritech.tmsservice.tms.repository.VideoRepository;
 import com.doritech.tmsservice.tms.repository.VideoSubProductRepository;
 
 @Service
@@ -26,9 +42,19 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 	private static final Logger log = LoggerFactory.getLogger(VideoSubProductServiceImpl.class);
 
 	private final VideoSubProductRepository videoSubProductRepository;
+	private final FileStorageProperties fileStorageProperties;
+	private final VideoRepository videoRepository;
+	private final FileStorageService fileStorageService;
+	private final VideoMetadataService videoMetadataService;
 
-	public VideoSubProductServiceImpl(VideoSubProductRepository videoSubProductRepository) {
+	public VideoSubProductServiceImpl(VideoSubProductRepository videoSubProductRepository,
+			FileStorageProperties fileStorageProperties, VideoRepository videoRepository,
+			FileStorageService fileStorageService, VideoMetadataService videoMetadataService) {
 		this.videoSubProductRepository = videoSubProductRepository;
+		this.fileStorageProperties = fileStorageProperties;
+		this.fileStorageService = fileStorageService;
+		this.videoRepository = videoRepository;
+		this.videoMetadataService = videoMetadataService;
 	}
 
 	@Override
@@ -119,5 +145,195 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 	private VideoSubProductResponse mapToResponse(VideoSubProduct entity) {
 		return new VideoSubProductResponse(entity.getId().getVideoId(), entity.getId().getSubProductId(),
 				entity.getAssignedAt(), entity.getAssignedBy());
+	}
+
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity uploadVideAndThumbnail(VideoRequest request, MultipartFile videoFile,
+			MultipartFile thumbnailFile, List<Long> subProductIds) {
+
+		if (request == null) {
+			throw new BadRequestException("Video data is required");
+		}
+
+		if (videoFile == null || videoFile.isEmpty()) {
+			throw new BadRequestException("Video file is required");
+		}
+
+		// Thumbnail is optional
+		if (subProductIds == null || subProductIds.isEmpty()) {
+			throw new BadRequestException("At least one sub product is required");
+		}
+
+		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
+			throw new BadRequestException("Video title is required");
+		}
+
+		if (request.getIsSecure() == null) {
+			throw new BadRequestException("isSecure is required");
+		}
+
+		if (request.getAllowDownload() == null) {
+			throw new BadRequestException("allowDownload is required");
+		}
+
+		if (request.getAllowScreenRecord() == null) {
+			throw new BadRequestException("allowScreenRecord is required");
+		}
+
+		if (request.getAllowScreenshot() == null) {
+			throw new BadRequestException("allowScreenshot is required");
+		}
+
+		// Validate sub-product IDs before uploading the large video
+		for (Long subProductId : subProductIds) {
+			if (subProductId == null || subProductId <= 0) {
+				throw new BadRequestException("Invalid sub product id: " + subProductId);
+			}
+		}
+
+		String videoPath = null;
+		String thumbnailPath = null;
+
+		try {
+
+			// Store video
+			videoPath = fileStorageService.storeFile(videoFile, fileStorageProperties.getVideoPath());
+
+			// Store thumbnail only when provided
+			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+
+				thumbnailPath = fileStorageService.storeFile(thumbnailFile, fileStorageProperties.getImagePath());
+			}
+
+			// Extract video metadata
+			Path path = Paths.get(videoPath);
+
+			VideoMetadata metadata = videoMetadataService.extractMetadata(path);
+
+			String videoFormat = metadata.getVideoFormat();
+
+			String originalFileName = videoFile.getOriginalFilename();
+
+			if (originalFileName != null && originalFileName.contains(".")) {
+
+				int lastDot = originalFileName.lastIndexOf(".");
+
+				if (lastDot < originalFileName.length() - 1) {
+
+					videoFormat = originalFileName.substring(lastDot + 1).toLowerCase();
+				}
+			}
+
+			if (videoFormat == null || videoFormat.trim().isEmpty()) {
+				videoFormat = "unknown";
+			}
+
+			// Create Video entity
+			Video video = new Video();
+
+			video.setVideoTitle(request.getVideoTitle().trim());
+			video.setVideoDescription(request.getVideoDescription());
+
+			video.setVideoUrl(videoPath);
+
+			// Thumbnail can be null
+			video.setThumbnailUrl(thumbnailPath);
+
+			video.setFileSizeBytes(videoFile.getSize());
+			video.setDurationSeconds(metadata.getDurationSeconds());
+			video.setVideoFormat(videoFormat);
+			video.setResolution(metadata.getResolution());
+
+			video.setIsSecure(request.getIsSecure());
+			video.setAllowDownload(request.getAllowDownload());
+			video.setAllowScreenRecord(request.getAllowScreenRecord());
+			video.setAllowScreenshot(request.getAllowScreenshot());
+
+			video.setStatus(VideoStatus.ACTIVE);
+			video.setViewCount(0);
+
+			video.setUploadedBy(CurrentUser.getUserId());
+
+			video.setCreatedAt(LocalDateTime.now());
+			video.setUpdatedAt(LocalDateTime.now());
+
+			// Save video
+			Video savedVideo = videoRepository.save(video);
+
+			// Create mappings for all sub-products
+			for (Long subProductId : subProductIds) {
+
+				VideoSubProductId mappingId = new VideoSubProductId(savedVideo.getVideoId(), subProductId);
+
+				// Normally this cannot exist because video is newly created,
+				// but keeping the check is safe.
+				if (videoSubProductRepository.existsById(mappingId)) {
+					continue;
+				}
+
+				VideoSubProduct mapping = new VideoSubProduct();
+
+				mapping.setId(mappingId);
+				mapping.setAssignedBy(CurrentUser.getUserId());
+
+				videoSubProductRepository.save(mapping);
+			}
+
+			return new ResponseEntity("Video uploaded and assigned to sub products successfully",
+					HttpStatus.CREATED.value(), mapToFullResponse(savedVideo));
+
+		} catch (BadRequestException e) {
+
+			// Delete uploaded files if anything fails
+			deleteFileQuietly(videoPath);
+			deleteFileQuietly(thumbnailPath);
+
+			throw e;
+
+		} catch (Exception e) {
+
+			// Delete files if database/mapping/metadata operation fails
+			deleteFileQuietly(videoPath);
+			deleteFileQuietly(thumbnailPath);
+
+			log.error("uploadVideAndThumbnail :: failed to upload video", e);
+
+			throw new DatabaseOperationException("Unable to upload video and assign sub products");
+		}
+	}
+
+	private void deleteFileQuietly(String filePath) {
+		if (filePath == null || filePath.trim().isEmpty()) {
+			return;
+		}
+		try {
+			Files.deleteIfExists(Paths.get(filePath));
+		} catch (Exception e) {
+			log.warn("Unable to delete file: {}", filePath);
+		}
+	}
+
+	private VideoResponse mapToFullResponse(Video entity) {
+		VideoResponse response = new VideoResponse();
+		response.setVideoId(entity.getVideoId());
+		response.setVideoTitle(entity.getVideoTitle());
+		response.setVideoDescription(entity.getVideoDescription());
+		response.setVideoUrl(entity.getVideoUrl());
+		response.setThumbnailUrl(entity.getThumbnailUrl());
+		response.setDurationSeconds(entity.getDurationSeconds());
+		response.setFileSizeBytes(entity.getFileSizeBytes());
+		response.setVideoFormat(entity.getVideoFormat());
+		response.setResolution(entity.getResolution());
+		response.setIsSecure(entity.getIsSecure());
+		response.setAllowDownload(entity.getAllowDownload());
+		response.setAllowScreenRecord(entity.getAllowScreenRecord());
+		response.setAllowScreenshot(entity.getAllowScreenshot());
+		response.setStatus(entity.getStatus() != null ? entity.getStatus().name() : null);
+		response.setViewCount(entity.getViewCount());
+		response.setUploadedBy(entity.getUploadedBy());
+		response.setCreatedAt(entity.getCreatedAt());
+		response.setUpdatedAt(entity.getUpdatedAt());
+		return response;
 	}
 }

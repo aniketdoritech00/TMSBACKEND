@@ -21,4 +21,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	boolean existsByDisplayOrderAndProductIdNot(Integer displayOrder, Long productId);
 
 	List<Product> findByProductCategory_ProductCategoryId(Long categoryId);
+
+	boolean existsByProductCategory_ProductCategoryId(Long id);
 }
