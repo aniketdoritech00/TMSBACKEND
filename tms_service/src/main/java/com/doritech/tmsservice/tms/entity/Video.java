@@ -2,6 +2,8 @@ package com.doritech.tmsservice.tms.entity;
 
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.VideoStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,253 +11,211 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "videos")
 public class Video {
 
-    public enum Status {
-        ACTIVE, INACTIVE, ARCHIVED
-    }
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "video_id")
+	private Long videoId;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "video_id")
-    private Long videoId;
+	@Column(name = "video_title", nullable = false, length = 255)
+	private String videoTitle;
 
-    @Column(name = "video_title", nullable = false, length = 255)
-    private String videoTitle;
+	@Column(name = "video_description", columnDefinition = "TEXT")
+	private String videoDescription;
 
-    @Column(name = "video_description", columnDefinition = "TEXT")
-    private String videoDescription;
+	@Column(name = "video_url", nullable = false, length = 500)
+	private String videoUrl;
 
-    @Column(name = "video_url", nullable = false, length = 500)
-    private String videoUrl;
+	@Column(name = "thumbnail_url", length = 500)
+	private String thumbnailUrl;
 
-    @Column(name = "thumbnail_url", length = 500)
-    private String thumbnailUrl;
+	@Column(name = "duration_seconds")
+	private Integer durationSeconds;
 
-    @Column(name = "duration_seconds")
-    private Integer durationSeconds;
+	@Column(name = "file_size_bytes")
+	private Long fileSizeBytes;
 
-    @Column(name = "file_size_bytes")
-    private Long fileSizeBytes;
+	@Column(name = "video_format", length = 20)
+	private String videoFormat;
 
-    @Column(name = "video_format", length = 20)
-    private String videoFormat;
+	@Column(name = "resolution", length = 20)
+	private String resolution;
 
-    @Column(name = "resolution", length = 20)
-    private String resolution;
+	@Column(name = "is_secure")
+	private Boolean isSecure = true;
 
-    @Column(name = "is_secure")
-    private Boolean isSecure = true;
+	@Column(name = "allow_download")
+	private Boolean allowDownload = false;
 
-    @Column(name = "allow_download")
-    private Boolean allowDownload = false;
+	@Column(name = "allow_screen_record")
+	private Boolean allowScreenRecord = false;
 
-    @Column(name = "allow_screen_record")
-    private Boolean allowScreenRecord = false;
+	@Column(name = "allow_screenshot")
+	private Boolean allowScreenshot = false;
 
-    @Column(name = "allow_screenshot")
-    private Boolean allowScreenshot = false;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status")
+	private VideoStatus status = VideoStatus.ACTIVE;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private Status status = Status.ACTIVE;
+	@Column(name = "view_count")
+	private Integer viewCount = 0;
 
-    @Column(name = "view_count")
-    private Integer viewCount = 0;
+	@Column(name = "uploaded_by")
+	private Long uploadedBy;
 
-    @Column(name = "uploaded_by")
-    private Long uploadedBy;
+	@Column(name = "created_at", updatable = false)
+	private LocalDateTime createdAt;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+	public Long getVideoId() {
+		return videoId;
+	}
 
-    public Video() {
-    }
+	public void setVideoId(Long videoId) {
+		this.videoId = videoId;
+	}
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        if (this.status == null) {
-            this.status = Status.ACTIVE;
-        }
-        if (this.viewCount == null) {
-            this.viewCount = 0;
-        }
-        if (this.isSecure == null) {
-            this.isSecure = true;
-        }
-        if (this.allowDownload == null) {
-            this.allowDownload = false;
-        }
-        if (this.allowScreenRecord == null) {
-            this.allowScreenRecord = false;
-        }
-        if (this.allowScreenshot == null) {
-            this.allowScreenshot = false;
-        }
-    }
+	public String getVideoTitle() {
+		return videoTitle;
+	}
 
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+	public void setVideoTitle(String videoTitle) {
+		this.videoTitle = videoTitle;
+	}
 
-    public Long getVideoId() {
-        return videoId;
-    }
+	public String getVideoDescription() {
+		return videoDescription;
+	}
 
-    public void setVideoId(Long videoId) {
-        this.videoId = videoId;
-    }
+	public void setVideoDescription(String videoDescription) {
+		this.videoDescription = videoDescription;
+	}
 
-    public String getVideoTitle() {
-        return videoTitle;
-    }
+	public String getVideoUrl() {
+		return videoUrl;
+	}
 
-    public void setVideoTitle(String videoTitle) {
-        this.videoTitle = videoTitle;
-    }
+	public void setVideoUrl(String videoUrl) {
+		this.videoUrl = videoUrl;
+	}
 
-    public String getVideoDescription() {
-        return videoDescription;
-    }
+	public String getThumbnailUrl() {
+		return thumbnailUrl;
+	}
 
-    public void setVideoDescription(String videoDescription) {
-        this.videoDescription = videoDescription;
-    }
+	public void setThumbnailUrl(String thumbnailUrl) {
+		this.thumbnailUrl = thumbnailUrl;
+	}
 
-    public String getVideoUrl() {
-        return videoUrl;
-    }
+	public Integer getDurationSeconds() {
+		return durationSeconds;
+	}
 
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
-    }
+	public void setDurationSeconds(Integer durationSeconds) {
+		this.durationSeconds = durationSeconds;
+	}
 
-    public String getThumbnailUrl() {
-        return thumbnailUrl;
-    }
+	public Long getFileSizeBytes() {
+		return fileSizeBytes;
+	}
 
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
-    }
+	public void setFileSizeBytes(Long fileSizeBytes) {
+		this.fileSizeBytes = fileSizeBytes;
+	}
 
-    public Integer getDurationSeconds() {
-        return durationSeconds;
-    }
+	public String getVideoFormat() {
+		return videoFormat;
+	}
 
-    public void setDurationSeconds(Integer durationSeconds) {
-        this.durationSeconds = durationSeconds;
-    }
+	public void setVideoFormat(String videoFormat) {
+		this.videoFormat = videoFormat;
+	}
 
-    public Long getFileSizeBytes() {
-        return fileSizeBytes;
-    }
+	public String getResolution() {
+		return resolution;
+	}
 
-    public void setFileSizeBytes(Long fileSizeBytes) {
-        this.fileSizeBytes = fileSizeBytes;
-    }
+	public void setResolution(String resolution) {
+		this.resolution = resolution;
+	}
 
-    public String getVideoFormat() {
-        return videoFormat;
-    }
+	public Boolean getIsSecure() {
+		return isSecure;
+	}
 
-    public void setVideoFormat(String videoFormat) {
-        this.videoFormat = videoFormat;
-    }
+	public void setIsSecure(Boolean isSecure) {
+		this.isSecure = isSecure;
+	}
 
-    public String getResolution() {
-        return resolution;
-    }
+	public Boolean getAllowDownload() {
+		return allowDownload;
+	}
 
-    public void setResolution(String resolution) {
-        this.resolution = resolution;
-    }
+	public void setAllowDownload(Boolean allowDownload) {
+		this.allowDownload = allowDownload;
+	}
 
-    public Boolean getIsSecure() {
-        return isSecure;
-    }
+	public Boolean getAllowScreenRecord() {
+		return allowScreenRecord;
+	}
 
-    public void setIsSecure(Boolean isSecure) {
-        this.isSecure = isSecure;
-    }
+	public void setAllowScreenRecord(Boolean allowScreenRecord) {
+		this.allowScreenRecord = allowScreenRecord;
+	}
 
-    public Boolean getAllowDownload() {
-        return allowDownload;
-    }
+	public Boolean getAllowScreenshot() {
+		return allowScreenshot;
+	}
 
-    public void setAllowDownload(Boolean allowDownload) {
-        this.allowDownload = allowDownload;
-    }
+	public void setAllowScreenshot(Boolean allowScreenshot) {
+		this.allowScreenshot = allowScreenshot;
+	}
 
-    public Boolean getAllowScreenRecord() {
-        return allowScreenRecord;
-    }
+	public VideoStatus getStatus() {
+		return status;
+	}
 
-    public void setAllowScreenRecord(Boolean allowScreenRecord) {
-        this.allowScreenRecord = allowScreenRecord;
-    }
+	public void setStatus(VideoStatus status) {
+		this.status = status;
+	}
 
-    public Boolean getAllowScreenshot() {
-        return allowScreenshot;
-    }
+	public Integer getViewCount() {
+		return viewCount;
+	}
 
-    public void setAllowScreenshot(Boolean allowScreenshot) {
-        this.allowScreenshot = allowScreenshot;
-    }
+	public void setViewCount(Integer viewCount) {
+		this.viewCount = viewCount;
+	}
 
-    public Status getStatus() {
-        return status;
-    }
+	public Long getUploadedBy() {
+		return uploadedBy;
+	}
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
+	public void setUploadedBy(Long uploadedBy) {
+		this.uploadedBy = uploadedBy;
+	}
 
-    public Integer getViewCount() {
-        return viewCount;
-    }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setViewCount(Integer viewCount) {
-        this.viewCount = viewCount;
-    }
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    public Long getUploadedBy() {
-        return uploadedBy;
-    }
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
 
-    public void setUploadedBy(Long uploadedBy) {
-        this.uploadedBy = uploadedBy;
-    }
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "Video [videoId=" + videoId + ", videoTitle=" + videoTitle + ", status=" + status + "]";
-    }
 }

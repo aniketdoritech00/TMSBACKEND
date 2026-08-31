@@ -7,40 +7,53 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "file.upload")
 public class FileStorageProperties {
 
-    private String videoPath;
-    private String documentPath;
-    private String trainingContentPath;
-    private long maxSizeMb;
+	private String videoPath;
 
-    public String getVideoPath() {
-        return videoPath;
-    }
+	private String documentPath;
 
-    public void setVideoPath(String videoPath) {
-        this.videoPath = videoPath;
-    }
+	private String trainingContentPath;
 
-    public String getDocumentPath() {
-        return documentPath;
-    }
+	private String imagePath;
 
-    public void setDocumentPath(String documentPath) {
-        this.documentPath = documentPath;
-    }
+	private long maxSizeMb;
 
-    public String getTrainingContentPath() {
-        return trainingContentPath;
-    }
+	public String getVideoPath() {
+		return videoPath;
+	}
 
-    public void setTrainingContentPath(String trainingContentPath) {
-        this.trainingContentPath = trainingContentPath;
-    }
+	public void setVideoPath(String videoPath) {
+		this.videoPath = videoPath;
+	}
 
-    public long getMaxSizeMb() {
-        return maxSizeMb;
-    }
+	public String getDocumentPath() {
+		return documentPath;
+	}
 
-    public void setMaxSizeMb(long maxSizeMb) {
-        this.maxSizeMb = maxSizeMb;
-    }
+	public void setDocumentPath(String documentPath) {
+		this.documentPath = documentPath;
+	}
+
+	public String getTrainingContentPath() {
+		return trainingContentPath;
+	}
+
+	public void setTrainingContentPath(String trainingContentPath) {
+		this.trainingContentPath = trainingContentPath;
+	}
+
+	public String getImagePath() {
+		return imagePath;
+	}
+
+	public void setImagePath(String imagePath) {
+		this.imagePath = imagePath;
+	}
+
+	public long getMaxSizeMb() {
+		return maxSizeMb;
+	}
+
+	public void setMaxSizeMb(long maxSizeMb) {
+		this.maxSizeMb = maxSizeMb;
+	}
 }

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
-import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.ProductCategoryRequest;
 import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.ProductCategoryResponse;
@@ -24,16 +24,20 @@ import com.doritech.tmsservice.service.ProductCategoryService;
 import com.doritech.tmsservice.tms.entity.ProductCategory;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.repository.ProductCategoryRepository;
+import com.doritech.tmsservice.tms.repository.ProductRepository;
 
 @Service
 public class ProductCategoryServiceImpl implements ProductCategoryService {
 
+	private final ProductRepository productRepository;
 	private final ProductCategoryRepository productCategoryRepository;
 	private final ParamService paramService;
 
-	public ProductCategoryServiceImpl(ProductCategoryRepository productCategoryRepository, ParamService paramService) {
+	public ProductCategoryServiceImpl(ProductCategoryRepository productCategoryRepository, ParamService paramService,
+			ProductRepository productRepository) {
 		this.productCategoryRepository = productCategoryRepository;
 		this.paramService = paramService;
+		this.productRepository = productRepository;
 	}
 
 	@Override
@@ -129,19 +133,38 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 	@Override
 	public ResponseEntity deleteProductCategory(Long id) {
 		try {
-
-			ProductCategory category = productCategoryRepository.findById(id)
-					.orElseThrow(() -> new ResourceNotFoundException("Product category not found with id: " + id));
-
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid product category id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			ProductCategory category = productCategoryRepository.findById(id).orElse(null);
+			if (category == null) {
+				return new ResponseEntity("Product category not found with id: " + id, HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+			boolean categoryInUse = productRepository.existsByProductCategory_ProductCategoryId(id);
+			if (categoryInUse) {
+				return new ResponseEntity(
+						"Product category cannot be deleted because it is already used by one or more products",
+						HttpStatus.CONFLICT.value(), null);
+			}
 			productCategoryRepository.delete(category);
 			productCategoryRepository.flush();
-			paramService.updateCodeValueOnDelete(category.getProductCategoryCode());
-			return new ResponseEntity("Product category deleted successfully", 200, null);
-
+			if (category.getProductCategoryCode() != null && !category.getProductCategoryCode().trim().isEmpty()) {
+				try {
+					paramService.updateCodeValueOnDelete(category.getProductCategoryCode());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return new ResponseEntity("Product category deleted successfully", HttpStatus.OK.value(), null);
+		} catch (DataIntegrityViolationException e) {
+			e.printStackTrace();
+			return new ResponseEntity("Product category cannot be deleted because it is linked to other records",
+					HttpStatus.CONFLICT.value(), null);
 		} catch (Exception e) {
 			e.printStackTrace();
-
-			return new ResponseEntity(e.getMessage(), 500, null);
+			return new ResponseEntity("Something went wrong while deleting product category",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 

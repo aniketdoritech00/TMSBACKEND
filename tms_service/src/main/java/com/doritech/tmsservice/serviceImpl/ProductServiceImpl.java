@@ -22,6 +22,7 @@ import com.doritech.tmsservice.tms.entity.ProductCategory;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.repository.ProductCategoryRepository;
 import com.doritech.tmsservice.tms.repository.ProductRepository;
+import com.doritech.tmsservice.tms.repository.SubProductRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -29,10 +30,11 @@ public class ProductServiceImpl implements ProductService {
 	private final ProductRepository productRepository;
 	private final ProductCategoryRepository productCategoryRepository;
 	private final ParamService paramService;
+	private final SubProductRepository subProductRepository;
 
 	public ProductServiceImpl(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository,
-			ParamService paramService) {
-
+			ParamService paramService, SubProductRepository subProductRepository) {
+		this.subProductRepository = subProductRepository;
 		this.productRepository = productRepository;
 		this.productCategoryRepository = productCategoryRepository;
 		this.paramService = paramService;
@@ -307,7 +309,6 @@ public class ProductServiceImpl implements ProductService {
 				return new ResponseEntity("Invalid category id", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			// Verify category exists
 			ProductCategory productCategory = productCategoryRepository.findById(categoryId).orElse(null);
 
 			if (productCategory == null) {
@@ -324,7 +325,6 @@ public class ProductServiceImpl implements ProductService {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-
 			return new ResponseEntity("Something went wrong while fetching products",
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
@@ -336,39 +336,35 @@ public class ProductServiceImpl implements ProductService {
 			if (id == null || id <= 0) {
 				return new ResponseEntity("Invalid product id", HttpStatus.BAD_REQUEST.value(), null);
 			}
-
 			Product product = productRepository.findById(id).orElse(null);
-
 			if (product == null) {
 				return new ResponseEntity("Product not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
 			}
-
+			boolean subProductExists = subProductRepository.existsByProduct_ProductId(id);
+			if (subProductExists) {
+				return new ResponseEntity(
+						"Product cannot be deleted because it is already linked with one or more sub-products",
+						HttpStatus.CONFLICT.value(), null);
+			}
 			String productCode = product.getProductCode();
-
 			try {
 				productRepository.delete(product);
 				productRepository.flush();
-
 			} catch (DataIntegrityViolationException e) {
 				e.printStackTrace();
-
-				return new ResponseEntity("Cannot delete product because it is linked to other records",
+				return new ResponseEntity("Product cannot be deleted because it is linked to other records",
 						HttpStatus.CONFLICT.value(), null);
 			}
-
-			try {
-				if (productCode != null) {
+			if (productCode != null && !productCode.trim().isEmpty()) {
+				try {
 					paramService.updateCodeValueOnDelete(productCode);
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
-
 			return new ResponseEntity("Product deleted successfully", HttpStatus.OK.value(), null);
-
 		} catch (Exception e) {
 			e.printStackTrace();
-
 			return new ResponseEntity("Something went wrong while deleting product",
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
@@ -376,48 +372,30 @@ public class ProductServiceImpl implements ProductService {
 
 	@Override
 	public ResponseEntity getAllProduct() {
+		try {
+			List<Product> productList = productRepository.findAll();
 
-	    try {
+			if (productList == null || productList.isEmpty()) {
+				return new ResponseEntity("No products found", HttpStatus.NOT_FOUND.value(), null);
+			}
 
-	        List<Product> productList = productRepository.findAll();
+			List<ProductResponse> responseList = productList.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
 
-	        if (productList == null || productList.isEmpty()) {
-	            return new ResponseEntity(
-	                    "No products found",
-	                    HttpStatus.NOT_FOUND.value(),
-	                    null
-	            );
-	        }
+			return new ResponseEntity("Products fetched successfully", HttpStatus.OK.value(), responseList);
 
-	        List<ProductResponse> responseList = productList.stream()
-	                .map(this::mapToResponse)
-	                .collect(Collectors.toList());
-
-	        return new ResponseEntity(
-	                "Products fetched successfully",
-	                HttpStatus.OK.value(),
-	                responseList
-	        );
-
-	    } catch (Exception e) {
-
-	        e.printStackTrace();
-
-	        return new ResponseEntity(
-	                "Something went wrong while fetching products",
-	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	                null
-	        );
-	    }
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Something went wrong while fetching products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
+
 	private ProductResponse mapToResponse(Product entity) {
-
 		Long categoryId = null;
-
 		if (entity.getProductCategory() != null) {
 			categoryId = entity.getProductCategory().getProductCategoryId();
 		}
-
 		return new ProductResponse(entity.getProductId(), categoryId, entity.getProductName(), entity.getProductCode(),
 				entity.getProductDescription(), entity.getDisplayOrder(), entity.getIsActive(), entity.getCreatedAt(),
 				entity.getUpdatedAt());

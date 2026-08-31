@@ -22,9 +22,7 @@ import com.doritech.tmsservice.tms.repository.DocumentSubProductRepository;
 
 @Service
 public class DocumentSubProductServiceImpl implements DocumentSubProductService {
-
 	private static final Logger log = LoggerFactory.getLogger(DocumentSubProductServiceImpl.class);
-
 	private final DocumentSubProductRepository documentSubProductRepository;
 
 	public DocumentSubProductServiceImpl(DocumentSubProductRepository documentSubProductRepository) {
