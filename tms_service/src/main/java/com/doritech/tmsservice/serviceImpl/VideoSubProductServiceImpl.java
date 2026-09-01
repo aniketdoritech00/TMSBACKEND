@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.VideoMetadata;
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.request.VideoSubProductRequest;
+import com.doritech.tmsservice.request.VideoUpdateRequest;
 import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.response.VideoSubProductResponse;
 import com.doritech.tmsservice.service.FileStorageService;
@@ -313,7 +315,228 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 			log.warn("Unable to delete file: {}", filePath);
 		}
 	}
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity updateVideo(
+	        Long videoId,
+	        VideoUpdateRequest request) {
 
+	    if (videoId == null || videoId <= 0) {
+	        return new ResponseEntity(
+	                "Invalid video id",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request == null) {
+	        return new ResponseEntity(
+	                "Video data is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request.getVideoTitle() == null
+	            || request.getVideoTitle().trim().isEmpty()) {
+
+	        return new ResponseEntity(
+	                "Video title is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request.getIsSecure() == null) {
+	        return new ResponseEntity(
+	                "isSecure is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request.getAllowDownload() == null) {
+	        return new ResponseEntity(
+	                "allowDownload is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request.getAllowScreenRecord() == null) {
+	        return new ResponseEntity(
+	                "allowScreenRecord is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request.getAllowScreenshot() == null) {
+	        return new ResponseEntity(
+	                "allowScreenshot is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    if (request.getSubProductIds() == null
+	            || request.getSubProductIds().isEmpty()) {
+
+	        return new ResponseEntity(
+	                "At least one sub product is required",
+	                HttpStatus.BAD_REQUEST.value(),
+	                null
+	        );
+	    }
+
+	    for (Long subProductId : request.getSubProductIds()) {
+
+	        if (subProductId == null || subProductId <= 0) {
+
+	            return new ResponseEntity(
+	                    "Invalid sub product id: " + subProductId,
+	                    HttpStatus.BAD_REQUEST.value(),
+	                    null
+	            );
+	        }
+	    }
+
+	    try {
+
+	        Optional<Video> videoOptional =
+	                videoRepository.findById(videoId);
+
+	        if (videoOptional.isEmpty()) {
+
+	            return new ResponseEntity(
+	                    "Video not found with id: " + videoId,
+	                    HttpStatus.NOT_FOUND.value(),
+	                    null
+	            );
+	        }
+
+	        Video video = videoOptional.get();
+
+
+	        // --------------------------------------------------
+	        // 2. Update only editable video fields
+	        // --------------------------------------------------
+
+	        video.setVideoTitle(
+	                request.getVideoTitle().trim()
+	        );
+
+	        video.setVideoDescription(
+	                request.getVideoDescription()
+	        );
+
+	        video.setIsSecure(
+	                request.getIsSecure()
+	        );
+
+	        video.setAllowDownload(
+	                request.getAllowDownload()
+	        );
+
+	        video.setAllowScreenRecord(
+	                request.getAllowScreenRecord()
+	        );
+
+	        video.setAllowScreenshot(
+	                request.getAllowScreenshot()
+	        );
+
+	        video.setUpdatedAt(
+	                LocalDateTime.now()
+	        );
+
+
+	        // --------------------------------------------------
+	        // 3. Save video
+	        // --------------------------------------------------
+
+	        Video updatedVideo =
+	                videoRepository.save(video);
+
+
+	        // --------------------------------------------------
+	        // 4. Remove existing mappings
+	        // --------------------------------------------------
+
+	        List<VideoSubProduct> existingMappings =
+	                videoSubProductRepository
+	                        .findByIdVideoId(videoId);
+
+	        videoSubProductRepository.deleteAll(
+	                existingMappings
+	        );
+
+
+	        // --------------------------------------------------
+	        // 5. Create new mappings
+	        // --------------------------------------------------
+
+	        List<Long> subProductIds =
+	                request.getSubProductIds()
+	                        .stream()
+	                        .distinct()
+	                        .collect(Collectors.toList());
+
+	        Long currentUserId =
+	                CurrentUser.getUserId();
+
+	        for (Long subProductId : subProductIds) {
+
+	            VideoSubProductId mappingId =
+	                    new VideoSubProductId(
+	                            videoId,
+	                            subProductId
+	                    );
+
+	            VideoSubProduct mapping =
+	                    new VideoSubProduct();
+
+	            mapping.setId(mappingId);
+
+	            mapping.setAssignedBy(
+	                    currentUserId
+	            );
+
+	            videoSubProductRepository.save(mapping);
+	        }
+
+
+	        // --------------------------------------------------
+	        // 6. Prepare response
+	        // --------------------------------------------------
+
+	        VideoResponse response =
+	                mapToFullResponse(updatedVideo);
+
+	        response.setSubProductIds(subProductIds);
+
+
+	        return new ResponseEntity(
+	                "Video updated successfully",
+	                HttpStatus.OK.value(),
+	                response
+	        );
+
+	    } catch (Exception e) {
+
+	        log.error(
+	                "updateVideo :: error while updating video id={}",
+	                videoId,
+	                e
+	        );
+
+	        return new ResponseEntity(
+	                "Something went wrong while updating video",
+	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+	                null
+	        );
+	    }
+	}
 	private VideoResponse mapToFullResponse(Video entity) {
 		VideoResponse response = new VideoResponse();
 		response.setVideoId(entity.getVideoId());

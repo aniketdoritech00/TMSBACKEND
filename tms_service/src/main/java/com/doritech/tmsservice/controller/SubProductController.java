@@ -48,6 +48,11 @@ public class SubProductController {
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
 		return subProductService.getAllSubProduct(page, size, sortBy, sortDir);
 	}
+	
+	@GetMapping("/getAllSubProductWithoutPagination")
+	public ResponseEntity getAllSubProductWithoutPagination() {
+	    return subProductService.getAllSubProductWithoutPagination();
+	}
 
 	@GetMapping("/getSubProductsByProductId/{productId}")
 	public ResponseEntity getSubProductsByProductId(@PathVariable("productId") Long productId) {

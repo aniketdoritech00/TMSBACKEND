@@ -218,4 +218,33 @@ public class Video {
 		this.updatedAt = updatedAt;
 	}
 
+	public Video(Long videoId, String videoTitle, String videoDescription, String videoUrl, String thumbnailUrl,
+			Integer durationSeconds, Long fileSizeBytes, String videoFormat, String resolution, Boolean isSecure,
+			Boolean allowDownload, Boolean allowScreenRecord, Boolean allowScreenshot, VideoStatus status,
+			Integer viewCount, Long uploadedBy, LocalDateTime createdAt, LocalDateTime updatedAt) {
+		super();
+		this.videoId = videoId;
+		this.videoTitle = videoTitle;
+		this.videoDescription = videoDescription;
+		this.videoUrl = videoUrl;
+		this.thumbnailUrl = thumbnailUrl;
+		this.durationSeconds = durationSeconds;
+		this.fileSizeBytes = fileSizeBytes;
+		this.videoFormat = videoFormat;
+		this.resolution = resolution;
+		this.isSecure = isSecure;
+		this.allowDownload = allowDownload;
+		this.allowScreenRecord = allowScreenRecord;
+		this.allowScreenshot = allowScreenshot;
+		this.status = status;
+		this.viewCount = viewCount;
+		this.uploadedBy = uploadedBy;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+	}
+
+	public Video() {
+		super();
+	}
+
 }

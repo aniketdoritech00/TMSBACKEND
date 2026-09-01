@@ -3,6 +3,7 @@ package com.doritech.tmsservice.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -52,4 +53,10 @@ public class GlobalExceptionHandler {
 	public ResponseEntity handleGenericException(Exception ex) {
 		return new ResponseEntity("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity handleMissingServletRequestParameter(MissingServletRequestParameterException e) {
+		return new ResponseEntity(e.getParameterName() + " is required", HttpStatus.BAD_REQUEST.value(), null);
+	}
+	
 }

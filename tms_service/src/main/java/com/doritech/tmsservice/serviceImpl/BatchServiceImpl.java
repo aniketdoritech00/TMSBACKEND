@@ -246,22 +246,22 @@ public class BatchServiceImpl implements BatchService {
 	public ResponseEntity deleteBatchbyId(Long batchId) {
 		ResponseEntity response = new ResponseEntity();
 		try {
-
-			Batch batch = batchRepository.getById(batchId);
-
 			if (batchId == null) {
 				response.setMessage("Batch ID is required!");
 				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
 				response.setPayload(null);
 				return response;
 			}
+			Optional<Batch> batchOptional = batchRepository.findById(batchId);
 
-			if (!batchRepository.existsById(batchId)) {
+			if (batchOptional.isEmpty()) {
 				response.setMessage("Batch not found!");
 				response.setStatusCode(HttpStatus.NOT_FOUND.value());
 				response.setPayload(null);
 				return response;
 			}
+
+			Batch batch = batchOptional.get();
 
 			if (userBatchRepository.existsByBatch_BatchId(batchId)) {
 				response.setMessage("Batch cannot be deleted because it's associated with another child table!");
@@ -270,9 +270,11 @@ public class BatchServiceImpl implements BatchService {
 				return response;
 			}
 
-			batchRepository.deleteById(batchId);
+			String batchCode = batch.getBatchCode();
 
-			paramService.updateCodeValueOnDelete(batch.getBatchCode());
+			batchRepository.delete(batch);
+
+			paramService.updateCodeValueOnDelete(batchCode);
 
 			response.setMessage("Batch deleted successfully!");
 			response.setStatusCode(HttpStatus.OK.value());
@@ -288,6 +290,7 @@ public class BatchServiceImpl implements BatchService {
 		}
 
 		return response;
+
 	}
 
 	public Batch convertToEntity(BatchRequest request) {

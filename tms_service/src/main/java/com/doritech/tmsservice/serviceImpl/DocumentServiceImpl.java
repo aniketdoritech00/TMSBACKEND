@@ -1,8 +1,10 @@
 package com.doritech.tmsservice.serviceImpl;
 
-import java.util.LinkedHashMap;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -14,20 +16,21 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.config.FileStorageProperties;
-import com.doritech.tmsservice.exception.BadRequestException;
-import com.doritech.tmsservice.exception.DatabaseOperationException;
-import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.DocumentRequest;
 import com.doritech.tmsservice.response.DocumentListResponse;
 import com.doritech.tmsservice.response.DocumentResponse;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.service.DocumentService;
 import com.doritech.tmsservice.service.FileStorageService;
 import com.doritech.tmsservice.tms.entity.Document;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.repository.DocumentRepository;
+import com.doritech.tmsservice.tms.repository.DocumentSubProductRepository;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
@@ -37,151 +40,207 @@ public class DocumentServiceImpl implements DocumentService {
 	private final DocumentRepository documentRepository;
 	private final FileStorageService fileStorageService;
 	private final FileStorageProperties fileStorageProperties;
+	private final DocumentSubProductRepository documentSubProductRepository;
 
 	public DocumentServiceImpl(DocumentRepository documentRepository, FileStorageService fileStorageService,
-			FileStorageProperties fileStorageProperties) {
+			FileStorageProperties fileStorageProperties, DocumentSubProductRepository documentSubProductRepository) {
 		this.documentRepository = documentRepository;
 		this.fileStorageService = fileStorageService;
 		this.fileStorageProperties = fileStorageProperties;
+		this.documentSubProductRepository = documentSubProductRepository;
 	}
 
 	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity createDocument(DocumentRequest documentRequest, MultipartFile file) {
-
-		log.info("createDocument :: request received for name={}", documentRequest.getDocumentName());
-
+		if (documentRequest == null) {
+			return new ResponseEntity("Document data is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
 		if (file == null || file.isEmpty()) {
-			log.error("createDocument :: document file is missing");
-			throw new BadRequestException("Document file must not be null");
+			return new ResponseEntity("Document file is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
 
-		String storedPath = fileStorageService.storeFile(file, fileStorageProperties.getDocumentPath());
-
-		Document document = new Document();
-		document.setDocumentName(documentRequest.getDocumentName());
-		document.setDocumentDescription(documentRequest.getDocumentDescription());
-		document.setDocumentUrl(storedPath);
-		document.setDocumentType(documentRequest.getDocumentType());
-		document.setFileSizeBytes(file.getSize());
-		document.setIsSecure(documentRequest.getIsSecure());
-		document.setUploadedBy(documentRequest.getUploadedBy());
-
-		Document saved;
+		if (documentRequest.getDocumentName() == null || documentRequest.getDocumentName().trim().isEmpty()) {
+			return new ResponseEntity("Document name is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+		String storedPath = null;
 		try {
-			saved = documentRepository.save(document);
+			String documentType = getDocumentType(file);
+			storedPath = fileStorageService.storeFile(file, fileStorageProperties.getDocumentPath());
+
+			Document document = new Document();
+			document.setDocumentName(documentRequest.getDocumentName().trim());
+			document.setDocumentDescription(documentRequest.getDocumentDescription());
+			document.setDocumentUrl(storedPath);
+			document.setDocumentType(documentType);
+			document.setFileSizeBytes(file.getSize());
+			document.setIsSecure(documentRequest.getIsSecure());
+			document.setUploadedBy(CurrentUser.getUserId());
+			document.setCreatedAt(LocalDateTime.now());
+			document.setUpdatedAt(LocalDateTime.now());
+
+			Document savedDocument = documentRepository.save(document);
+
+			return new ResponseEntity("Document saved successfully", HttpStatus.CREATED.value(),
+					mapToFullResponse(savedDocument));
+
 		} catch (Exception e) {
-			log.error("createDocument :: error while saving - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while saving document");
+			deleteFileQuietly(storedPath);
+			return new ResponseEntity("Something went wrong while saving document",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	private void deleteFileQuietly(String filePath) {
+		if (filePath == null || filePath.trim().isEmpty()) {
+			return;
+		}
+		try {
+			Files.deleteIfExists(Paths.get(filePath));
+		} catch (Exception e) {
+			log.warn("Unable to delete document file: {}", filePath);
+		}
+	}
+
+	private String getDocumentType(MultipartFile file) {
+		String originalFileName = file.getOriginalFilename();
+		if (originalFileName != null && originalFileName.contains(".")) {
+			int lastDot = originalFileName.lastIndexOf(".");
+			if (lastDot < originalFileName.length() - 1) {
+				return originalFileName.substring(lastDot + 1).toUpperCase();
+			}
 		}
 
-		log.info("createDocument :: document saved successfully with id={}", saved.getDocumentId());
+		String contentType = file.getContentType();
+		if (contentType != null && contentType.contains("/")) {
+			return contentType.substring(contentType.lastIndexOf("/") + 1).toUpperCase();
+		}
 
-		return new ResponseEntity("Document saved successfully", HttpStatus.CREATED.value(), mapToFullResponse(saved));
+		return "UNKNOWN";
 	}
 
 	@Override
-	public ResponseEntity getDocumentById(Long id) {
+	public ResponseEntity getDocumentDetailsById(Long id) {
+		try {
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid document id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-		log.info("getDocumentById :: request received for id={}", id);
+			Optional<Document> documentOptional = documentRepository.findById(id);
+			if (documentOptional.isEmpty()) {
+				return new ResponseEntity("Document not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
 
-		if (id == null) {
-			log.error("getDocumentById :: id is null");
-			throw new BadRequestException("ID can not be null");
+			Document document = documentOptional.get();
+
+			DocumentResponse response = mapToFullResponse(document);
+
+			return new ResponseEntity("Document fetched successfully", HttpStatus.OK.value(), response);
+
+		} catch (Exception e) {
+
+			log.error("getDocumentById :: error while fetching document for id={}", id, e);
+
+			return new ResponseEntity("Something went wrong while fetching document",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		Document document = documentRepository.findById(id).orElseThrow(() -> {
-			log.error("getDocumentById :: document not found for id={}", id);
-			return new ResourceNotFoundException("Document not found with id: " + id);
-		});
-
-		log.info("getDocumentById :: fetched successfully for id={}", id);
-
-		return new ResponseEntity("Fetch Data By Id", HttpStatus.OK.value(), mapToFullResponse(document));
 	}
 
 	@Override
 	public ResponseEntity getAllDocument(int page, int size, String sortBy, String sortDir) {
-
-		log.info("getAllDocument :: request received with page={}, size={}, sortBy={}, sortDir={}", page, size, sortBy,
-				sortDir);
-
-		if (page < 0) {
-			log.error("getAllDocument :: page cannot be negative");
-			throw new BadRequestException("Page number can not be negative");
-		}
-
-		if (size <= 0) {
-			log.error("getAllDocument :: size must be greater than 0");
-			throw new BadRequestException("Page size must be greater than 0");
-		}
-
-		if (size > 100) {
-			log.error("getAllDocument :: size exceeds max limit={}", size);
-			throw new BadRequestException("Page size can not exceed 100");
-		}
-
-		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-		Pageable pageable = PageRequest.of(page, size, sort);
-
-		Page<Document> documentPage;
 		try {
-			documentPage = documentRepository.findAll(pageable);
-		} catch (PropertyReferenceException e) {
-			log.error("getAllDocument :: invalid sort field={}", sortBy);
-			throw new BadRequestException("Invalid sort field: " + sortBy);
+			if (page < 0) {
+				return new ResponseEntity("Page number cannot be negative", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size <= 0) {
+				return new ResponseEntity("Page size must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size > 100) {
+				return new ResponseEntity("Page size cannot exceed 100", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "documentId";
+			}
+			if (sortDir == null || sortDir.trim().isEmpty()) {
+				sortDir = "asc";
+			}
+
+			if (!sortDir.equalsIgnoreCase("asc") && !sortDir.equalsIgnoreCase("desc")) {
+				return new ResponseEntity("Invalid sort direction. Use 'asc' or 'desc'", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			List<String> allowedSortFields = List.of("documentId", "documentName", "uploadedBy", "createdAt",
+					"updatedAt");
+			if (!allowedSortFields.contains(sortBy)) {
+				return new ResponseEntity("Invalid sort field: " + sortBy, HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+			Pageable pageable = PageRequest.of(page, size, sort);
+			Page<Document> documentPage;
+			try {
+				documentPage = documentRepository.findAll(pageable);
+			} catch (PropertyReferenceException e) {
+				return new ResponseEntity("Invalid sort field: " + sortBy, HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (documentPage.getTotalElements() == 0) {
+				return new ResponseEntity("No documents found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			List<DocumentListResponse> responseList = documentPage.getContent().stream().map(this::mapToListResponse)
+					.collect(Collectors.toList());
+			PageResponse<DocumentListResponse> pageResponse = new PageResponse<>();
+
+			pageResponse.setContent(responseList);
+			pageResponse.setPageNumber(documentPage.getNumber());
+			pageResponse.setPageSize(documentPage.getSize());
+			pageResponse.setTotalElements(documentPage.getTotalElements());
+			pageResponse.setTotalPages(documentPage.getTotalPages());
+			pageResponse.setLastPage(documentPage.isLast());
+
+			return new ResponseEntity("Documents fetched successfully", HttpStatus.OK.value(), pageResponse);
+
 		} catch (Exception e) {
-			log.error("getAllDocument :: error while fetching - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while fetching documents");
+
+			return new ResponseEntity("Something went wrong while fetching documents",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		// NOTE: getAll me sirf lightweight fields — heavy document data (url,
-		// fileSizeBytes) nahi bhejte.
-		// Full detail sirf getDocumentById se milega.
-		List<DocumentListResponse> responseList = documentPage.getContent().stream().map(this::mapToListResponse)
-				.collect(Collectors.toList());
-
-		Map<String, Object> pageData = new LinkedHashMap<>();
-		pageData.put("content", responseList);
-		pageData.put("pageNumber", documentPage.getNumber());
-		pageData.put("pageSize", documentPage.getSize());
-		pageData.put("totalElements", documentPage.getTotalElements());
-		pageData.put("totalPages", documentPage.getTotalPages());
-		pageData.put("isLast", documentPage.isLast());
-
-		log.info("getAllDocument :: {} of {} documents fetched successfully", responseList.size(),
-				documentPage.getTotalElements());
-
-		return new ResponseEntity("Document fetch successfully", HttpStatus.OK.value(), pageData);
 	}
 
 	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteDocument(Long id) {
-
-		log.info("deleteDocument :: request received for id={}", id);
-
-		if (id == null) {
-			log.error("deleteDocument :: id is null");
-			throw new BadRequestException("ID can not be null");
-		}
-
-		Document document = documentRepository.findById(id).orElseThrow(() -> {
-			log.error("deleteDocument :: document not found for id={}", id);
-			return new ResourceNotFoundException("Document not found with id: " + id);
-		});
-
 		try {
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid document id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			Optional<Document> documentOptional = documentRepository.findById(id);
+			if (documentOptional.isEmpty()) {
+				return new ResponseEntity("Document not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+			boolean isMapped = documentSubProductRepository.existsByIdDocumentId(id);
+			if (isMapped) {
+				return new ResponseEntity("Cannot delete document because it is mapped to one or more sub products",
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			Document document = documentOptional.get();
 			documentRepository.delete(document);
+
+			return new ResponseEntity("Document deleted successfully", HttpStatus.OK.value(), null);
+
 		} catch (Exception e) {
-			log.error("deleteDocument :: error while deleting - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Cannot delete document, it may be linked to other records");
+			e.printStackTrace();
+			return new ResponseEntity("Something went wrong while deleting document",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		log.info("deleteDocument :: deleted successfully for id={}", id);
-
-		return new ResponseEntity("Document deleted successfully", HttpStatus.OK.value(), null);
 	}
 
-	// Full detail mapping — sirf getById / create response ke liye
 	private DocumentResponse mapToFullResponse(Document entity) {
 		DocumentResponse response = new DocumentResponse();
 		response.setDocumentId(entity.getDocumentId());

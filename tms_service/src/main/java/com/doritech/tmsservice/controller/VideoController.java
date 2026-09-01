@@ -51,10 +51,14 @@ public class VideoController {
 		return videoService.getAllVideo(page, size, sortBy, sortDir);
 	}
 
+	@GetMapping("/getVideoDetailsById")
+	public ResponseEntity getVideoDetailsById(@RequestParam Long videoId) {
+		return videoService.getVideoDetailsById(videoId);
+	}
+
 	@GetMapping("/getVideoThumbnailById")
 	public org.springframework.http.ResponseEntity<ByteArrayResource> getVideoThumbnailById(@RequestParam Long videoId)
 			throws GenericException {
-
 		try {
 
 			Video video = videoRepository.findById(videoId).orElseThrow(() -> new GenericException("Video not found"));
@@ -86,13 +90,19 @@ public class VideoController {
 		}
 	}
 
-	@GetMapping("/streamVideo")
-	public org.springframework.http.ResponseEntity<Resource> streamVideo(@RequestParam Long videoId) {
-		return videoService.streamVideo(videoId);
+	@GetMapping("/downloadVideo")
+	public org.springframework.http.ResponseEntity<Resource> downloadVideo(@RequestParam Long videoId) {
+		return videoService.downloadVideo(videoId);
 	}
 
 	@DeleteMapping("/deleteVideo/{id}")
 	public ResponseEntity deleteVideo(@PathVariable Long id) {
 		return videoService.deleteVideo(id);
+	}
+
+	@PostMapping(value = "/uploadVideo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity uploadVideo(@RequestPart("video") MultipartFile videoFile,
+			@RequestPart("videoData") VideoRequest request) {
+		return videoService.uploadVideo(request, videoFile);
 	}
 }
