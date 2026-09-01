@@ -9,7 +9,7 @@ public interface DocumentService {
 
 	ResponseEntity createDocument(DocumentRequest documentRequest, MultipartFile file);
 
-	ResponseEntity getDocumentById(Long id);
+	ResponseEntity getDocumentDetailsById(Long id);
 
 	ResponseEntity getAllDocument(int page, int size, String sortBy, String sortDir);
 

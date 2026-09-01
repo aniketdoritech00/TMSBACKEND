@@ -8,4 +8,10 @@ import com.doritech.tmsservice.tms.entity.TrainingCategory;
 public interface TrainingCategoryRepository extends JpaRepository<TrainingCategory, Long> {
 
 	boolean existsByCategoryCode(String categoryCode);
+
+	boolean existsByCategoryName(String categoryName);
+
+	boolean existsByCategoryCodeAndTrainingCategoryIdNot(String categoryCode, Long id);
+
+	boolean existsByCategoryNameAndTrainingCategoryIdNot(String categoryName, Long id);
 }

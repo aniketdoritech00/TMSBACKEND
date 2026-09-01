@@ -12,4 +12,9 @@ public interface TrainingCategoryService {
     ResponseEntity getAllTrainingCategory(int page, int size, String sortBy, String sortDir);
 
     ResponseEntity deleteTrainingCategory(Long id);
+
+	ResponseEntity getAllTrainingCategory();
+
+	ResponseEntity updateTrainingCategory(Long id, TrainingCategoryRequest request);
+
 }

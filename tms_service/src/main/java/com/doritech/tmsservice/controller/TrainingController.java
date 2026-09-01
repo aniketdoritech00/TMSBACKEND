@@ -62,4 +62,6 @@ public class TrainingController {
 		log.info("publishTraining :: request received for id={}", id);
 		return trainingService.publishTraining(id);
 	}
+
+
 }
