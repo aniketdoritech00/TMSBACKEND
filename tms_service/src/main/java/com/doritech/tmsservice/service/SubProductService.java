@@ -18,4 +18,6 @@ public interface SubProductService {
 	ResponseEntity createSubProduct(SubProductRequest request);
 
 	ResponseEntity updateSubProduct(Long id, @Valid SubProductRequest request);
+
+	ResponseEntity getAllSubProductWithoutPagination();
 }

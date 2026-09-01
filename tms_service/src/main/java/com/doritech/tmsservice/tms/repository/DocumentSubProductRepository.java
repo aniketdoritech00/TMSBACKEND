@@ -14,4 +14,6 @@ public interface DocumentSubProductRepository extends JpaRepository<DocumentSubP
 	List<DocumentSubProduct> findByIdSubProductId(Long subProductId);
 
 	List<DocumentSubProduct> findByIdDocumentId(Long documentId);
+
+	boolean existsByIdDocumentId(Long id);
 }

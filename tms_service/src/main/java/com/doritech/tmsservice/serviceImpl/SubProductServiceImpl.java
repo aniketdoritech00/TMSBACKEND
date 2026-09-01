@@ -218,6 +218,23 @@ public class SubProductServiceImpl implements SubProductService {
 	}
 
 	@Override
+	public ResponseEntity getAllSubProductWithoutPagination() {
+		try {
+			List<SubProduct> subProducts = subProductRepository.findAll();
+			if (subProducts == null || subProducts.isEmpty()) {
+				return new ResponseEntity("No sub products found", HttpStatus.NOT_FOUND.value(), null);
+			}
+			List<SubProductResponse> responseList = subProducts.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+			return new ResponseEntity("Sub products fetched successfully", HttpStatus.OK.value(), responseList);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Something went wrong while fetching sub products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
 	public ResponseEntity getSubProductsByProductId(Long productId) {
 		try {
 			if (productId == null || productId <= 0) {

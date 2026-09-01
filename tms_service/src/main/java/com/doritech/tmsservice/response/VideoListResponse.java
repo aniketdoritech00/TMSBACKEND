@@ -7,6 +7,10 @@ public class VideoListResponse {
 	private String videoDescription;
 	private String status;
 	private Integer viewCount;
+	private String resolution;
+	private String videoFormat;
+	private Integer durationSeconds;
+	private Long fileSizeBytes;
 
 	public Long getVideoId() {
 		return videoId;
@@ -48,14 +52,50 @@ public class VideoListResponse {
 		this.viewCount = viewCount;
 	}
 
-	public VideoListResponse(Long videoId, String videoTitle, String videoDescription, String status,
-			Integer viewCount) {
+	public String getResolution() {
+		return resolution;
+	}
+
+	public void setResolution(String resolution) {
+		this.resolution = resolution;
+	}
+
+	public String getVideoFormat() {
+		return videoFormat;
+	}
+
+	public void setVideoFormat(String videoFormat) {
+		this.videoFormat = videoFormat;
+	}
+
+	public Integer getDurationSeconds() {
+		return durationSeconds;
+	}
+
+	public void setDurationSeconds(Integer durationSeconds) {
+		this.durationSeconds = durationSeconds;
+	}
+
+	public Long getFileSizeBytes() {
+		return fileSizeBytes;
+	}
+
+	public void setFileSizeBytes(Long fileSizeBytes) {
+		this.fileSizeBytes = fileSizeBytes;
+	}
+
+	public VideoListResponse(Long videoId, String videoTitle, String videoDescription, String status, Integer viewCount,
+			String resolution, String videoFormat, Integer durationSeconds, Long fileSizeBytes) {
 		super();
 		this.videoId = videoId;
 		this.videoTitle = videoTitle;
 		this.videoDescription = videoDescription;
 		this.status = status;
 		this.viewCount = viewCount;
+		this.resolution = resolution;
+		this.videoFormat = videoFormat;
+		this.durationSeconds = durationSeconds;
+		this.fileSizeBytes = fileSizeBytes;
 	}
 
 	public VideoListResponse() {

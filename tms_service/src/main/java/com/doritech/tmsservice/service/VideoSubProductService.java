@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.request.VideoSubProductRequest;
+import com.doritech.tmsservice.request.VideoUpdateRequest;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 import jakarta.validation.Valid;
@@ -20,4 +21,6 @@ public interface VideoSubProductService {
 
 	ResponseEntity uploadVideAndThumbnail(@Valid VideoRequest request, MultipartFile videoFile,
 			MultipartFile thumbnailFile, List<Long> subProductIds);
+
+	ResponseEntity updateVideo(Long videoId, VideoUpdateRequest request);
 }
