@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -31,13 +30,14 @@ public class TrainingCategory {
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
 
-	public TrainingCategory() {
-	}
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
 
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-	}
+	@Column(name = "created_by")
+	private Long createdBy;
+
+	@Column(name = "updated_by")
+	private Long updatedBy;
 
 	public Long getTrainingCategoryId() {
 		return trainingCategoryId;
@@ -79,8 +79,28 @@ public class TrainingCategory {
 		this.createdAt = createdAt;
 	}
 
-	@Override
-	public String toString() {
-		return "TrainingCategory [trainingCategoryId=" + trainingCategoryId + ", categoryName=" + categoryName + "]";
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
 	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	public Long getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
 }

@@ -1,11 +1,17 @@
 package com.doritech.tmsservice.service;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -38,6 +44,10 @@ import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.entity.Video;
 import com.doritech.tmsservice.tms.repository.VideoRepository;
+import com.doritech.tmsservice.tms.repository.VideoSubProductRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class VideoServiceImpl implements VideoService {
@@ -48,33 +58,48 @@ public class VideoServiceImpl implements VideoService {
 	private final FileStorageService fileStorageService;
 	private final FileStorageProperties fileStorageProperties;
 	private final VideoMetadataService videoMetadataService;
+	private final VideoSubProductRepository videoSubProductRepository;
 
 	public VideoServiceImpl(VideoRepository videoRepository, FileStorageService fileStorageService,
-			FileStorageProperties fileStorageProperties, VideoMetadataService videoMetadataService) {
+			FileStorageProperties fileStorageProperties, VideoMetadataService videoMetadataService,
+			VideoSubProductRepository videoSubProductRepository) {
 		this.videoRepository = videoRepository;
 		this.fileStorageService = fileStorageService;
 		this.fileStorageProperties = fileStorageProperties;
 		this.videoMetadataService = videoMetadataService;
+		this.videoSubProductRepository = videoSubProductRepository;
 	}
 
 	@Override
-	public ResponseEntity getVideoById(Long id) {
+	public ResponseEntity getVideoDetailsById(Long id) {
 
-		log.info("getVideoById :: request received for id={}", id);
-
-		if (id == null) {
-			log.error("getVideoById :: id is null");
-			throw new BadRequestException("ID can not be null");
+		if (id == null || id <= 0) {
+			return new ResponseEntity("ID must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
 		}
 
-		Video video = videoRepository.findById(id).orElseThrow(() -> {
-			log.error("getVideoById :: video not found for id={}", id);
-			return new ResourceNotFoundException("Video not found with id: " + id);
-		});
+		try {
 
-		log.info("getVideoById :: fetched successfully for id={}", id);
+			Optional<Video> videoOptional = videoRepository.findById(id);
+			if (videoOptional.isEmpty()) {
+				return new ResponseEntity("Video not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
 
-		return new ResponseEntity("Fetch Data By Id", HttpStatus.OK.value(), mapToFullResponse(video));
+			Video video = videoOptional.get();
+			List<Long> subProductIds = videoSubProductRepository.getSubProductIdsByVideoId(id);
+
+			VideoResponse response = mapToFullResponse(video);
+
+			response.setSubProductIds(subProductIds);
+
+			return new ResponseEntity("Video fetched successfully", HttpStatus.OK.value(), response);
+
+		} catch (Exception e) {
+
+			log.error("getVideoById :: error while fetching video with id={}", id, e);
+
+			return new ResponseEntity("Something went wrong while fetching video",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	@Override
@@ -214,7 +239,9 @@ public class VideoServiceImpl implements VideoService {
 
 	private VideoListResponse mapToListResponse(Video entity) {
 		return new VideoListResponse(entity.getVideoId(), entity.getVideoTitle(), entity.getVideoDescription(),
-				entity.getStatus() != null ? entity.getStatus().name() : null, entity.getViewCount());
+				entity.getStatus() != null ? entity.getStatus().name() : null, entity.getViewCount(),
+				entity.getResolution(), entity.getVideoFormat(), entity.getDurationSeconds(),
+				entity.getFileSizeBytes());
 	}
 
 	@Override
@@ -403,30 +430,576 @@ public class VideoServiceImpl implements VideoService {
 		}
 	}
 
+//	@Override
+//	public org.springframework.http.ResponseEntity<Resource> streamVideo(Long videoId) {
+//
+//		log.info("streamVideo :: request received for videoId={}", videoId);
+//
+//		if (videoId == null || videoId <= 0) {
+//			log.error("streamVideo :: invalid videoId={}", videoId);
+//			throw new BadRequestException("Invalid video id");
+//		}
+//
+//		Video video;
+//
+//		try {
+//			video = videoRepository.findById(videoId).orElseThrow(() -> {
+//				log.error("streamVideo :: video not found for videoId={}", videoId);
+//				return new ResourceNotFoundException("Video not found with id: " + videoId);
+//			});
+//
+//		} catch (ResourceNotFoundException e) {
+//			throw e;
+//
+//		} catch (Exception e) {
+//
+//			log.error("streamVideo :: error while fetching videoId={}", videoId, e);
+//
+//			throw new DatabaseOperationException("Something went wrong while fetching video");
+//		}
+//
+//		String videoPath = video.getVideoUrl();
+//
+//		if (videoPath == null || videoPath.trim().isEmpty()) {
+//
+//			log.error("streamVideo :: video path is empty for videoId={}", videoId);
+//
+//			throw new BadRequestException("Video file not found");
+//		}
+//
+//		try {
+//
+//			Path path = Paths.get(videoPath);
+//
+//			if (!Files.exists(path)) {
+//
+//				log.error("streamVideo :: video file does not exist. videoId={}, path={}", videoId, videoPath);
+//
+//				throw new BadRequestException("Video file not found");
+//			}
+//
+//			if (!Files.isRegularFile(path)) {
+//
+//				log.error("streamVideo :: path is not a valid file. videoId={}, path={}", videoId, videoPath);
+//
+//				throw new BadRequestException("Invalid video file");
+//			}
+//
+//			Resource resource = new UrlResource(path.toUri());
+//
+//			long fileLength = Files.size(path);
+//
+//			String contentType = Files.probeContentType(path);
+//
+//			if (contentType == null) {
+//
+//				String videoFormat = video.getVideoFormat();
+//
+//				if (videoFormat != null) {
+//
+//					if (videoFormat.equalsIgnoreCase("mp4")) {
+//						contentType = "video/mp4";
+//
+//					} else if (videoFormat.equalsIgnoreCase("webm")) {
+//						contentType = "video/webm";
+//
+//					} else if (videoFormat.equalsIgnoreCase("avi")) {
+//						contentType = "video/x-msvideo";
+//
+//					} else if (videoFormat.equalsIgnoreCase("mov")) {
+//						contentType = "video/quicktime";
+//
+//					} else if (videoFormat.equalsIgnoreCase("mkv")) {
+//						contentType = "video/x-matroska";
+//
+//					} else {
+//						contentType = "application/octet-stream";
+//					}
+//
+//				} else {
+//					contentType = "application/octet-stream";
+//				}
+//			}
+//
+//			log.info("streamVideo :: returning video successfully. videoId={}, size={}, contentType={}", videoId,
+//					fileLength, contentType);
+//
+//			return org.springframework.http.ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+//					.contentLength(fileLength)
+//					.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + path.getFileName() + "\"")
+//					.header(HttpHeaders.ACCEPT_RANGES, "none").body(resource);
+//
+//		} catch (BadRequestException e) {
+//
+//			throw e;
+//
+//		} catch (IOException e) {
+//
+//			log.error("streamVideo :: error reading video file. videoId={}, path={}", videoId, videoPath, e);
+//
+//			throw new DatabaseOperationException("Unable to read video file");
+//
+//		} catch (Exception e) {
+//
+//			log.error("streamVideo :: failed to stream videoId={}", videoId, e);
+//
+//			throw new DatabaseOperationException("Unable to stream video");
+//		}
+//	}
+
 	@Override
-	public org.springframework.http.ResponseEntity<Resource> streamVideo(Long videoId) {
+	public void streamVideo(Long videoId, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		log.info("streamVideo :: request received for videoId={}", videoId);
 
+		// ---------------------------------------------------------
+		// 1. Validate video ID
+		// ---------------------------------------------------------
 		if (videoId == null || videoId <= 0) {
-			log.error("streamVideo :: invalid videoId={}", videoId);
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid video id");
+			return;
+		}
+
+		// ---------------------------------------------------------
+		// 2. Fetch video from database
+		// ---------------------------------------------------------
+		Video video;
+
+		try {
+
+			Optional<Video> videoOptional = videoRepository.findById(videoId);
+
+			if (videoOptional.isEmpty()) {
+
+				log.warn("streamVideo :: video not found for videoId={}", videoId);
+
+				response.sendError(HttpServletResponse.SC_NOT_FOUND, "Video not found with id: " + videoId);
+
+				return;
+			}
+
+			video = videoOptional.get();
+
+		} catch (Exception e) {
+
+			log.error("streamVideo :: error while fetching videoId={}", videoId, e);
+
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"Something went wrong while fetching video");
+
+			return;
+		}
+
+		// ---------------------------------------------------------
+		// 3. Get video path from database
+		// ---------------------------------------------------------
+		String videoPath = video.getVideoUrl();
+
+		log.info("streamVideo :: video path={}", videoPath);
+
+		if (videoPath == null || videoPath.trim().isEmpty()) {
+
+			log.warn("streamVideo :: video path is empty for videoId={}", videoId);
+
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, "Video file not found");
+
+			return;
+		}
+
+		// ---------------------------------------------------------
+		// 4. Resolve physical file
+		// ---------------------------------------------------------
+		Path filePath;
+
+		try {
+
+			filePath = Paths.get(videoPath).toAbsolutePath().normalize();
+
+			log.info("streamVideo :: resolved file path={}", filePath);
+
+			if (!Files.exists(filePath)) {
+
+				log.warn("streamVideo :: video file does not exist. videoId={}, path={}", videoId, filePath);
+
+				response.sendError(HttpServletResponse.SC_NOT_FOUND, "Video file not found");
+
+				return;
+			}
+
+			if (!Files.isRegularFile(filePath)) {
+
+				log.warn("streamVideo :: invalid video file. videoId={}, path={}", videoId, filePath);
+
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid video file");
+
+				return;
+			}
+
+		} catch (Exception e) {
+
+			log.error("streamVideo :: error while resolving video path. videoId={}", videoId, e);
+
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unable to access video file");
+
+			return;
+		}
+
+		// ---------------------------------------------------------
+		// 5. Get file size
+		// ---------------------------------------------------------
+		long fileSize;
+
+		try {
+
+			fileSize = Files.size(filePath);
+
+		} catch (IOException e) {
+
+			log.error("streamVideo :: unable to read file size. videoId={}", videoId, e);
+
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unable to read video file");
+
+			return;
+		}
+
+		if (fileSize <= 0) {
+
+			log.warn("streamVideo :: video file is empty. videoId={}", videoId);
+
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, "Video file is empty");
+
+			return;
+		}
+
+		// ---------------------------------------------------------
+		// 6. Determine Content-Type
+		// ---------------------------------------------------------
+		String contentType = resolveVideoContentType(filePath);
+
+		// ---------------------------------------------------------
+		// 7. Set common response headers
+		// ---------------------------------------------------------
+		response.setContentType(contentType);
+
+		response.setHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
+
+		response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+				"inline; filename=\"" + filePath.getFileName().toString() + "\"");
+
+		response.setHeader("Access-Control-Allow-Origin", "*");
+
+		response.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
+
+		/*
+		 * For video streaming, don't use no-store. Let the browser handle the media
+		 * cache.
+		 */
+		response.setHeader("Cache-Control", "public, max-age=3600");
+
+		// ---------------------------------------------------------
+		// 8. Get Range header
+		// ---------------------------------------------------------
+		String rangeHeader = request.getHeader(HttpHeaders.RANGE);
+
+		log.info("streamVideo :: Range header={}", rangeHeader);
+
+		// =========================================================
+		// CASE 1: Browser did NOT send Range header
+		// =========================================================
+		if (rangeHeader == null || !rangeHeader.startsWith("bytes=")) {
+
+			log.info("streamVideo :: streaming complete file. size={}", fileSize);
+
+			response.setStatus(HttpServletResponse.SC_OK);
+
+			response.setContentLengthLong(fileSize);
+
+			try {
+
+				streamBytesNio(filePath, 0, fileSize, response.getOutputStream());
+
+				log.info("streamVideo :: complete video streaming finished. videoId={}", videoId);
+
+			} catch (IOException e) {
+
+				/*
+				 * Browser/client can disconnect while video is being streamed. This is not
+				 * necessarily a server-side failure.
+				 */
+				if (isClientDisconnected(e)) {
+
+					log.warn("streamVideo :: client disconnected while streaming video: {}", filePath);
+
+				} else {
+
+					log.error("streamVideo :: error while streaming video. videoId={}", videoId, e);
+
+					throw e;
+				}
+			}
+
+			return;
+		}
+
+		// =========================================================
+		// CASE 2: Browser sent Range header
+		// =========================================================
+		try {
+
+			/*
+			 * Example:
+			 *
+			 * Range: bytes=0-1023 Range: bytes=1000-
+			 *
+			 * We only process the first range.
+			 */
+			String rangeValue = rangeHeader.substring(6).split(",")[0].trim();
+
+			String[] rangeParts = rangeValue.split("-", 2);
+
+			if (rangeParts.length == 0) {
+
+				response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+
+				response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize);
+
+				return;
+			}
+
+			long start;
+
+			/*
+			 * Normal browser request:
+			 *
+			 * bytes=0-1023
+			 */
+			if (!rangeParts[0].trim().isEmpty()) {
+
+				start = Long.parseLong(rangeParts[0].trim());
+
+			} else {
+
+				/*
+				 * Suffix range:
+				 *
+				 * bytes=-500
+				 *
+				 * Means last 500 bytes.
+				 */
+				long suffixLength = Long.parseLong(rangeParts.length > 1 ? rangeParts[1].trim() : "0");
+
+				if (suffixLength <= 0) {
+
+					response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+
+					response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize);
+
+					return;
+				}
+
+				start = Math.max(0, fileSize - suffixLength);
+			}
+
+			long end;
+
+			/*
+			 * bytes=0-
+			 */
+			if (rangeParts.length > 1 && !rangeParts[1].trim().isEmpty()) {
+
+				end = Long.parseLong(rangeParts[1].trim());
+
+			} else {
+
+				end = fileSize - 1;
+			}
+
+			// -----------------------------------------------------
+			// Validate range
+			// -----------------------------------------------------
+			if (start < 0 || start >= fileSize || start > end) {
+
+				log.warn("streamVideo :: invalid range. videoId={}, range={}, fileSize={}", videoId, rangeHeader,
+						fileSize);
+
+				response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+
+				response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize);
+
+				return;
+			}
+
+			// -----------------------------------------------------
+			// Make sure end never exceeds file size
+			// -----------------------------------------------------
+			end = Math.min(end, fileSize - 1);
+
+			long contentLength = end - start + 1;
+
+			// -----------------------------------------------------
+			// Return Partial Content
+			// -----------------------------------------------------
+			response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+
+			response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + fileSize);
+
+			response.setHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
+
+			response.setContentLengthLong(contentLength);
+
+			log.info("streamVideo :: streaming range. videoId={}, start={}, end={}, length={}, totalSize={}", videoId,
+					start, end, contentLength, fileSize);
+
+			// -----------------------------------------------------
+			// Stream requested bytes only
+			// -----------------------------------------------------
+			try {
+
+				streamBytesNio(filePath, start, contentLength, response.getOutputStream());
+
+				log.debug("streamVideo :: range streaming completed. videoId={}, start={}, end={}", videoId, start,
+						end);
+
+			} catch (IOException e) {
+
+				if (isClientDisconnected(e)) {
+
+					log.warn("streamVideo :: client disconnected during range streaming. videoId={}, start={}, end={}",
+							videoId, start, end);
+
+				} else {
+
+					log.error("streamVideo :: error during range streaming. videoId={}", videoId, e);
+
+					throw e;
+				}
+			}
+
+		} catch (NumberFormatException e) {
+
+			log.warn("streamVideo :: invalid Range header. videoId={}, range={}", videoId, rangeHeader);
+
+			response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+
+			response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize);
+		}
+	}
+
+	private boolean isClientDisconnected(IOException e) {
+
+	    String message = e.getMessage();
+
+	    if (message == null) {
+	        return false;
+	    }
+
+	    String lowerMessage =
+	            message.toLowerCase();
+
+	    return lowerMessage.contains("connection reset")
+	            || lowerMessage.contains("broken pipe")
+	            || lowerMessage.contains("connection aborted")
+	            || lowerMessage.contains("connection was aborted")
+	            || lowerMessage.contains("stream closed");
+	}
+	private void streamBytesNio(Path filePath, long start, long length, OutputStream out) throws IOException {
+
+		if (!Files.exists(filePath)) {
+			throw new FileNotFoundException("File not found: " + filePath);
+		}
+
+		if (!Files.isRegularFile(filePath)) {
+			throw new IOException("Not a regular file: " + filePath);
+		}
+
+		try (FileChannel fileChannel = FileChannel.open(filePath, StandardOpenOption.READ)) {
+
+			fileChannel.position(start);
+
+			ByteBuffer buffer = ByteBuffer.allocate(64 * 1024);
+
+			long remaining = length;
+
+			while (remaining > 0) {
+
+				int bytesToRead = (int) Math.min(buffer.capacity(), remaining);
+
+				buffer.clear();
+				buffer.limit(bytesToRead);
+
+				int bytesRead = fileChannel.read(buffer);
+
+				if (bytesRead == -1) {
+					break;
+				}
+
+				out.write(buffer.array(), 0, bytesRead);
+
+				remaining -= bytesRead;
+			}
+
+			out.flush();
+		}
+	}
+
+	private String resolveVideoContentType(Path filePath) {
+
+		String fileName = filePath.getFileName().toString().toLowerCase();
+
+		if (fileName.endsWith(".mp4")) {
+			return "video/mp4";
+		}
+
+		if (fileName.endsWith(".webm")) {
+			return "video/webm";
+		}
+
+		if (fileName.endsWith(".ogg") || fileName.endsWith(".ogv")) {
+			return "video/ogg";
+		}
+
+		if (fileName.endsWith(".mov")) {
+			return "video/quicktime";
+		}
+
+		if (fileName.endsWith(".avi")) {
+			return "video/x-msvideo";
+		}
+
+		if (fileName.endsWith(".mkv")) {
+			return "video/x-matroska";
+		}
+
+		return "application/octet-stream";
+	}
+
+
+	@Override
+	public org.springframework.http.ResponseEntity<Resource> downloadVideo(Long videoId) {
+
+		log.info("downloadVideo :: request received for videoId={}", videoId);
+
+		if (videoId == null || videoId <= 0) {
+			log.error("downloadVideo :: invalid videoId={}", videoId);
 			throw new BadRequestException("Invalid video id");
 		}
 
 		Video video;
 
 		try {
+
 			video = videoRepository.findById(videoId).orElseThrow(() -> {
-				log.error("streamVideo :: video not found for videoId={}", videoId);
+				log.error("downloadVideo :: video not found for videoId={}", videoId);
 				return new ResourceNotFoundException("Video not found with id: " + videoId);
 			});
 
 		} catch (ResourceNotFoundException e) {
+
 			throw e;
 
 		} catch (Exception e) {
 
-			log.error("streamVideo :: error while fetching videoId={}", videoId, e);
+			log.error("downloadVideo :: error while fetching videoId={}", videoId, e);
 
 			throw new DatabaseOperationException("Something went wrong while fetching video");
 		}
@@ -435,7 +1008,7 @@ public class VideoServiceImpl implements VideoService {
 
 		if (videoPath == null || videoPath.trim().isEmpty()) {
 
-			log.error("streamVideo :: video path is empty for videoId={}", videoId);
+			log.error("downloadVideo :: video path is empty for videoId={}", videoId);
 
 			throw new BadRequestException("Video file not found");
 		}
@@ -446,14 +1019,14 @@ public class VideoServiceImpl implements VideoService {
 
 			if (!Files.exists(path)) {
 
-				log.error("streamVideo :: video file does not exist. videoId={}, path={}", videoId, videoPath);
+				log.error("downloadVideo :: video file does not exist. videoId={}, path={}", videoId, videoPath);
 
 				throw new BadRequestException("Video file not found");
 			}
 
 			if (!Files.isRegularFile(path)) {
 
-				log.error("streamVideo :: path is not a valid file. videoId={}, path={}", videoId, videoPath);
+				log.error("downloadVideo :: path is not a valid file. videoId={}, path={}", videoId, videoPath);
 
 				throw new BadRequestException("Invalid video file");
 			}
@@ -490,17 +1063,20 @@ public class VideoServiceImpl implements VideoService {
 					}
 
 				} else {
+
 					contentType = "application/octet-stream";
 				}
 			}
 
-			log.info("streamVideo :: returning video successfully. videoId={}, size={}, contentType={}", videoId,
+			String fileName = path.getFileName().toString();
+
+			log.info("downloadVideo :: returning video successfully. videoId={}, size={}, contentType={}", videoId,
 					fileLength, contentType);
 
 			return org.springframework.http.ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
 					.contentLength(fileLength)
-					.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + path.getFileName() + "\"")
-					.header(HttpHeaders.ACCEPT_RANGES, "none").body(resource);
+					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+					.body(resource);
 
 		} catch (BadRequestException e) {
 
@@ -508,15 +1084,130 @@ public class VideoServiceImpl implements VideoService {
 
 		} catch (IOException e) {
 
-			log.error("streamVideo :: error reading video file. videoId={}, path={}", videoId, videoPath, e);
+			log.error("downloadVideo :: error reading video file. videoId={}, path={}", videoId, videoPath, e);
 
 			throw new DatabaseOperationException("Unable to read video file");
 
 		} catch (Exception e) {
 
-			log.error("streamVideo :: failed to stream videoId={}", videoId, e);
+			log.error("downloadVideo :: failed to download videoId={}", videoId, e);
 
-			throw new DatabaseOperationException("Unable to stream video");
+			throw new DatabaseOperationException("Unable to download video");
+		}
+	}
+
+	@Override
+	public ResponseEntity uploadVideo(VideoRequest request, MultipartFile videoFile) {
+
+		if (request == null) {
+			throw new BadRequestException("Video data is required");
+		}
+
+		if (videoFile == null || videoFile.isEmpty()) {
+			throw new BadRequestException("Video file is required");
+		}
+
+		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
+			throw new BadRequestException("Video title is required");
+		}
+
+		if (request.getIsSecure() == null) {
+			throw new BadRequestException("isSecure is required");
+		}
+
+		if (request.getAllowDownload() == null) {
+			throw new BadRequestException("allowDownload is required");
+		}
+
+		if (request.getAllowScreenRecord() == null) {
+			throw new BadRequestException("allowScreenRecord is required");
+		}
+
+		if (request.getAllowScreenshot() == null) {
+			throw new BadRequestException("allowScreenshot is required");
+		}
+
+		String videoPath = null;
+
+		try {
+
+			videoPath = fileStorageService.storeFile(videoFile, fileStorageProperties.getVideoPath());
+
+			log.info("Video stored successfully at: {}", videoPath);
+
+		} catch (Exception e) {
+
+			log.error("Video upload failed", e);
+
+			throw new DatabaseOperationException("Unable to store video file");
+		}
+
+		VideoMetadata metadata;
+
+		try {
+
+			Path path = Paths.get(videoPath);
+
+			metadata = videoMetadataService.extractMetadata(path);
+
+		} catch (Exception e) {
+
+			try {
+				Files.deleteIfExists(Paths.get(videoPath));
+			} catch (Exception deleteException) {
+				log.warn("Unable to delete uploaded video: {}", videoPath);
+			}
+
+			throw new BadRequestException("Unable to extract video metadata");
+		}
+		String videoFormat = metadata.getVideoFormat();
+
+		String originalFileName = videoFile.getOriginalFilename();
+
+		if (originalFileName != null && originalFileName.contains(".")) {
+
+			int lastDot = originalFileName.lastIndexOf(".");
+
+			if (lastDot < originalFileName.length() - 1) {
+
+				videoFormat = originalFileName.substring(lastDot + 1).toLowerCase();
+			}
+		}
+
+		if (videoFormat == null || videoFormat.trim().isEmpty()) {
+			videoFormat = "unknown";
+		}
+
+		Video video = new Video();
+
+		video.setVideoTitle(request.getVideoTitle().trim());
+		video.setVideoDescription(request.getVideoDescription());
+		video.setVideoUrl(videoPath);
+		video.setThumbnailUrl(null);
+		video.setFileSizeBytes(videoFile.getSize());
+		video.setDurationSeconds(metadata.getDurationSeconds());
+		video.setVideoFormat(videoFormat);
+		video.setResolution(metadata.getResolution());
+		video.setIsSecure(request.getIsSecure());
+		video.setAllowDownload(request.getAllowDownload());
+		video.setAllowScreenRecord(request.getAllowScreenRecord());
+		video.setAllowScreenshot(request.getAllowScreenshot());
+		video.setStatus(VideoStatus.ACTIVE);
+		video.setViewCount(0);
+		video.setUploadedBy(CurrentUser.getUserId());
+		video.setCreatedAt(LocalDateTime.now());
+		video.setUpdatedAt(LocalDateTime.now());
+		try {
+			Video saved = videoRepository.save(video);
+			return new ResponseEntity("Video uploaded successfully", HttpStatus.CREATED.value(),
+					mapToFullResponse(saved));
+		} catch (Exception e) {
+			try {
+				Files.deleteIfExists(Paths.get(videoPath));
+			} catch (Exception deleteException) {
+				log.warn("Unable to delete uploaded video: {}", videoPath);
+			}
+			throw new DatabaseOperationException("Unable to save video details");
 		}
 	}
 }
