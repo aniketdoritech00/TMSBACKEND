@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.tmsservice.config.FileStorageProperties;
+import com.doritech.tmsservice.enums.ContentType;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
@@ -54,9 +55,9 @@ public class TrainingContentServiceImpl implements TrainingContentService {
 		TrainingContent content = new TrainingContent();
 		content.setTrainingId(request.getTrainingId());
 
-		TrainingContent.ContentType contentType;
+		ContentType contentType;
 		try {
-			contentType = TrainingContent.ContentType.valueOf(request.getContentType());
+			contentType = ContentType.valueOf(request.getContentType());
 		} catch (IllegalArgumentException e) {
 			log.error("createTrainingContent :: invalid contentType={}", request.getContentType());
 			throw new BadRequestException("Invalid content type. Must be one of VIDEO, PDF, DOCUMENT, AUDIO, YOUTUBE");
@@ -70,7 +71,7 @@ public class TrainingContentServiceImpl implements TrainingContentService {
 			content.setDocumentUrl(null);
 		}
 		// Case 2: YOUTUBE link — direct URL, no file upload needed
-		else if (contentType == TrainingContent.ContentType.YOUTUBE) {
+		else if (contentType == ContentType.YOUTUBE) {
 			if (request.getDocumentUrl() == null || request.getDocumentUrl().isBlank()) {
 				log.error("createTrainingContent :: youtube url missing");
 				throw new BadRequestException("Document URL is required for YOUTUBE content type");

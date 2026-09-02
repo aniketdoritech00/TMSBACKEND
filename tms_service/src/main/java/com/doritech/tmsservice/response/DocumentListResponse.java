@@ -2,50 +2,74 @@ package com.doritech.tmsservice.response;
 
 public class DocumentListResponse {
 
-    private Long documentId;
-    private String documentName;
-    private String documentType;
-    private Boolean isSecure;
+	private Long documentId;
+	private String documentName;
+	private String documentType;
+	private Boolean isSecure;
+	private String documentDescription;
+	private Long fileSizeBytes;
 
-    public DocumentListResponse() {
-    }
+	public Long getDocumentId() {
+		return documentId;
+	}
 
-    public DocumentListResponse(Long documentId, String documentName, String documentType, Boolean isSecure) {
-        this.documentId = documentId;
-        this.documentName = documentName;
-        this.documentType = documentType;
-        this.isSecure = isSecure;
-    }
+	public void setDocumentId(Long documentId) {
+		this.documentId = documentId;
+	}
 
-    public Long getDocumentId() {
-        return documentId;
-    }
+	public String getDocumentName() {
+		return documentName;
+	}
 
-    public void setDocumentId(Long documentId) {
-        this.documentId = documentId;
-    }
+	public void setDocumentName(String documentName) {
+		this.documentName = documentName;
+	}
 
-    public String getDocumentName() {
-        return documentName;
-    }
+	public String getDocumentType() {
+		return documentType;
+	}
 
-    public void setDocumentName(String documentName) {
-        this.documentName = documentName;
-    }
+	public void setDocumentType(String documentType) {
+		this.documentType = documentType;
+	}
 
-    public String getDocumentType() {
-        return documentType;
-    }
+	public Boolean getIsSecure() {
+		return isSecure;
+	}
 
-    public void setDocumentType(String documentType) {
-        this.documentType = documentType;
-    }
+	public void setIsSecure(Boolean isSecure) {
+		this.isSecure = isSecure;
+	}
 
-    public Boolean getIsSecure() {
-        return isSecure;
-    }
+	public String getDocumentDescription() {
+		return documentDescription;
+	}
 
-    public void setIsSecure(Boolean isSecure) {
-        this.isSecure = isSecure;
-    }
+	public void setDocumentDescription(String documentDescription) {
+		this.documentDescription = documentDescription;
+	}
+
+	public Long getFileSizeBytes() {
+		return fileSizeBytes;
+	}
+
+	public void setFileSizeBytes(Long fileSizeBytes) {
+		this.fileSizeBytes = fileSizeBytes;
+	}
+
+	public DocumentListResponse(Long documentId, String documentName, String documentType, Boolean isSecure,
+			String documentDescription, Long fileSizeBytes) {
+		super();
+		this.documentId = documentId;
+		this.documentName = documentName;
+		this.documentType = documentType;
+		this.isSecure = isSecure;
+		this.documentDescription = documentDescription;
+		this.fileSizeBytes = fileSizeBytes;
+	}
+
+	public DocumentListResponse() {
+		super();
+	}
+
 }

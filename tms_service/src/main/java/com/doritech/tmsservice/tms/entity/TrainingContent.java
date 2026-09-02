@@ -2,6 +2,8 @@ package com.doritech.tmsservice.tms.entity;
 
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.ContentType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,10 +17,6 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "training_content")
 public class TrainingContent {
-
-	public enum ContentType {
-		VIDEO, PDF, DOCUMENT, AUDIO, YOUTUBE
-	}
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

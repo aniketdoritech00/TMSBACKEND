@@ -88,6 +88,51 @@ public class DocumentSubProductServiceImpl implements DocumentSubProductService 
 		}
 	}
 
+	private String getDocumentType(MultipartFile document) {
+
+		String fileName = document.getOriginalFilename();
+
+		if (fileName == null || !fileName.contains(".")) {
+			return "OTHER";
+		}
+
+		String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+
+		switch (extension) {
+
+		case "pdf":
+			return "PDF";
+
+		case "doc":
+		case "docx":
+			return "WORD";
+
+		case "xls":
+		case "xlsx":
+			return "EXCEL";
+
+		case "ppt":
+		case "pptx":
+			return "POWERPOINT";
+
+		case "txt":
+			return "TEXT";
+
+		case "csv":
+			return "CSV";
+
+		case "jpg":
+		case "jpeg":
+		case "png":
+		case "gif":
+		case "webp":
+			return "IMAGE";
+
+		default:
+			return "OTHER";
+		}
+	}
+
 	@Override
 	public ResponseEntity getDocumentsBySubProductId(Long subProductId) {
 		try {
@@ -157,9 +202,10 @@ public class DocumentSubProductServiceImpl implements DocumentSubProductService 
 	}
 
 	@Override
-	@Transactional("tmsTransactionManager")
+	@Transactional(transactionManager = "tmsTransactionManager")
 	public ResponseEntity uploadDocumentAndAssignToSubProducts(DocumentSubProductUploadRequest request,
 			MultipartFile document) {
+
 		if (request == null) {
 			return new ResponseEntity("Document data is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
@@ -169,46 +215,85 @@ public class DocumentSubProductServiceImpl implements DocumentSubProductService 
 		}
 
 		if (request.getDocumentName() == null || request.getDocumentName().trim().isEmpty()) {
+
 			return new ResponseEntity("Document name is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
 
 		if (request.getSubProductIds() == null || request.getSubProductIds().isEmpty()) {
+
 			return new ResponseEntity("At least one sub product is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
+
 		for (Long subProductId : request.getSubProductIds()) {
+
 			if (subProductId == null || subProductId <= 0) {
+
 				return new ResponseEntity("Invalid sub product id: " + subProductId, HttpStatus.BAD_REQUEST.value(),
 						null);
 			}
 		}
+
 		List<Long> subProductIds = request.getSubProductIds().stream().distinct().collect(Collectors.toList());
+
 		String documentPath = null;
+
 		try {
+
+			// Store physical file
 			documentPath = fileStorageService.storeFile(document, fileStorageProperties.getDocumentPath());
+
+			// Create document entity
 			Document documentEntity = new Document();
+
 			documentEntity.setDocumentName(request.getDocumentName().trim());
+
 			documentEntity.setDocumentDescription(request.getDocumentDescription());
+
 			documentEntity.setDocumentUrl(documentPath);
+
+			documentEntity.setIsSecure(request.isSecure());
+
+			documentEntity.setDocumentType(getDocumentType(document));
+
+			// Set file size in bytes
+			documentEntity.setFileSizeBytes(document.getSize());
+
 			documentEntity.setUploadedBy(CurrentUser.getUserId());
+
 			documentEntity.setCreatedAt(LocalDateTime.now());
+
 			documentEntity.setUpdatedAt(LocalDateTime.now());
+
 			Document savedDocument = documentRepository.save(documentEntity);
+
 			Long currentUserId = CurrentUser.getUserId();
+
+			// Assign document to sub products
 			for (Long subProductId : subProductIds) {
+
 				DocumentSubProductId mappingId = new DocumentSubProductId(savedDocument.getDocumentId(), subProductId);
+
 				DocumentSubProduct mapping = new DocumentSubProduct();
+
 				mapping.setId(mappingId);
 				mapping.setAssignedBy(currentUserId);
+
 				documentSubProductRepository.save(mapping);
 			}
 
 			DocumentResponse response = mapToFullResponse(savedDocument);
+
 			response.setSubProductIds(subProductIds);
+
 			return new ResponseEntity("Document uploaded and assigned to sub products successfully",
 					HttpStatus.CREATED.value(), response);
 
 		} catch (Exception e) {
+
+			e.printStackTrace();
+
 			deleteFileQuietly(documentPath);
+
 			return new ResponseEntity("Something went wrong while uploading document and assigning sub products",
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
@@ -306,15 +391,18 @@ public class DocumentSubProductServiceImpl implements DocumentSubProductService 
 		}
 	}
 
-	private DocumentResponse mapToFullResponse(Document document) {
+	private DocumentResponse mapToFullResponse(Document entity) {
 		DocumentResponse response = new DocumentResponse();
-		response.setDocumentId(document.getDocumentId());
-		response.setDocumentName(document.getDocumentName());
-		response.setDocumentDescription(document.getDocumentDescription());
-		response.setDocumentUrl(document.getDocumentUrl());
-		response.setUploadedBy(document.getUploadedBy());
-		response.setCreatedAt(document.getCreatedAt());
-		response.setUpdatedAt(document.getUpdatedAt());
+		response.setDocumentId(entity.getDocumentId());
+		response.setDocumentName(entity.getDocumentName());
+		response.setDocumentDescription(entity.getDocumentDescription());
+		response.setDocumentUrl(entity.getDocumentUrl());
+		response.setDocumentType(entity.getDocumentType());
+		response.setFileSizeBytes(entity.getFileSizeBytes());
+		response.setIsSecure(entity.getIsSecure());
+		response.setUploadedBy(entity.getUploadedBy());
+		response.setCreatedAt(entity.getCreatedAt());
+		response.setUpdatedAt(entity.getUpdatedAt());
 		return response;
 	}
 }

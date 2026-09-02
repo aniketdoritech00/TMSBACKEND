@@ -1,7 +1,6 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,8 +19,6 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 @RequestMapping("/api/tms/documents")
 public class DocumentController {
 
-	private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
-
 	private final DocumentService documentService;
 
 	public DocumentController(DocumentService documentService) {
@@ -29,20 +26,19 @@ public class DocumentController {
 	}
 
 	@PostMapping(value = "/createDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity createDocument(
-	        @RequestParam("file") MultipartFile file,
-	        @RequestParam("documentName") String documentName,
-	        @RequestParam(value = "documentDescription", required = false) String documentDescription,
-	        @RequestParam(value = "documentType", required = false) String documentType,
-	        @RequestParam(value = "isSecure", required = false) Boolean isSecure) {
+	public ResponseEntity createDocument(@RequestParam("file") MultipartFile file,
+			@RequestParam("documentName") String documentName,
+			@RequestParam(value = "documentDescription", required = false) String documentDescription,
+			@RequestParam(value = "documentType", required = false) String documentType,
+			@RequestParam(value = "isSecure", required = false) Boolean isSecure) {
 
-	    DocumentRequest request = new DocumentRequest();
+		DocumentRequest request = new DocumentRequest();
 
-	    request.setDocumentName(documentName);
-	    request.setDocumentDescription(documentDescription);
-	    request.setIsSecure(isSecure);
+		request.setDocumentName(documentName);
+		request.setDocumentDescription(documentDescription);
+		request.setIsSecure(isSecure);
 
-	    return documentService.createDocument(request, file);
+		return documentService.createDocument(request, file);
 	}
 
 	@GetMapping("/getDocumentDetailsById/{id}")
@@ -58,8 +54,19 @@ public class DocumentController {
 		return documentService.getAllDocument(page, size, sortBy, sortDir);
 	}
 
+	@GetMapping("/previewDocument/{id}")
+	public org.springframework.http.ResponseEntity<Resource> previewDocument(@PathVariable("id") Long id) {
+	    return documentService.previewDocument(id);
+	}
+	
 	@DeleteMapping("/deleteDocument/{id}")
 	public ResponseEntity deleteDocument(@PathVariable("id") Long id) {
 		return documentService.deleteDocument(id);
+	}
+	
+	@GetMapping("/downloadDocument/{id}")
+	public org.springframework.http.ResponseEntity<Resource> downloadDocument(
+	        @PathVariable("id") Long id) {
+	    return documentService.downloadDocument(id);
 	}
 }

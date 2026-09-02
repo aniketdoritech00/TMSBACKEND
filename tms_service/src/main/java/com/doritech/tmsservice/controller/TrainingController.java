@@ -1,7 +1,5 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,8 +20,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/trainings")
 public class TrainingController {
 
-	private static final Logger log = LoggerFactory.getLogger(TrainingController.class);
-
 	private final TrainingService trainingService;
 
 	public TrainingController(TrainingService trainingService) {
@@ -32,13 +28,11 @@ public class TrainingController {
 
 	@PostMapping("/createTraining")
 	public ResponseEntity createTraining(@Valid @RequestBody TrainingRequest request) {
-		log.info("createTraining :: request received for code={}", request.getTrainingCode());
 		return trainingService.createTraining(request);
 	}
 
 	@GetMapping("/getTrainingById/{id}")
-	public ResponseEntity getTrainingById(@PathVariable("id") Long id) {
-		log.info("getTrainingById :: request received for id={}", id);
+	public ResponseEntity getTrainingById(@PathVariable Long id) {
 		return trainingService.getTrainingById(id);
 	}
 
@@ -47,21 +41,32 @@ public class TrainingController {
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "trainingId") String sortBy,
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllTraining :: request received with page={}, size={}", page, size);
 		return trainingService.getAllTraining(page, size, sortBy, sortDir);
 	}
 
+	@GetMapping("/getAllTrainingWithoutPagination")
+	public ResponseEntity getAllTrainingWithoutPagination() {
+		return trainingService.getAllTraining();
+	}
+
+	@PutMapping("/updateTraining/{id}")
+	public ResponseEntity updateTraining(@PathVariable Long id, @Valid @RequestBody TrainingRequest request) {
+		return trainingService.updateTraining(id, request);
+	}
+
 	@DeleteMapping("/deleteTraining/{id}")
-	public ResponseEntity deleteTraining(@PathVariable("id") Long id) {
-		log.info("deleteTraining :: request received for id={}", id);
+	public ResponseEntity deleteTraining(@PathVariable Long id) {
 		return trainingService.deleteTraining(id);
 	}
 
 	@PutMapping("/publishTraining/{id}")
-	public ResponseEntity publishTraining(@PathVariable("id") Long id) {
-		log.info("publishTraining :: request received for id={}", id);
+	public ResponseEntity publishTraining(@PathVariable Long id) {
 		return trainingService.publishTraining(id);
 	}
-
-
+	
+	@GetMapping("/getTrainingByCategoryId/{trainingCategoryId}")
+	public ResponseEntity getTrainingByCategoryId(
+			@PathVariable Long trainingCategoryId) {
+		return trainingService.getTrainingByCategoryId(trainingCategoryId);
+	}
 }
