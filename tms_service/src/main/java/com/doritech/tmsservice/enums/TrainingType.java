@@ -1,5 +1,5 @@
 package com.doritech.tmsservice.enums;
 
-enum TrainingType {
+public enum TrainingType {
 	REGULAR, MANDATORY, REFRESHER
 }

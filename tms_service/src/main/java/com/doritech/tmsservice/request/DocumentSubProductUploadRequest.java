@@ -14,6 +14,8 @@ public class DocumentSubProductUploadRequest {
 
     @NotEmpty(message = "At least one sub product is required")
     private List<Long> subProductIds;
+    
+    private boolean isSecure;
 
     public String getDocumentName() {
         return documentName;
@@ -38,4 +40,13 @@ public class DocumentSubProductUploadRequest {
     public void setSubProductIds(List<Long> subProductIds) {
         this.subProductIds = subProductIds;
     }
+
+	public boolean isSecure() {
+		return isSecure;
+	}
+
+	public void setSecure(boolean isSecure) {
+		this.isSecure = isSecure;
+	}
+    
 }
