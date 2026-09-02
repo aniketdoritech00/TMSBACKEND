@@ -14,4 +14,10 @@ public interface TrainingService {
     ResponseEntity deleteTraining(Long id);
 
     ResponseEntity publishTraining(Long id);
+
+	ResponseEntity getAllTraining();
+
+	ResponseEntity updateTraining(Long id, TrainingRequest request);
+
+	ResponseEntity getTrainingByCategoryId(Long trainingCategoryId);
 }

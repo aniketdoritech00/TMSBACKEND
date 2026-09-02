@@ -13,4 +13,6 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
 	boolean existsByTrainingCode(String trainingCode);
 
 	List<Training> findByTrainingCategoryId(Long trainingCategoryId);
+
+	boolean existsByTrainingCodeAndTrainingIdNot(String trainingCode, Long id);
 }

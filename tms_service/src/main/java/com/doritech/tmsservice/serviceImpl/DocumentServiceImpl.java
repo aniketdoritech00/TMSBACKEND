@@ -1,6 +1,7 @@
 package com.doritech.tmsservice.serviceImpl;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,12 +10,16 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -132,9 +137,10 @@ public class DocumentServiceImpl implements DocumentService {
 			}
 
 			Document document = documentOptional.get();
+			List<Long> subProductIds = documentSubProductRepository.getSubProductIdsByDocumentId(id);
 
 			DocumentResponse response = mapToFullResponse(document);
-
+			response.setSubProductIds(subProductIds);
 			return new ResponseEntity("Document fetched successfully", HttpStatus.OK.value(), response);
 
 		} catch (Exception e) {
@@ -143,6 +149,96 @@ public class DocumentServiceImpl implements DocumentService {
 
 			return new ResponseEntity("Something went wrong while fetching document",
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	public org.springframework.http.ResponseEntity<Resource> previewDocument(Long id) {
+		try {
+			if (id == null || id <= 0) {
+				return org.springframework.http.ResponseEntity.badRequest().build();
+			}
+			Optional<Document> documentOptional = documentRepository.findById(id);
+			if (documentOptional.isEmpty()) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+			Document document = documentOptional.get();
+			String documentPath = document.getDocumentUrl();
+			if (documentPath == null || documentPath.trim().isEmpty()) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+			Path path = Paths.get(documentPath);
+			if (!Files.exists(path) || !Files.isRegularFile(path)) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+			Resource resource = new UrlResource(path.toUri());
+			if (!resource.exists() || !resource.isReadable()) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+			String contentType = Files.probeContentType(path);
+			if (contentType == null) {
+				contentType = "application/octet-stream";
+			}
+			return org.springframework.http.ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+					.header(HttpHeaders.CONTENT_DISPOSITION,
+							"inline; filename=\"" + path.getFileName().toString() + "\"")
+					.body(resource);
+
+		} catch (Exception e) {
+			return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	@Override
+	public org.springframework.http.ResponseEntity<Resource> downloadDocument(Long id) {
+
+		try {
+
+			if (id == null || id <= 0) {
+				return org.springframework.http.ResponseEntity.badRequest().build();
+			}
+
+			Optional<Document> documentOptional = documentRepository.findById(id);
+
+			if (documentOptional.isEmpty()) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+
+			Document document = documentOptional.get();
+
+			String documentPath = document.getDocumentUrl();
+
+			if (documentPath == null || documentPath.trim().isEmpty()) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+
+			Path path = Paths.get(documentPath);
+
+			if (!Files.exists(path) || !Files.isRegularFile(path)) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+
+			Resource resource = new UrlResource(path.toUri());
+
+			if (!resource.exists() || !resource.isReadable()) {
+				return org.springframework.http.ResponseEntity.notFound().build();
+			}
+
+			String contentType = Files.probeContentType(path);
+
+			if (contentType == null) {
+				contentType = "application/octet-stream";
+			}
+
+			String fileName = path.getFileName().toString();
+
+			return org.springframework.http.ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+					.body(resource);
+
+		} catch (Exception e) {
+
+			return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -256,9 +352,8 @@ public class DocumentServiceImpl implements DocumentService {
 		return response;
 	}
 
-	// Lightweight mapping — getAll ke liye
 	private DocumentListResponse mapToListResponse(Document entity) {
 		return new DocumentListResponse(entity.getDocumentId(), entity.getDocumentName(), entity.getDocumentType(),
-				entity.getIsSecure());
+				entity.getIsSecure(), entity.getDocumentDescription(), entity.getFileSizeBytes());
 	}
 }
