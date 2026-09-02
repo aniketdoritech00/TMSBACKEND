@@ -1,7 +1,5 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,8 +23,6 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/tms/document-sub-products")
 public class DocumentSubProductController {
-
-	private static final Logger log = LoggerFactory.getLogger(DocumentSubProductController.class);
 
 	private final DocumentSubProductService documentSubProductService;
 
