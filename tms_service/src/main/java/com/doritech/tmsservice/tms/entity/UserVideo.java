@@ -2,23 +2,23 @@ package com.doritech.tmsservice.tms.entity;
 
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.UserVideoStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "user_videos")
 public class UserVideo {
-
-	public enum Status {
-		ASSIGNED, WATCHING, COMPLETED, EXPIRED
-	}
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,15 +28,17 @@ public class UserVideo {
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
-	@Column(name = "video_id", nullable = false)
-	private Long videoId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "video_id", nullable = false)
+	private Video video;
 
-	@Column(name = "training_assignment_id")
-	private Long trainingAssignmentId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "training_assignment_id")
+	private TrainingAssignment trainingAssignment;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status")
-	private Status status = Status.ASSIGNED;
+	private UserVideoStatus status = UserVideoStatus.ASSIGNED;
 
 	@Column(name = "watched_count")
 	private Integer watchedCount = 0;
@@ -56,19 +58,8 @@ public class UserVideo {
 	@Column(name = "assigned_by")
 	private Long assignedBy;
 
-	public UserVideo() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.assignedAt = LocalDateTime.now();
-		if (this.status == null) {
-			this.status = Status.ASSIGNED;
-		}
-		if (this.watchedCount == null) {
-			this.watchedCount = 0;
-		}
-	}
+	@Column(name = "watched_seconds")
+	private Integer watchedSeconds = 0;
 
 	public Long getUserVideoId() {
 		return userVideoId;
@@ -86,27 +77,27 @@ public class UserVideo {
 		this.userId = userId;
 	}
 
-	public Long getVideoId() {
-		return videoId;
+	public Video getVideo() {
+		return video;
 	}
 
-	public void setVideoId(Long videoId) {
-		this.videoId = videoId;
+	public void setVideo(Video video) {
+		this.video = video;
 	}
 
-	public Long getTrainingAssignmentId() {
-		return trainingAssignmentId;
+	public TrainingAssignment getTrainingAssignment() {
+		return trainingAssignment;
 	}
 
-	public void setTrainingAssignmentId(Long trainingAssignmentId) {
-		this.trainingAssignmentId = trainingAssignmentId;
+	public void setTrainingAssignment(TrainingAssignment trainingAssignment) {
+		this.trainingAssignment = trainingAssignment;
 	}
 
-	public Status getStatus() {
+	public UserVideoStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(Status status) {
+	public void setStatus(UserVideoStatus status) {
 		this.status = status;
 	}
 
@@ -157,4 +148,13 @@ public class UserVideo {
 	public void setAssignedBy(Long assignedBy) {
 		this.assignedBy = assignedBy;
 	}
+
+	public Integer getWatchedSeconds() {
+		return watchedSeconds;
+	}
+
+	public void setWatchedSeconds(Integer watchedSeconds) {
+		this.watchedSeconds = watchedSeconds;
+	}
+
 }

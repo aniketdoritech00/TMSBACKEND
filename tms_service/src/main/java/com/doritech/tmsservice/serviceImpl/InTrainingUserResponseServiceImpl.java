@@ -5,11 +5,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.request.InTrainingUserResponseRequest;
 import com.doritech.tmsservice.response.InTrainingUserResponseResponse;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.service.InTrainingUserResponseService;
 import com.doritech.tmsservice.tms.entity.InTrainingQuestion;
 import com.doritech.tmsservice.tms.entity.InTrainingUserResponse;
@@ -22,343 +29,595 @@ import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
 @Service
 public class InTrainingUserResponseServiceImpl implements InTrainingUserResponseService {
 
-	private final InTrainingUserResponseRepository responseRepository;
-	private final InTrainingQuestionRepository questionRepository;
+	private final InTrainingUserResponseRepository inTrainingUserResponseRepository;
+	private final InTrainingQuestionRepository inTrainingQuestionRepository;
 	private final TrainingAssignmentRepository trainingAssignmentRepository;
 
-	public InTrainingUserResponseServiceImpl(InTrainingUserResponseRepository responseRepository,
-			InTrainingQuestionRepository questionRepository,
+	public InTrainingUserResponseServiceImpl(InTrainingUserResponseRepository inTrainingUserResponseRepository,
+			InTrainingQuestionRepository inTrainingQuestionRepository,
 			TrainingAssignmentRepository trainingAssignmentRepository) {
 
-		this.responseRepository = responseRepository;
-		this.questionRepository = questionRepository;
+		this.inTrainingUserResponseRepository = inTrainingUserResponseRepository;
+
+		this.inTrainingQuestionRepository = inTrainingQuestionRepository;
+
 		this.trainingAssignmentRepository = trainingAssignmentRepository;
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity submitResponse(InTrainingUserResponseRequest request) {
 
 		try {
 
 			if (request == null) {
-				return new ResponseEntity("Request cannot be null", 400, null);
+
+				return new ResponseEntity("Request cannot be null", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			if (request.getQuestionId() == null) {
-				return new ResponseEntity("Question id is required", 400, null);
+			if (request.getQuestionId() == null || request.getQuestionId() <= 0) {
+
+				return new ResponseEntity("Valid question id is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			Optional<InTrainingQuestion> questionOptional = questionRepository.findById(request.getQuestionId());
+			if (request.getTrainingAssignmentId() == null || request.getTrainingAssignmentId() <= 0) {
+
+				return new ResponseEntity("Valid training assignment id is required", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			Optional<InTrainingQuestion> questionOptional = inTrainingQuestionRepository
+					.findById(request.getQuestionId());
 
 			if (questionOptional.isEmpty()) {
-				return new ResponseEntity("Training question not found", 404, null);
+
+				return new ResponseEntity("In-training question not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			Optional<TrainingAssignment> assignmentOptional = trainingAssignmentRepository
+					.findById(request.getTrainingAssignmentId());
+
+			if (assignmentOptional.isEmpty()) {
+
+				return new ResponseEntity("Training assignment not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			InTrainingQuestion question = questionOptional.get();
 
-			TrainingAssignment trainingAssignment = null;
+			TrainingAssignment assignment = assignmentOptional.get();
 
-			if (request.getTrainingAssignmentId() != null) {
-
-				Optional<TrainingAssignment> assignmentOptional = trainingAssignmentRepository
-						.findById(request.getTrainingAssignmentId());
-
-				if (assignmentOptional.isEmpty()) {
-					return new ResponseEntity("Training assignment not found", 404, null);
-				}
-
-				trainingAssignment = assignmentOptional.get();
-			}
-
-			Optional<InTrainingUserResponse> existingResponse = responseRepository
+			Optional<InTrainingUserResponse> existingResponse = inTrainingUserResponseRepository
 					.findByQuestion_QuestionIdAndTrainingAssignment_TrainingAssignmentId(request.getQuestionId(),
 							request.getTrainingAssignmentId());
 
-			InTrainingUserResponse response;
+			InTrainingUserResponse userResponse;
 
 			if (existingResponse.isPresent()) {
 
-				response = existingResponse.get();
+				userResponse = existingResponse.get();
 
 			} else {
 
-				response = new InTrainingUserResponse();
+				userResponse = new InTrainingUserResponse();
 
-				response.setQuestion(question);
-				response.setTrainingAssignment(trainingAssignment);
+				userResponse.setQuestion(question);
+
+				userResponse.setTrainingAssignment(assignment);
+
+				userResponse.setRespondedAt(LocalDateTime.now());
 			}
 
-			response.setUserAnswer(request.getUserAnswer());
+			userResponse.setUserAnswer(request.getUserAnswer());
 
-			response.setIsSkipped(request.getIsSkipped() != null ? request.getIsSkipped() : false);
+			userResponse.setTimeTakenSeconds(request.getTimeTakenSeconds());
 
-			response.setTimeTakenSeconds(request.getTimeTakenSeconds());
-			
-			if (Boolean.TRUE.equals(response.getIsSkipped())) {
+			boolean correct = checkAnswer(question, request.getUserAnswer());
 
-				response.setIsCorrect(false);
+			userResponse.setIsCorrect(correct);
 
-			} else {
+			if (userResponse.getRespondedAt() == null) {
 
-				boolean correct = checkAnswer(question, request.getUserAnswer());
-
-				response.setIsCorrect(correct);
+				userResponse.setRespondedAt(LocalDateTime.now());
 			}
 
-			if (response.getRespondedAt() == null) {
-				response.setRespondedAt(LocalDateTime.now());
-			}
+			InTrainingUserResponse saved = inTrainingUserResponseRepository.save(userResponse);
 
-			InTrainingUserResponse saved = responseRepository.save(response);
+			String message = existingResponse.isPresent() ? "Response updated successfully"
+					: "Response submitted successfully";
 
-			return new ResponseEntity(existingResponse.isPresent() ? "Training response updated successfully"
-					: "Training response submitted successfully", 200, mapToResponse(saved));
+			return new ResponseEntity(message, HttpStatus.OK.value(), mapToResponse(saved));
+
+		} catch (DataIntegrityViolationException e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Response already exists or violates database constraints",
+					HttpStatus.CONFLICT.value(), null);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while submitting training response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while submitting response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getResponseById(Long inTrainingUserResponseId) {
 
 		try {
 
-			Optional<InTrainingUserResponse> optional = responseRepository.findById(inTrainingUserResponseId);
+			if (inTrainingUserResponseId == null || inTrainingUserResponseId <= 0) {
 
-			if (optional.isEmpty()) {
-				return new ResponseEntity("Training response not found", 404, null);
+				return new ResponseEntity("Invalid in-training user response id", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			return new ResponseEntity("Training response fetched successfully", 200, mapToResponse(optional.get()));
+			Optional<InTrainingUserResponse> optional = inTrainingUserResponseRepository
+					.findById(inTrainingUserResponseId);
+
+			if (optional.isEmpty()) {
+
+				return new ResponseEntity("In-training user response not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			return new ResponseEntity("In-training user response fetched successfully", HttpStatus.OK.value(),
+					mapToResponse(optional.get()));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching training response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	public ResponseEntity getResponsesByTrainingAssignment(Long trainingAssignmentId) {
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getAllResponses(int page, int size, String sortBy, String sortDir) {
 
 		try {
 
-			List<InTrainingUserResponse> responses = responseRepository
-					.findByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+			if (page < 0) {
+				page = 0;
+			}
 
-			List<InTrainingUserResponseResponse> result = responses.stream().map(this::mapToResponse)
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (size > 100) {
+				size = 100;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+
+				sortBy = "inTrainingUserResponseId";
+			}
+
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<InTrainingUserResponse> responsePage = inTrainingUserResponseRepository.findAll(pageable);
+
+			List<InTrainingUserResponseResponse> content = responsePage.getContent().stream().map(this::mapToResponse)
 					.collect(Collectors.toList());
 
-			return new ResponseEntity("Training responses fetched successfully", 200, result);
+			PageResponse<InTrainingUserResponseResponse> pageResponse = new PageResponse<>(content,
+					responsePage.getNumber(), responsePage.getSize(), responsePage.getTotalElements(),
+					responsePage.getTotalPages(), responsePage.isLast());
+
+			return new ResponseEntity("In-training user responses fetched successfully", HttpStatus.OK.value(),
+					pageResponse);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching training responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	public ResponseEntity getResponsesByQuestion(Long questionId) {
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getResponsesByTrainingAssignment(Long trainingAssignmentId, int page, int size, String sortBy,
+			String sortDir) {
 
 		try {
 
-			List<InTrainingUserResponse> responses = responseRepository.findByQuestion_QuestionId(questionId);
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
 
-			List<InTrainingUserResponseResponse> result = responses.stream().map(this::mapToResponse)
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<TrainingAssignment> assignmentOptional = trainingAssignmentRepository
+					.findById(trainingAssignmentId);
+
+			if (assignmentOptional.isEmpty()) {
+
+				return new ResponseEntity("Training assignment not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			if (page < 0) {
+				page = 0;
+			}
+
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (size > 100) {
+				size = 100;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+
+				sortBy = "inTrainingUserResponseId";
+			}
+
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<InTrainingUserResponse> responsePage = inTrainingUserResponseRepository
+					.findByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId, pageable);
+
+			List<InTrainingUserResponseResponse> content = responsePage.getContent().stream().map(this::mapToResponse)
 					.collect(Collectors.toList());
 
-			return new ResponseEntity("Question responses fetched successfully", 200, result);
+			PageResponse<InTrainingUserResponseResponse> pageResponse = new PageResponse<>(content,
+					responsePage.getNumber(), responsePage.getSize(), responsePage.getTotalElements(),
+					responsePage.getTotalPages(), responsePage.isLast());
+
+			return new ResponseEntity("Responses fetched successfully", HttpStatus.OK.value(), pageResponse);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching question responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching responses by training assignment: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getResponsesByQuestion(Long questionId, int page, int size, String sortBy, String sortDir) {
+
+		try {
+
+			if (questionId == null || questionId <= 0) {
+
+				return new ResponseEntity("Invalid question id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<InTrainingQuestion> questionOptional = inTrainingQuestionRepository.findById(questionId);
+
+			if (questionOptional.isEmpty()) {
+
+				return new ResponseEntity("In-training question not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			if (page < 0) {
+				page = 0;
+			}
+
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (size > 100) {
+				size = 100;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+
+				sortBy = "inTrainingUserResponseId";
+			}
+
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<InTrainingUserResponse> responsePage = inTrainingUserResponseRepository
+					.findByQuestion_QuestionId(questionId, pageable);
+
+			List<InTrainingUserResponseResponse> content = responsePage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			PageResponse<InTrainingUserResponseResponse> pageResponse = new PageResponse<>(content,
+					responsePage.getNumber(), responsePage.getSize(), responsePage.getTotalElements(),
+					responsePage.getTotalPages(), responsePage.isLast());
+
+			return new ResponseEntity("Responses fetched successfully", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Error while fetching responses by question: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getResponseByQuestionAndAssignment(Long questionId, Long trainingAssignmentId) {
 
 		try {
 
-			Optional<InTrainingUserResponse> optional = responseRepository
+			if (questionId == null || questionId <= 0) {
+
+				return new ResponseEntity("Invalid question id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<InTrainingUserResponse> optional = inTrainingUserResponseRepository
 					.findByQuestion_QuestionIdAndTrainingAssignment_TrainingAssignmentId(questionId,
 							trainingAssignmentId);
 
 			if (optional.isEmpty()) {
-				return new ResponseEntity("Training response not found", 404, null);
+
+				return new ResponseEntity("Response not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
-			return new ResponseEntity("Training response fetched successfully", 200, mapToResponse(optional.get()));
+			return new ResponseEntity("Response fetched successfully", HttpStatus.OK.value(),
+					mapToResponse(optional.get()));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching training response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity updateResponse(Long inTrainingUserResponseId, InTrainingUserResponseRequest request) {
 
 		try {
 
-			Optional<InTrainingUserResponse> optional = responseRepository.findById(inTrainingUserResponseId);
+			if (inTrainingUserResponseId == null || inTrainingUserResponseId <= 0) {
+
+				return new ResponseEntity("Invalid in-training user response id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request == null) {
+
+				return new ResponseEntity("Request cannot be null", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<InTrainingUserResponse> optional = inTrainingUserResponseRepository
+					.findById(inTrainingUserResponseId);
 
 			if (optional.isEmpty()) {
-				return new ResponseEntity("Training response not found", 404, null);
+
+				return new ResponseEntity("In-training user response not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			InTrainingUserResponse response = optional.get();
 
-			response.setUserAnswer(request.getUserAnswer());
+			if (request.getUserAnswer() != null) {
 
-			response.setIsSkipped(request.getIsSkipped() != null ? request.getIsSkipped() : false);
+				response.setUserAnswer(request.getUserAnswer());
 
-			response.setTimeTakenSeconds(request.getTimeTakenSeconds());
+				boolean correct = checkAnswer(response.getQuestion(), request.getUserAnswer());
 
-			if (Boolean.TRUE.equals(response.getIsSkipped())) {
-
-				response.setIsCorrect(false);
-
-			} else {
-
-				response.setIsCorrect(checkAnswer(response.getQuestion(), request.getUserAnswer()));
+				response.setIsCorrect(correct);
 			}
 
-			InTrainingUserResponse saved = responseRepository.save(response);
+			if (request.getTimeTakenSeconds() != null) {
 
-			return new ResponseEntity("Training response updated successfully", 200, mapToResponse(saved));
+				response.setTimeTakenSeconds(request.getTimeTakenSeconds());
+			}
+
+			InTrainingUserResponse saved = inTrainingUserResponseRepository.save(response);
+
+			return new ResponseEntity("Response updated successfully", HttpStatus.OK.value(), mapToResponse(saved));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while updating training response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while updating response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteResponse(Long inTrainingUserResponseId) {
 
 		try {
 
-			if (!responseRepository.existsById(inTrainingUserResponseId)) {
+			if (inTrainingUserResponseId == null || inTrainingUserResponseId <= 0) {
 
-				return new ResponseEntity("Training response not found", 404, null);
+				return new ResponseEntity("Invalid in-training user response id", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			responseRepository.deleteById(inTrainingUserResponseId);
+			Optional<InTrainingUserResponse> optional = inTrainingUserResponseRepository
+					.findById(inTrainingUserResponseId);
 
-			return new ResponseEntity("Training response deleted successfully", 200, null);
+			if (optional.isEmpty()) {
+
+				return new ResponseEntity("In-training user response not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			inTrainingUserResponseRepository.delete(optional.get());
+
+			return new ResponseEntity("Response deleted successfully", HttpStatus.OK.value(), null);
+
+		} catch (DataIntegrityViolationException e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Response cannot be deleted because it is being used",
+					HttpStatus.CONFLICT.value(), null);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while deleting training response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while deleting response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteResponsesByTrainingAssignment(Long trainingAssignmentId) {
 
 		try {
 
-			responseRepository.deleteByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
 
-			return new ResponseEntity("Training responses deleted successfully", 200, null);
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			long count = inTrainingUserResponseRepository
+					.countByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+
+			if (count == 0) {
+
+				return new ResponseEntity("No responses found for this training assignment",
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			inTrainingUserResponseRepository.deleteByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+
+			return new ResponseEntity("Responses deleted successfully", HttpStatus.OK.value(), null);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while deleting training responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while deleting responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getCorrectAnswerCount(Long trainingAssignmentId) {
 
 		try {
 
-			long count = responseRepository
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			long count = inTrainingUserResponseRepository
 					.countByTrainingAssignment_TrainingAssignmentIdAndIsCorrect(trainingAssignmentId, true);
 
-			return new ResponseEntity("Correct answer count fetched successfully", 200, count);
+			return new ResponseEntity("Correct answer count fetched successfully", HttpStatus.OK.value(), count);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while counting correct answers: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while counting correct answers: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getSkippedAnswerCount(Long trainingAssignmentId) {
 
 		try {
 
-			long count = responseRepository
-					.countByTrainingAssignment_TrainingAssignmentIdAndIsSkipped(trainingAssignmentId, true);
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
 
-			return new ResponseEntity("Skipped answer count fetched successfully", 200, count);
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			/*
+			 * A skipped answer is treated as a response where userAnswer is null or blank.
+			 *
+			 * If your database has a dedicated skipped flag, replace this logic with that
+			 * field.
+			 */
+
+			long totalResponses = inTrainingUserResponseRepository
+					.countByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+
+			long answeredResponses = inTrainingUserResponseRepository
+					.countByTrainingAssignment_TrainingAssignmentIdAndUserAnswerIsNotNullAndUserAnswerNot(
+							trainingAssignmentId, "");
+
+			long skippedCount = totalResponses - answeredResponses;
+
+			if (skippedCount < 0) {
+				skippedCount = 0;
+			}
+
+			return new ResponseEntity("Skipped answer count fetched successfully", HttpStatus.OK.value(), skippedCount);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while counting skipped answers: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while counting skipped answers: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getResponseCount(Long trainingAssignmentId) {
 
 		try {
 
-			long count = responseRepository.countByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
 
-			return new ResponseEntity("Response count fetched successfully", 200, count);
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			long count = inTrainingUserResponseRepository
+					.countByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+
+			return new ResponseEntity("Response count fetched successfully", HttpStatus.OK.value(), count);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while counting responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while counting responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	private boolean checkAnswer(InTrainingQuestion question, String userAnswer) {
+
+		if (question == null) {
+			return false;
+		}
 
 		if (userAnswer == null || userAnswer.trim().isEmpty()) {
 
 			return false;
 		}
 
-		/*
-		 * Replace this according to your InTrainingQuestion entity.
-		 *
-		 * Example:
-		 *
-		 * return question.getCorrectAnswer() .equalsIgnoreCase(userAnswer.trim());
-		 */
+		if (question.getCorrectAnswer() == null || question.getCorrectAnswer().trim().isEmpty()) {
 
-		return question.getCorrectAnswer().equalsIgnoreCase(userAnswer.trim());
+			return false;
+		}
+
+		return question.getCorrectAnswer().trim().equalsIgnoreCase(userAnswer.trim());
 	}
 
 	private InTrainingUserResponseResponse mapToResponse(InTrainingUserResponse entity) {
@@ -376,8 +635,6 @@ public class InTrainingUserResponseServiceImpl implements InTrainingUserResponse
 		response.setUserAnswer(entity.getUserAnswer());
 
 		response.setIsCorrect(entity.getIsCorrect());
-
-		response.setIsSkipped(entity.getIsSkipped());
 
 		response.setTimeTakenSeconds(entity.getTimeTakenSeconds());
 

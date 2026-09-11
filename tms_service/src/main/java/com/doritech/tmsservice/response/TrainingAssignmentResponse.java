@@ -3,180 +3,245 @@ package com.doritech.tmsservice.response;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.AssignmentStatus;
+
 public class TrainingAssignmentResponse {
 
-    private Long trainingAssignmentId;
-    private Long trainingId;
-    private Long userId;
-    private Long batchId;
-    private Long assignedBy;
-    private LocalDateTime assignedAt;
-    private LocalDateTime dueDate;
-    private String status;
-    private BigDecimal progressPercentage;
-    private LocalDateTime completionDate;
-    private BigDecimal finalScore;
-    private Boolean isPassed;
-    private Boolean certificateGenerated;
-    private Integer attemptedQuestions;
-    private Integer correctAnswers;
-    private Integer wrongAnswers;
-    private Integer totalQuestions;
-    private String remarks;
-    private LocalDateTime startedAt;
+	private Long trainingAssignmentId;
 
-    public TrainingAssignmentResponse() {
-    }
+	private Long trainingId;
+	private String trainingCode;
+	private String trainingName;
 
-    public Long getTrainingAssignmentId() {
-        return trainingAssignmentId;
-    }
+	private Long userId;
+	private String userName;
 
-    public void setTrainingAssignmentId(Long trainingAssignmentId) {
-        this.trainingAssignmentId = trainingAssignmentId;
-    }
+	private Long batchId;
+	private String batchName;
 
-    public Long getTrainingId() {
-        return trainingId;
-    }
+	private Long assignedBy;
+	private String assignedByName;
 
-    public void setTrainingId(Long trainingId) {
-        this.trainingId = trainingId;
-    }
+	private LocalDateTime assignedAt;
 
-    public Long getUserId() {
-        return userId;
-    }
+	private LocalDateTime dueDate;
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+	private AssignmentStatus status;
 
-    public Long getBatchId() {
-        return batchId;
-    }
+	private BigDecimal progressPercentage;
 
-    public void setBatchId(Long batchId) {
-        this.batchId = batchId;
-    }
+	private LocalDateTime completionDate;
 
-    public Long getAssignedBy() {
-        return assignedBy;
-    }
+	private BigDecimal finalScore;
 
-    public void setAssignedBy(Long assignedBy) {
-        this.assignedBy = assignedBy;
-    }
+	private Boolean isPassed;
 
-    public LocalDateTime getAssignedAt() {
-        return assignedAt;
-    }
+	private Boolean certificateGenerated;
 
-    public void setAssignedAt(LocalDateTime assignedAt) {
-        this.assignedAt = assignedAt;
-    }
+	private Integer attemptedQuestions;
 
-    public LocalDateTime getDueDate() {
-        return dueDate;
-    }
+	private Integer correctAnswers;
 
-    public void setDueDate(LocalDateTime dueDate) {
-        this.dueDate = dueDate;
-    }
+	private Integer wrongAnswers;
 
-    public String getStatus() {
-        return status;
-    }
+	private Integer totalQuestions;
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	private String remarks;
 
-    public BigDecimal getProgressPercentage() {
-        return progressPercentage;
-    }
+	private LocalDateTime startedAt;
 
-    public void setProgressPercentage(BigDecimal progressPercentage) {
-        this.progressPercentage = progressPercentage;
-    }
+	public TrainingAssignmentResponse() {
+	}
 
-    public LocalDateTime getCompletionDate() {
-        return completionDate;
-    }
+	public Long getTrainingAssignmentId() {
+		return trainingAssignmentId;
+	}
 
-    public void setCompletionDate(LocalDateTime completionDate) {
-        this.completionDate = completionDate;
-    }
+	public void setTrainingAssignmentId(Long trainingAssignmentId) {
+		this.trainingAssignmentId = trainingAssignmentId;
+	}
 
-    public BigDecimal getFinalScore() {
-        return finalScore;
-    }
+	public Long getTrainingId() {
+		return trainingId;
+	}
 
-    public void setFinalScore(BigDecimal finalScore) {
-        this.finalScore = finalScore;
-    }
+	public void setTrainingId(Long trainingId) {
+		this.trainingId = trainingId;
+	}
 
-    public Boolean getIsPassed() {
-        return isPassed;
-    }
+	public String getTrainingCode() {
+		return trainingCode;
+	}
 
-    public void setIsPassed(Boolean isPassed) {
-        this.isPassed = isPassed;
-    }
+	public void setTrainingCode(String trainingCode) {
+		this.trainingCode = trainingCode;
+	}
 
-    public Boolean getCertificateGenerated() {
-        return certificateGenerated;
-    }
+	public String getTrainingName() {
+		return trainingName;
+	}
 
-    public void setCertificateGenerated(Boolean certificateGenerated) {
-        this.certificateGenerated = certificateGenerated;
-    }
+	public void setTrainingName(String trainingName) {
+		this.trainingName = trainingName;
+	}
 
-    public Integer getAttemptedQuestions() {
-        return attemptedQuestions;
-    }
+	public Long getUserId() {
+		return userId;
+	}
 
-    public void setAttemptedQuestions(Integer attemptedQuestions) {
-        this.attemptedQuestions = attemptedQuestions;
-    }
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
 
-    public Integer getCorrectAnswers() {
-        return correctAnswers;
-    }
+	public String getUserName() {
+		return userName;
+	}
 
-    public void setCorrectAnswers(Integer correctAnswers) {
-        this.correctAnswers = correctAnswers;
-    }
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
 
-    public Integer getWrongAnswers() {
-        return wrongAnswers;
-    }
+	public Long getBatchId() {
+		return batchId;
+	}
 
-    public void setWrongAnswers(Integer wrongAnswers) {
-        this.wrongAnswers = wrongAnswers;
-    }
+	public void setBatchId(Long batchId) {
+		this.batchId = batchId;
+	}
 
-    public Integer getTotalQuestions() {
-        return totalQuestions;
-    }
+	public String getBatchName() {
+		return batchName;
+	}
 
-    public void setTotalQuestions(Integer totalQuestions) {
-        this.totalQuestions = totalQuestions;
-    }
+	public void setBatchName(String batchName) {
+		this.batchName = batchName;
+	}
 
-    public String getRemarks() {
-        return remarks;
-    }
+	public Long getAssignedBy() {
+		return assignedBy;
+	}
 
-    public void setRemarks(String remarks) {
-        this.remarks = remarks;
-    }
+	public void setAssignedBy(Long assignedBy) {
+		this.assignedBy = assignedBy;
+	}
 
-    public LocalDateTime getStartedAt() {
-        return startedAt;
-    }
+	public String getAssignedByName() {
+		return assignedByName;
+	}
 
-    public void setStartedAt(LocalDateTime startedAt) {
-        this.startedAt = startedAt;
-    }
+	public void setAssignedByName(String assignedByName) {
+		this.assignedByName = assignedByName;
+	}
+
+	public LocalDateTime getAssignedAt() {
+		return assignedAt;
+	}
+
+	public void setAssignedAt(LocalDateTime assignedAt) {
+		this.assignedAt = assignedAt;
+	}
+
+	public LocalDateTime getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(LocalDateTime dueDate) {
+		this.dueDate = dueDate;
+	}
+
+	public AssignmentStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(AssignmentStatus status) {
+		this.status = status;
+	}
+
+	public BigDecimal getProgressPercentage() {
+		return progressPercentage;
+	}
+
+	public void setProgressPercentage(BigDecimal progressPercentage) {
+		this.progressPercentage = progressPercentage;
+	}
+
+	public LocalDateTime getCompletionDate() {
+		return completionDate;
+	}
+
+	public void setCompletionDate(LocalDateTime completionDate) {
+		this.completionDate = completionDate;
+	}
+
+	public BigDecimal getFinalScore() {
+		return finalScore;
+	}
+
+	public void setFinalScore(BigDecimal finalScore) {
+		this.finalScore = finalScore;
+	}
+
+	public Boolean getIsPassed() {
+		return isPassed;
+	}
+
+	public void setIsPassed(Boolean isPassed) {
+		this.isPassed = isPassed;
+	}
+
+	public Boolean getCertificateGenerated() {
+		return certificateGenerated;
+	}
+
+	public void setCertificateGenerated(Boolean certificateGenerated) {
+		this.certificateGenerated = certificateGenerated;
+	}
+
+	public Integer getAttemptedQuestions() {
+		return attemptedQuestions;
+	}
+
+	public void setAttemptedQuestions(Integer attemptedQuestions) {
+		this.attemptedQuestions = attemptedQuestions;
+	}
+
+	public Integer getCorrectAnswers() {
+		return correctAnswers;
+	}
+
+	public void setCorrectAnswers(Integer correctAnswers) {
+		this.correctAnswers = correctAnswers;
+	}
+
+	public Integer getWrongAnswers() {
+		return wrongAnswers;
+	}
+
+	public void setWrongAnswers(Integer wrongAnswers) {
+		this.wrongAnswers = wrongAnswers;
+	}
+
+	public Integer getTotalQuestions() {
+		return totalQuestions;
+	}
+
+	public void setTotalQuestions(Integer totalQuestions) {
+		this.totalQuestions = totalQuestions;
+	}
+
+	public String getRemarks() {
+		return remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+
+	public LocalDateTime getStartedAt() {
+		return startedAt;
+	}
+
+	public void setStartedAt(LocalDateTime startedAt) {
+		this.startedAt = startedAt;
+	}
 }

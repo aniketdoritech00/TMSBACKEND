@@ -9,9 +9,12 @@ public interface InTrainingUserResponseService {
 
 	ResponseEntity getResponseById(Long inTrainingUserResponseId);
 
-	ResponseEntity getResponsesByTrainingAssignment(Long trainingAssignmentId);
+	ResponseEntity getAllResponses(int page, int size, String sortBy, String sortDir);
 
-	ResponseEntity getResponsesByQuestion(Long questionId);
+	ResponseEntity getResponsesByTrainingAssignment(Long trainingAssignmentId, int page, int size, String sortBy,
+			String sortDir);
+
+	ResponseEntity getResponsesByQuestion(Long questionId, int page, int size, String sortBy, String sortDir);
 
 	ResponseEntity getResponseByQuestionAndAssignment(Long questionId, Long trainingAssignmentId);
 

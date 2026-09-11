@@ -9,7 +9,9 @@ public interface UserResponseService {
 
 	ResponseEntity getResponseById(Long userResponseId);
 
-	ResponseEntity getResponsesByTestAttemptId(Long testAttemptId);
+	ResponseEntity getAllResponses(int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity getResponsesByTestAttemptId(Long testAttemptId, int page, int size, String sortBy, String sortDir);
 
 	ResponseEntity getResponseByAttemptAndQuestion(Long testAttemptId, Long testQuestionId);
 
@@ -19,7 +21,7 @@ public interface UserResponseService {
 
 	ResponseEntity deleteResponsesByTestAttemptId(Long testAttemptId);
 
-	ResponseEntity getCorrectResponses(Long testAttemptId);
+	ResponseEntity getCorrectResponses(Long testAttemptId, int page, int size, String sortBy, String sortDir);
 
 	ResponseEntity getResponseCount(Long testAttemptId);
 
