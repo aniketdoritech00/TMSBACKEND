@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,20 +23,19 @@ import com.doritech.tmsservice.enums.VideoStatus;
 import com.doritech.tmsservice.event.VideoMetadataProcessEvent;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
-import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
-import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.request.VideoSubProductRequest;
 import com.doritech.tmsservice.request.VideoUpdateRequest;
 import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.response.VideoSubProductResponse;
 import com.doritech.tmsservice.service.FileStorageService;
-import com.doritech.tmsservice.service.VideoMetadataService;
 import com.doritech.tmsservice.service.VideoSubProductService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.SubProduct;
 import com.doritech.tmsservice.tms.entity.Video;
 import com.doritech.tmsservice.tms.entity.VideoSubProduct;
 import com.doritech.tmsservice.tms.entity.VideoSubProduct.VideoSubProductId;
+import com.doritech.tmsservice.tms.repository.SubProductRepository;
 import com.doritech.tmsservice.tms.repository.VideoRepository;
 import com.doritech.tmsservice.tms.repository.VideoSubProductRepository;
 
@@ -49,266 +49,148 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 	private final VideoRepository videoRepository;
 	private final FileStorageService fileStorageService;
 	private final ApplicationEventPublisher eventPublisher;
-	
+	private final SubProductRepository subProductRepository;
+
 	public VideoSubProductServiceImpl(VideoSubProductRepository videoSubProductRepository,
 			FileStorageProperties fileStorageProperties, VideoRepository videoRepository,
-			FileStorageService fileStorageService, ApplicationEventPublisher eventPublisher) {
+			FileStorageService fileStorageService, ApplicationEventPublisher eventPublisher,
+			SubProductRepository subProductRepository) {
 		this.videoSubProductRepository = videoSubProductRepository;
 		this.fileStorageProperties = fileStorageProperties;
 		this.fileStorageService = fileStorageService;
 		this.videoRepository = videoRepository;
 		this.eventPublisher = eventPublisher;
+		this.subProductRepository = subProductRepository;
 	}
 
 	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity assignVideoToSubProduct(VideoSubProductRequest request) {
-
-		log.info("assignVideoToSubProduct :: videoId={}, subProductId={}", request.getVideoId(),
-				request.getSubProductId());
-
-		VideoSubProductId id = new VideoSubProductId(request.getVideoId(), request.getSubProductId());
-
-		if (videoSubProductRepository.existsById(id)) {
-			log.error("assignVideoToSubProduct :: mapping already exists for videoId={}, subProductId={}",
-					request.getVideoId(), request.getSubProductId());
-			throw new ResourceAlreadyExistsException("Video is already assigned to this sub product");
-		}
-
-		VideoSubProduct mapping = new VideoSubProduct();
-		mapping.setId(id);
-		mapping.setAssignedBy(request.getAssignedBy());
-
-		VideoSubProduct saved;
 		try {
-			saved = videoSubProductRepository.save(mapping);
+			if (request == null) {
+				return new ResponseEntity("Video sub product data is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request.getVideoId() == null || request.getVideoId() <= 0) {
+				return new ResponseEntity("Valid video id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request.getSubProductId() == null || request.getSubProductId() <= 0) {
+				return new ResponseEntity("Valid sub product id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<Video> optionalVideo = videoRepository.findById(request.getVideoId());
+			if (optionalVideo.isEmpty()) {
+				return new ResponseEntity("Video not found with id: " + request.getVideoId(),
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			Optional<SubProduct> optionalSubProduct = subProductRepository.findById(request.getSubProductId());
+
+			if (optionalSubProduct.isEmpty()) {
+
+				return new ResponseEntity("Sub product not found with id: " + request.getSubProductId(),
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+			VideoSubProductId id = new VideoSubProductId(request.getVideoId(), request.getSubProductId());
+
+			boolean alreadyExists = videoSubProductRepository.existsById(id);
+			if (alreadyExists) {
+				return new ResponseEntity("Video is already assigned to this sub product", HttpStatus.CONFLICT.value(),
+						null);
+			}
+
+			VideoSubProduct mapping = new VideoSubProduct();
+			mapping.setId(id);
+			if (request.getAssignedBy() != null) {
+				mapping.setAssignedBy(request.getAssignedBy());
+			} else {
+				mapping.setAssignedBy(CurrentUser.getUserId());
+			}
+
+			mapping.setAssignedAt(LocalDateTime.now());
+			VideoSubProduct savedMapping = videoSubProductRepository.save(mapping);
+			return new ResponseEntity("Video assigned to sub product successfully", HttpStatus.CREATED.value(),
+					mapToResponse(savedMapping));
+
+		} catch (DataIntegrityViolationException e) {
+			e.printStackTrace();
+			return new ResponseEntity("Video is already assigned to this sub product or violates database constraints",
+					HttpStatus.CONFLICT.value(), null);
 		} catch (Exception e) {
-			log.error("assignVideoToSubProduct :: error while saving - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while assigning video to sub product");
+			e.printStackTrace();
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		log.info("assignVideoToSubProduct :: assigned successfully videoId={}, subProductId={}", request.getVideoId(),
-				request.getSubProductId());
-
-		return new ResponseEntity("Video assigned to sub product successfully", HttpStatus.CREATED.value(),
-				mapToResponse(saved));
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getVideosBySubProductId(Long subProductId) {
+		try {
+			if (subProductId == null || subProductId <= 0) {
+				return new ResponseEntity("Valid sub product id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-		log.info("getVideosBySubProductId :: request received for subProductId={}", subProductId);
+			Optional<SubProduct> optionalSubProduct = subProductRepository.findById(subProductId);
+			if (optionalSubProduct.isEmpty()) {
+				return new ResponseEntity("Sub product not found with id: " + subProductId,
+						HttpStatus.NOT_FOUND.value(), null);
+			}
 
-		if (subProductId == null) {
-			log.error("getVideosBySubProductId :: subProductId is null");
-			throw new BadRequestException("Sub Product ID can not be null");
+			List<VideoSubProduct> mappings = videoSubProductRepository.findByIdSubProductId(subProductId);
+			List<VideoSubProductResponse> responseList = mappings.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+			return new ResponseEntity("Video list fetched successfully", HttpStatus.OK.value(), responseList);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		List<VideoSubProduct> mappings = videoSubProductRepository.findByIdSubProductId(subProductId);
-
-		List<VideoSubProductResponse> responseList = mappings.stream().map(this::mapToResponse)
-				.collect(Collectors.toList());
-
-		log.info("getVideosBySubProductId :: {} mappings fetched for subProductId={}", responseList.size(),
-				subProductId);
-
-		return new ResponseEntity("Video list fetch successfully", HttpStatus.OK.value(), responseList);
 	}
 
 	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity removeVideoFromSubProduct(Long videoId, Long subProductId) {
-
-		log.info("removeVideoFromSubProduct :: videoId={}, subProductId={}", videoId, subProductId);
-
-		if (videoId == null || subProductId == null) {
-			log.error("removeVideoFromSubProduct :: videoId or subProductId is null");
-			throw new BadRequestException("Video ID and Sub Product ID can not be null");
-		}
-
-		VideoSubProductId id = new VideoSubProductId(videoId, subProductId);
-
-		VideoSubProduct mapping = videoSubProductRepository.findById(id).orElseThrow(() -> {
-			log.error("removeVideoFromSubProduct :: mapping not found for videoId={}, subProductId={}", videoId,
-					subProductId);
-			return new ResourceNotFoundException("Mapping not found for given video and sub product");
-		});
-
 		try {
-			videoSubProductRepository.delete(mapping);
+			if (videoId == null || videoId <= 0) {
+				return new ResponseEntity("Valid video id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (subProductId == null || subProductId <= 0) {
+				return new ResponseEntity("Valid sub product id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			VideoSubProductId id = new VideoSubProductId(videoId, subProductId);
+
+			Optional<VideoSubProduct> optionalMapping = videoSubProductRepository.findById(id);
+
+			if (optionalMapping.isEmpty()) {
+				return new ResponseEntity("Video is not assigned to this sub product", HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+
+			videoSubProductRepository.delete(optionalMapping.get());
+			return new ResponseEntity("Video removed from sub product successfully", HttpStatus.OK.value(), null);
+
+		} catch (DataIntegrityViolationException e) {
+			e.printStackTrace();
+			return new ResponseEntity("Unable to remove video from sub product because of database constraints",
+					HttpStatus.CONFLICT.value(), null);
+
 		} catch (Exception e) {
-			log.error("removeVideoFromSubProduct :: error while deleting - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while removing the mapping");
+			e.printStackTrace();
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		log.info("removeVideoFromSubProduct :: removed successfully videoId={}, subProductId={}", videoId,
-				subProductId);
-
-		return new ResponseEntity("Video removed from sub product successfully", HttpStatus.OK.value(), null);
 	}
 
 	private VideoSubProductResponse mapToResponse(VideoSubProduct entity) {
+		if (entity == null || entity.getId() == null) {
+			return null;
+		}
 		return new VideoSubProductResponse(entity.getId().getVideoId(), entity.getId().getSubProductId(),
 				entity.getAssignedAt(), entity.getAssignedBy());
 	}
 
-//
-//	@Override
-//	@Transactional("tmsTransactionManager")
-//	public ResponseEntity uploadVideAndThumbnail(VideoRequest request, MultipartFile videoFile,
-//			MultipartFile thumbnailFile, List<Long> subProductIds) {
-//
-//		if (request == null) {
-//			throw new BadRequestException("Video data is required");
-//		}
-//
-//		if (videoFile == null || videoFile.isEmpty()) {
-//			throw new BadRequestException("Video file is required");
-//		}
-//
-//		// Thumbnail is optional
-//		if (subProductIds == null || subProductIds.isEmpty()) {
-//			throw new BadRequestException("At least one sub product is required");
-//		}
-//
-//		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
-//			throw new BadRequestException("Video title is required");
-//		}
-//
-//		if (request.getIsSecure() == null) {
-//			throw new BadRequestException("isSecure is required");
-//		}
-//
-//		if (request.getAllowDownload() == null) {
-//			throw new BadRequestException("allowDownload is required");
-//		}
-//
-//		if (request.getAllowScreenRecord() == null) {
-//			throw new BadRequestException("allowScreenRecord is required");
-//		}
-//
-//		if (request.getAllowScreenshot() == null) {
-//			throw new BadRequestException("allowScreenshot is required");
-//		}
-//
-//		// Validate sub-product IDs before uploading the large video
-//		for (Long subProductId : subProductIds) {
-//			if (subProductId == null || subProductId <= 0) {
-//				throw new BadRequestException("Invalid sub product id: " + subProductId);
-//			}
-//		}
-//
-//		String videoPath = null;
-//		String thumbnailPath = null;
-//
-//		try {
-//
-//			// Store video
-//			videoPath = fileStorageService.storeFile(videoFile, fileStorageProperties.getVideoPath());
-//
-//			// Store thumbnail only when provided
-//			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
-//
-//				thumbnailPath = fileStorageService.storeFile(thumbnailFile, fileStorageProperties.getImagePath());
-//			}
-//
-//			// Extract video metadata
-//			Path path = Paths.get(videoPath);
-//
-//			VideoMetadata metadata = videoMetadataService.extractMetadata(path);
-//
-//			String videoFormat = metadata.getVideoFormat();
-//
-//			String originalFileName = videoFile.getOriginalFilename();
-//
-//			if (originalFileName != null && originalFileName.contains(".")) {
-//
-//				int lastDot = originalFileName.lastIndexOf(".");
-//
-//				if (lastDot < originalFileName.length() - 1) {
-//
-//					videoFormat = originalFileName.substring(lastDot + 1).toLowerCase();
-//				}
-//			}
-//
-//			if (videoFormat == null || videoFormat.trim().isEmpty()) {
-//				videoFormat = "unknown";
-//			}
-//
-//			// Create Video entity
-//			Video video = new Video();
-//
-//			video.setVideoTitle(request.getVideoTitle().trim());
-//			video.setVideoDescription(request.getVideoDescription());
-//
-//			video.setVideoUrl(videoPath);
-//
-//			// Thumbnail can be null
-//			video.setThumbnailUrl(thumbnailPath);
-//
-//			video.setFileSizeBytes(videoFile.getSize());
-//			video.setDurationSeconds(metadata.getDurationSeconds());
-//			video.setVideoFormat(videoFormat);
-//			video.setResolution(metadata.getResolution());
-//
-//			video.setIsSecure(request.getIsSecure());
-//			video.setAllowDownload(request.getAllowDownload());
-//			video.setAllowScreenRecord(request.getAllowScreenRecord());
-//			video.setAllowScreenshot(request.getAllowScreenshot());
-//
-//			video.setStatus(VideoStatus.ACTIVE);
-//			video.setViewCount(0);
-//
-//			video.setUploadedBy(CurrentUser.getUserId());
-//
-//			video.setCreatedAt(LocalDateTime.now());
-//			video.setUpdatedAt(LocalDateTime.now());
-//
-//			// Save video
-//			Video savedVideo = videoRepository.save(video);
-//
-//			// Create mappings for all sub-products
-//			for (Long subProductId : subProductIds) {
-//
-//				VideoSubProductId mappingId = new VideoSubProductId(savedVideo.getVideoId(), subProductId);
-//
-//				// Normally this cannot exist because video is newly created,
-//				// but keeping the check is safe.
-//				if (videoSubProductRepository.existsById(mappingId)) {
-//					continue;
-//				}
-//
-//				VideoSubProduct mapping = new VideoSubProduct();
-//
-//				mapping.setId(mappingId);
-//				mapping.setAssignedBy(CurrentUser.getUserId());
-//
-//				videoSubProductRepository.save(mapping);
-//			}
-//
-//			return new ResponseEntity("Video uploaded and assigned to sub products successfully",
-//					HttpStatus.CREATED.value(), mapToFullResponse(savedVideo));
-//
-//		} catch (BadRequestException e) {
-//
-//			// Delete uploaded files if anything fails
-//			deleteFileQuietly(videoPath);
-//			deleteFileQuietly(thumbnailPath);
-//
-//			throw e;
-//
-//		} catch (Exception e) {
-//
-//			// Delete files if database/mapping/metadata operation fails
-//			deleteFileQuietly(videoPath);
-//			deleteFileQuietly(thumbnailPath);
-//
-//			log.error("uploadVideAndThumbnail :: failed to upload video", e);
-//
-//			throw new DatabaseOperationException("Unable to upload video and assign sub products");
-//		}
-//	}
-//
-//	
-//	
 	public ResponseEntity uploadVideAndThumbnail(VideoRequest request, MultipartFile videoFile,
 			MultipartFile thumbnailFile, List<Long> subProductIds) {
 

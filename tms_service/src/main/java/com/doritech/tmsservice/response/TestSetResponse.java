@@ -5,165 +5,179 @@ import java.time.LocalDateTime;
 
 public class TestSetResponse {
 
-    private Long testSetId;
-    private String testName;
-    private String testDescription;
-    private String testCode;
-    private String setNo;
-    private Long trainingId;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
-    private Integer timeLimitMinutes;
-    private BigDecimal passingPercentage;
-    private Boolean shuffleQuestions;
-    private Boolean shuffleOptions;
-    private Boolean isActive;
-    private Long createdBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime publishedAt;
+	private Long testSetId;
+	private String testName;
+	private String testDescription;
+	private String testSetCode;
+	private String setNo;
+	private Long trainingId;
+	private LocalDateTime startDateTime;
+	private LocalDateTime endDateTime;
+	private Integer timeLimitMinutes;
+	private BigDecimal passingPercentage;
+	private Boolean shuffleQuestions;
+	private Boolean shuffleOptions;
+	private Boolean isActive;
+	private Long createdBy;
+	private String trainingCode;
+	private String trainingName;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
+	private LocalDateTime publishedAt;
 
-    public TestSetResponse() {
-    }
+	public String getTrainingName() {
+		return trainingName;
+	}
 
-    public Long getTestSetId() {
-        return testSetId;
-    }
+	public void setTrainingName(String trainingName) {
+		this.trainingName = trainingName;
+	}
 
-    public void setTestSetId(Long testSetId) {
-        this.testSetId = testSetId;
-    }
+	public String getTrainingCode() {
+		return trainingCode;
+	}
 
-    public String getTestName() {
-        return testName;
-    }
+	public void setTrainingCode(String trainingCode) {
+		this.trainingCode = trainingCode;
+	}
 
-    public void setTestName(String testName) {
-        this.testName = testName;
-    }
+	public TestSetResponse() {
+	}
 
-    public String getTestDescription() {
-        return testDescription;
-    }
+	public Long getTestSetId() {
+		return testSetId;
+	}
 
-    public void setTestDescription(String testDescription) {
-        this.testDescription = testDescription;
-    }
+	public void setTestSetId(Long testSetId) {
+		this.testSetId = testSetId;
+	}
 
-    public String getTestCode() {
-        return testCode;
-    }
+	public String getTestName() {
+		return testName;
+	}
 
-    public void setTestCode(String testCode) {
-        this.testCode = testCode;
-    }
+	public void setTestName(String testName) {
+		this.testName = testName;
+	}
 
-    public String getSetNo() {
-        return setNo;
-    }
+	public String getTestDescription() {
+		return testDescription;
+	}
 
-    public void setSetNo(String setNo) {
-        this.setNo = setNo;
-    }
+	public void setTestDescription(String testDescription) {
+		this.testDescription = testDescription;
+	}
 
-    public Long getTrainingId() {
-        return trainingId;
-    }
+	public String getTestSetCode() {
+		return testSetCode;
+	}
 
-    public void setTrainingId(Long trainingId) {
-        this.trainingId = trainingId;
-    }
+	public void setTestSetCode(String testSetCode) {
+		this.testSetCode = testSetCode;
+	}
 
-    public LocalDateTime getStartDateTime() {
-        return startDateTime;
-    }
+	public String getSetNo() {
+		return setNo;
+	}
 
-    public void setStartDateTime(LocalDateTime startDateTime) {
-        this.startDateTime = startDateTime;
-    }
+	public void setSetNo(String setNo) {
+		this.setNo = setNo;
+	}
 
-    public LocalDateTime getEndDateTime() {
-        return endDateTime;
-    }
+	public Long getTrainingId() {
+		return trainingId;
+	}
 
-    public void setEndDateTime(LocalDateTime endDateTime) {
-        this.endDateTime = endDateTime;
-    }
+	public void setTrainingId(Long trainingId) {
+		this.trainingId = trainingId;
+	}
 
-    public Integer getTimeLimitMinutes() {
-        return timeLimitMinutes;
-    }
+	public LocalDateTime getStartDateTime() {
+		return startDateTime;
+	}
 
-    public void setTimeLimitMinutes(Integer timeLimitMinutes) {
-        this.timeLimitMinutes = timeLimitMinutes;
-    }
+	public void setStartDateTime(LocalDateTime startDateTime) {
+		this.startDateTime = startDateTime;
+	}
 
-    public BigDecimal getPassingPercentage() {
-        return passingPercentage;
-    }
+	public LocalDateTime getEndDateTime() {
+		return endDateTime;
+	}
 
-    public void setPassingPercentage(BigDecimal passingPercentage) {
-        this.passingPercentage = passingPercentage;
-    }
+	public void setEndDateTime(LocalDateTime endDateTime) {
+		this.endDateTime = endDateTime;
+	}
 
-    public Boolean getShuffleQuestions() {
-        return shuffleQuestions;
-    }
+	public Integer getTimeLimitMinutes() {
+		return timeLimitMinutes;
+	}
 
-    public void setShuffleQuestions(Boolean shuffleQuestions) {
-        this.shuffleQuestions = shuffleQuestions;
-    }
+	public void setTimeLimitMinutes(Integer timeLimitMinutes) {
+		this.timeLimitMinutes = timeLimitMinutes;
+	}
 
-    public Boolean getShuffleOptions() {
-        return shuffleOptions;
-    }
+	public BigDecimal getPassingPercentage() {
+		return passingPercentage;
+	}
 
-    public void setShuffleOptions(Boolean shuffleOptions) {
-        this.shuffleOptions = shuffleOptions;
-    }
+	public void setPassingPercentage(BigDecimal passingPercentage) {
+		this.passingPercentage = passingPercentage;
+	}
 
-    public Boolean getIsActive() {
-        return isActive;
-    }
+	public Boolean getShuffleQuestions() {
+		return shuffleQuestions;
+	}
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
+	public void setShuffleQuestions(Boolean shuffleQuestions) {
+		this.shuffleQuestions = shuffleQuestions;
+	}
 
-    public Long getCreatedBy() {
-        return createdBy;
-    }
+	public Boolean getShuffleOptions() {
+		return shuffleOptions;
+	}
 
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
+	public void setShuffleOptions(Boolean shuffleOptions) {
+		this.shuffleOptions = shuffleOptions;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public Boolean getIsActive() {
+		return isActive;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public void setIsActive(Boolean isActive) {
+		this.isActive = isActive;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public Long getCreatedBy() {
+		return createdBy;
+	}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
 
-    public LocalDateTime getPublishedAt() {
-        return publishedAt;
-    }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setPublishedAt(LocalDateTime publishedAt) {
-        this.publishedAt = publishedAt;
-    }
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    @Override
-    public String toString() {
-        return "TestSetResponse [testSetId=" + testSetId + ", testName=" + testName + ", testCode=" + testCode + "]";
-    }
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	public LocalDateTime getPublishedAt() {
+		return publishedAt;
+	}
+
+	public void setPublishedAt(LocalDateTime publishedAt) {
+		this.publishedAt = publishedAt;
+	}
+
 }

@@ -2,108 +2,128 @@ package com.doritech.tmsservice.response;
 
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.UserVideoStatus;
+
 public class UserVideoResponse {
 
-    private Long userVideoId;
-    private Long userId;
-    private Long videoId;
-    private Long trainingAssignmentId;
-    private String status;
-    private Integer watchedCount;
-    private LocalDateTime lastWatchedAt;
-    private LocalDateTime completedAt;
-    private LocalDateTime expiryDate;
-    private LocalDateTime assignedAt;
-    private Long assignedBy;
+	private Long userVideoId;
+	private Long userId;
+	private Long videoId;
+	private Long trainingAssignmentId;
+	private UserVideoStatus status;
+	private Integer watchedCount;
+	private LocalDateTime lastWatchedAt;
+	private LocalDateTime completedAt;
+	private LocalDateTime expiryDate;
+	private LocalDateTime assignedAt;
+	private Long assignedBy;
+	private String videoTitle;
+	private Integer watchedSeconds;
 
-    public UserVideoResponse() {
-    }
+	public Integer getWatchedSeconds() {
+		return watchedSeconds;
+	}
 
-    public Long getUserVideoId() {
-        return userVideoId;
-    }
+	public void setWatchedSeconds(Integer watchedSeconds) {
+		this.watchedSeconds = watchedSeconds;
+	}
 
-    public void setUserVideoId(Long userVideoId) {
-        this.userVideoId = userVideoId;
-    }
+	public String getVideoTitle() {
+		return videoTitle;
+	}
 
-    public Long getUserId() {
-        return userId;
-    }
+	public void setVideoTitle(String videoTitle) {
+		this.videoTitle = videoTitle;
+	}
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+	public UserVideoResponse() {
+	}
 
-    public Long getVideoId() {
-        return videoId;
-    }
+	public Long getUserVideoId() {
+		return userVideoId;
+	}
 
-    public void setVideoId(Long videoId) {
-        this.videoId = videoId;
-    }
+	public void setUserVideoId(Long userVideoId) {
+		this.userVideoId = userVideoId;
+	}
 
-    public Long getTrainingAssignmentId() {
-        return trainingAssignmentId;
-    }
+	public Long getUserId() {
+		return userId;
+	}
 
-    public void setTrainingAssignmentId(Long trainingAssignmentId) {
-        this.trainingAssignmentId = trainingAssignmentId;
-    }
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public Long getVideoId() {
+		return videoId;
+	}
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	public void setVideoId(Long videoId) {
+		this.videoId = videoId;
+	}
 
-    public Integer getWatchedCount() {
-        return watchedCount;
-    }
+	public Long getTrainingAssignmentId() {
+		return trainingAssignmentId;
+	}
 
-    public void setWatchedCount(Integer watchedCount) {
-        this.watchedCount = watchedCount;
-    }
+	public void setTrainingAssignmentId(Long trainingAssignmentId) {
+		this.trainingAssignmentId = trainingAssignmentId;
+	}
 
-    public LocalDateTime getLastWatchedAt() {
-        return lastWatchedAt;
-    }
+	public UserVideoStatus getStatus() {
+		return status;
+	}
 
-    public void setLastWatchedAt(LocalDateTime lastWatchedAt) {
-        this.lastWatchedAt = lastWatchedAt;
-    }
+	public void setStatus(UserVideoStatus status) {
+		this.status = status;
+	}
 
-    public LocalDateTime getCompletedAt() {
-        return completedAt;
-    }
+	public Integer getWatchedCount() {
+		return watchedCount;
+	}
 
-    public void setCompletedAt(LocalDateTime completedAt) {
-        this.completedAt = completedAt;
-    }
+	public void setWatchedCount(Integer watchedCount) {
+		this.watchedCount = watchedCount;
+	}
 
-    public LocalDateTime getExpiryDate() {
-        return expiryDate;
-    }
+	public LocalDateTime getLastWatchedAt() {
+		return lastWatchedAt;
+	}
 
-    public void setExpiryDate(LocalDateTime expiryDate) {
-        this.expiryDate = expiryDate;
-    }
+	public void setLastWatchedAt(LocalDateTime lastWatchedAt) {
+		this.lastWatchedAt = lastWatchedAt;
+	}
 
-    public LocalDateTime getAssignedAt() {
-        return assignedAt;
-    }
+	public LocalDateTime getCompletedAt() {
+		return completedAt;
+	}
 
-    public void setAssignedAt(LocalDateTime assignedAt) {
-        this.assignedAt = assignedAt;
-    }
+	public void setCompletedAt(LocalDateTime completedAt) {
+		this.completedAt = completedAt;
+	}
 
-    public Long getAssignedBy() {
-        return assignedBy;
-    }
+	public LocalDateTime getExpiryDate() {
+		return expiryDate;
+	}
 
-    public void setAssignedBy(Long assignedBy) {
-        this.assignedBy = assignedBy;
-    }
+	public void setExpiryDate(LocalDateTime expiryDate) {
+		this.expiryDate = expiryDate;
+	}
+
+	public LocalDateTime getAssignedAt() {
+		return assignedAt;
+	}
+
+	public void setAssignedAt(LocalDateTime assignedAt) {
+		this.assignedAt = assignedAt;
+	}
+
+	public Long getAssignedBy() {
+		return assignedBy;
+	}
+
+	public void setAssignedBy(Long assignedBy) {
+		this.assignedBy = assignedBy;
+	}
 }

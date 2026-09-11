@@ -1,7 +1,5 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,13 +14,9 @@ import com.doritech.tmsservice.request.TrainingAssignmentRequest;
 import com.doritech.tmsservice.service.TrainingAssignmentService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
-import jakarta.validation.Valid;
-
 @RestController
 @RequestMapping("/api/tms/training-assignments")
 public class TrainingAssignmentController {
-
-	private static final Logger log = LoggerFactory.getLogger(TrainingAssignmentController.class);
 
 	private final TrainingAssignmentService trainingAssignmentService;
 
@@ -31,48 +25,80 @@ public class TrainingAssignmentController {
 	}
 
 	@PostMapping("/createTrainingAssignment")
-	public ResponseEntity createTrainingAssignment(@Valid @RequestBody TrainingAssignmentRequest request) {
-		log.info("createTrainingAssignment :: request received for trainingId={}, userId={}", request.getTrainingId(),
-				request.getUserId());
+	public ResponseEntity createTrainingAssignment(@RequestBody TrainingAssignmentRequest request) {
 		return trainingAssignmentService.createTrainingAssignment(request);
 	}
 
 	@GetMapping("/getTrainingAssignmentById/{id}")
-	public ResponseEntity getTrainingAssignmentById(@PathVariable("id") Long id) {
-		log.info("getTrainingAssignmentById :: request received for id={}", id);
+	public ResponseEntity getTrainingAssignmentById(@PathVariable Long id) {
 		return trainingAssignmentService.getTrainingAssignmentById(id);
 	}
 
-	@GetMapping("/getAllTrainingAssignment")
-	public ResponseEntity getAllTrainingAssignment(@RequestParam(value = "page", defaultValue = "0") int page,
-			@RequestParam(value = "size", defaultValue = "10") int size,
-			@RequestParam(value = "sortBy", defaultValue = "trainingAssignmentId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllTrainingAssignment :: request received with page={}, size={}", page, size);
-		return trainingAssignmentService.getAllTrainingAssignment(page, size, sortBy, sortDir);
+	@GetMapping("/getAllTrainingAssignments/all")
+	public ResponseEntity getAllTrainingAssignments() {
+		return trainingAssignmentService.getAllTrainingAssignments();
 	}
 
-	@GetMapping("/getAssignmentsByUserId/{userId}")
-	public ResponseEntity getAssignmentsByUserId(@PathVariable("userId") Long userId) {
-		log.info("getAssignmentsByUserId :: request received for userId={}", userId);
-		return trainingAssignmentService.getAssignmentsByUserId(userId);
+	@GetMapping("/getTrainingAssignmentsByTrainingId/{trainingId}")
+	public ResponseEntity getTrainingAssignmentsByTrainingId(@PathVariable Long trainingId) {
+		return trainingAssignmentService.getTrainingAssignmentsByTrainingId(trainingId);
 	}
 
-	@GetMapping("/getAssignmentsByTrainingId/{trainingId}")
-	public ResponseEntity getAssignmentsByTrainingId(@PathVariable("trainingId") Long trainingId) {
-		log.info("getAssignmentsByTrainingId :: request received for trainingId={}", trainingId);
-		return trainingAssignmentService.getAssignmentsByTrainingId(trainingId);
+	@GetMapping("/getTrainingAssignmentsByUserId/{userId}")
+	public ResponseEntity getTrainingAssignmentsByUserId(@PathVariable Long userId) {
+		return trainingAssignmentService.getTrainingAssignmentsByUserId(userId);
 	}
 
-	@PutMapping("/startTrainingAssignment/{id}")
-	public ResponseEntity startTrainingAssignment(@PathVariable("id") Long id) {
-		log.info("startTrainingAssignment :: request received for id={}", id);
-		return trainingAssignmentService.startTrainingAssignment(id);
+	@GetMapping("/getTrainingAssignmentsForCurrentUser")
+	public ResponseEntity getTrainingAssignmentsForCurrentUser() {
+		return trainingAssignmentService.getTrainingAssignmentsForCurrentUser();
+	}
+
+	@PutMapping("/updateTrainingAssignment/{id}")
+	public ResponseEntity updateTrainingAssignment(@PathVariable Long id,
+			@RequestBody TrainingAssignmentRequest request) {
+		return trainingAssignmentService.updateTrainingAssignment(id, request);
 	}
 
 	@DeleteMapping("/deleteTrainingAssignment/{id}")
-	public ResponseEntity deleteTrainingAssignment(@PathVariable("id") Long id) {
-		log.info("deleteTrainingAssignment :: request received for id={}", id);
+	public ResponseEntity deleteTrainingAssignment(@PathVariable Long id) {
 		return trainingAssignmentService.deleteTrainingAssignment(id);
 	}
+
+	@GetMapping("/getAllTrainingAssignments/page")
+	public ResponseEntity getAllTrainingAssignments(@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "trainingAssignmentId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+		return trainingAssignmentService.getAllTrainingAssignments(page, size, sortBy, sortDir);
+	}
+
+	@GetMapping("/getTrainingAssignmentsByTrainingId/{trainingId}/page")
+	public ResponseEntity getTrainingAssignmentsByTrainingId(@PathVariable Long trainingId,
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "trainingAssignmentId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+		return trainingAssignmentService.getTrainingAssignmentsByTrainingId(trainingId, page, size, sortBy, sortDir);
+	}
+
+	@GetMapping("/getTrainingAssignmentsByUserId/{userId}/page")
+	public ResponseEntity getTrainingAssignmentsByUserId(@PathVariable Long userId,
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "trainingAssignmentId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+
+		return trainingAssignmentService.getTrainingAssignmentsByUserId(userId, page, size, sortBy, sortDir);
+	}
+
+	@GetMapping("/getTrainingAssignmentsForCurrentUser/page")
+	public ResponseEntity getTrainingAssignmentsForCurrentUser(
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "trainingAssignmentId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+		return trainingAssignmentService.getTrainingAssignmentsForCurrentUser(page, size, sortBy, sortDir);
+	}
+
 }

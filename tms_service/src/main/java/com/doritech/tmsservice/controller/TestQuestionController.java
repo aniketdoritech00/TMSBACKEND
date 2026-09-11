@@ -1,11 +1,10 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,13 +14,9 @@ import com.doritech.tmsservice.request.TestQuestionRequest;
 import com.doritech.tmsservice.service.TestQuestionService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
-import jakarta.validation.Valid;
-
 @RestController
 @RequestMapping("/api/tms/test-questions")
 public class TestQuestionController {
-
-	private static final Logger log = LoggerFactory.getLogger(TestQuestionController.class);
 
 	private final TestQuestionService testQuestionService;
 
@@ -30,35 +25,49 @@ public class TestQuestionController {
 	}
 
 	@PostMapping("/createTestQuestion")
-	public ResponseEntity createTestQuestion(@Valid @RequestBody TestQuestionRequest request) {
-		log.info("createTestQuestion :: request received for testSetId={}", request.getTestSetId());
+	public ResponseEntity createTestQuestion(@RequestBody TestQuestionRequest request) {
 		return testQuestionService.createTestQuestion(request);
 	}
 
 	@GetMapping("/getTestQuestionById/{id}")
-	public ResponseEntity getTestQuestionById(@PathVariable("id") Long id) {
-		log.info("getTestQuestionById :: request received for id={}", id);
+	public ResponseEntity getTestQuestionById(@PathVariable Long id) {
 		return testQuestionService.getTestQuestionById(id);
 	}
 
-	@GetMapping("/getAllTestQuestion")
-	public ResponseEntity getAllTestQuestion(@RequestParam(value = "page", defaultValue = "0") int page,
-			@RequestParam(value = "size", defaultValue = "10") int size,
-			@RequestParam(value = "sortBy", defaultValue = "testQuestionId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllTestQuestion :: request received with page={}, size={}", page, size);
-		return testQuestionService.getAllTestQuestion(page, size, sortBy, sortDir);
+	@GetMapping("/getAllTestQuestions/all")
+	public ResponseEntity getAllTestQuestions() {
+		return testQuestionService.getAllTestQuestions();
 	}
 
-	@GetMapping("/getQuestionsByTestSetId/{testSetId}")
-	public ResponseEntity getQuestionsByTestSetId(@PathVariable("testSetId") Long testSetId) {
-		log.info("getQuestionsByTestSetId :: request received for testSetId={}", testSetId);
-		return testQuestionService.getQuestionsByTestSetId(testSetId);
+	@GetMapping("/getTestQuestionsByTestSetId/{testSetId}")
+	public ResponseEntity getTestQuestionsByTestSetId(@PathVariable Long testSetId) {
+		return testQuestionService.getTestQuestionsByTestSetId(testSetId);
+	}
+
+	@PutMapping("/updateTestQuestion/{id}")
+	public ResponseEntity updateTestQuestion(@PathVariable Long id, @RequestBody TestQuestionRequest request) {
+		return testQuestionService.updateTestQuestion(id, request);
 	}
 
 	@DeleteMapping("/deleteTestQuestion/{id}")
-	public ResponseEntity deleteTestQuestion(@PathVariable("id") Long id) {
-		log.info("deleteTestQuestion :: request received for id={}", id);
+	public ResponseEntity deleteTestQuestion(@PathVariable Long id) {
 		return testQuestionService.deleteTestQuestion(id);
+	}
+
+	@GetMapping("/getAllTestQuestions/page")
+	public ResponseEntity getAllTestQuestions(@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "displayOrder") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+		return testQuestionService.getAllTestQuestions(page, size, sortBy, sortDir);
+	}
+
+	@GetMapping("/getTestQuestionsByTestSetId/{testSetId}/page")
+	public ResponseEntity getTestQuestionsByTestSetId(@PathVariable Long testSetId,
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "displayOrder") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+		return testQuestionService.getTestQuestionsByTestSetId(testSetId, page, size, sortBy, sortDir);
 	}
 }

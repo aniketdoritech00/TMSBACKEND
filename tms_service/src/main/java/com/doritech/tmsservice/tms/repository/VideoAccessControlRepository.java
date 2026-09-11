@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.doritech.tmsservice.tms.entity.VideoAccessControl;
@@ -16,4 +19,8 @@ public interface VideoAccessControlRepository extends JpaRepository<VideoAccessC
 	Optional<VideoAccessControl> findByVideoIdAndUserId(Long videoId, Long userId);
 
 	List<VideoAccessControl> findByUserId(Long userId);
+
+	@Modifying
+	@Query(value = "DELETE FROM video_access_control WHERE video_id = :videoId", nativeQuery = true)
+	int deleteByVideoId(@Param("videoId") Long videoId);
 }
