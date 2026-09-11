@@ -5,17 +5,28 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface TrainingAssignmentService {
 
-    ResponseEntity createTrainingAssignment(TrainingAssignmentRequest request);
+	ResponseEntity createTrainingAssignment(TrainingAssignmentRequest request);
 
-    ResponseEntity getTrainingAssignmentById(Long id);
+	ResponseEntity getTrainingAssignmentById(Long id);
 
-    ResponseEntity getAllTrainingAssignment(int page, int size, String sortBy, String sortDir);
+	ResponseEntity getAllTrainingAssignments();
 
-    ResponseEntity getAssignmentsByUserId(Long userId);
+	ResponseEntity getTrainingAssignmentsByTrainingId(Long trainingId);
 
-    ResponseEntity getAssignmentsByTrainingId(Long trainingId);
+	ResponseEntity getTrainingAssignmentsByUserId(Long userId);
 
-    ResponseEntity startTrainingAssignment(Long id);
+	ResponseEntity updateTrainingAssignment(Long id, TrainingAssignmentRequest request);
 
-    ResponseEntity deleteTrainingAssignment(Long id);
+	ResponseEntity deleteTrainingAssignment(Long id);
+
+	ResponseEntity getAllTrainingAssignments(int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity getTrainingAssignmentsByTrainingId(Long trainingId, int page, int size, String sortBy,
+			String sortDir);
+
+	ResponseEntity getTrainingAssignmentsByUserId(Long userId, int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity getTrainingAssignmentsForCurrentUser();
+
+	ResponseEntity getTrainingAssignmentsForCurrentUser(int page, int size, String sortBy, String sortDir);
 }

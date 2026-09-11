@@ -4,112 +4,113 @@ import java.time.LocalDateTime;
 
 public class TrainingContentResponse {
 
-    private Long trainingContentId;
-    private Long trainingId;
-    private String contentType;
-    private Integer contentReferenceId;
-    private String documentName;
-    private String documentDescription;
-    private String documentUrl;
-    private Long fileSizeBytes;
-    private Integer displayOrder;
-    private Boolean isRequired;
-    private LocalDateTime createdAt;
+	private Long trainingContentId;
 
-    public TrainingContentResponse() {
-    }
+	private Long trainingId;
 
-    public Long getTrainingContentId() {
-        return trainingContentId;
-    }
+	private String trainingCode;
 
-    public void setTrainingContentId(Long trainingContentId) {
-        this.trainingContentId = trainingContentId;
-    }
+	private String trainingName;
 
-    public Long getTrainingId() {
-        return trainingId;
-    }
+	private String contentType;
 
-    public void setTrainingId(Long trainingId) {
-        this.trainingId = trainingId;
-    }
+	private Long contentReferenceId;
 
-    public String getContentType() {
-        return contentType;
-    }
+	private Boolean isRequired;
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
+	private Long createdBy;
 
-    public Integer getContentReferenceId() {
-        return contentReferenceId;
-    }
+	private Long updatedBy;
 
-    public void setContentReferenceId(Integer contentReferenceId) {
-        this.contentReferenceId = contentReferenceId;
-    }
+	private LocalDateTime createdAt;
 
-    public String getDocumentName() {
-        return documentName;
-    }
+	private LocalDateTime updatedAt;
 
-    public void setDocumentName(String documentName) {
-        this.documentName = documentName;
-    }
+	public Long getTrainingContentId() {
+		return trainingContentId;
+	}
 
-    public String getDocumentDescription() {
-        return documentDescription;
-    }
+	public void setTrainingContentId(Long trainingContentId) {
+		this.trainingContentId = trainingContentId;
+	}
 
-    public void setDocumentDescription(String documentDescription) {
-        this.documentDescription = documentDescription;
-    }
+	public Long getTrainingId() {
+		return trainingId;
+	}
 
-    public String getDocumentUrl() {
-        return documentUrl;
-    }
+	public void setTrainingId(Long trainingId) {
+		this.trainingId = trainingId;
+	}
 
-    public void setDocumentUrl(String documentUrl) {
-        this.documentUrl = documentUrl;
-    }
+	public String getTrainingCode() {
+		return trainingCode;
+	}
 
-    public Long getFileSizeBytes() {
-        return fileSizeBytes;
-    }
+	public void setTrainingCode(String trainingCode) {
+		this.trainingCode = trainingCode;
+	}
 
-    public void setFileSizeBytes(Long fileSizeBytes) {
-        this.fileSizeBytes = fileSizeBytes;
-    }
+	public String getTrainingName() {
+		return trainingName;
+	}
 
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
+	public void setTrainingName(String trainingName) {
+		this.trainingName = trainingName;
+	}
 
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
+	public String getContentType() {
+		return contentType;
+	}
 
-    public Boolean getIsRequired() {
-        return isRequired;
-    }
+	public void setContentType(String contentType) {
+		this.contentType = contentType;
+	}
 
-    public void setIsRequired(Boolean isRequired) {
-        this.isRequired = isRequired;
-    }
+	public Long getContentReferenceId() {
+		return contentReferenceId;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public void setContentReferenceId(Long contentReferenceId) {
+		this.contentReferenceId = contentReferenceId;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public Boolean getIsRequired() {
+		return isRequired;
+	}
 
-    @Override
-    public String toString() {
-        return "TrainingContentResponse [trainingContentId=" + trainingContentId
-                + ", trainingId=" + trainingId + ", contentType=" + contentType + "]";
-    }
+	public void setIsRequired(Boolean isRequired) {
+		this.isRequired = isRequired;
+	}
+
+	public Long getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 }

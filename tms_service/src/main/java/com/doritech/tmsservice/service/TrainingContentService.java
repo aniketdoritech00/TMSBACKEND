@@ -1,19 +1,21 @@
 package com.doritech.tmsservice.service;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import com.doritech.tmsservice.request.TrainingContentRequest;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface TrainingContentService {
 
-    ResponseEntity createTrainingContent(TrainingContentRequest request, MultipartFile file);
+	ResponseEntity createTrainingContent(TrainingContentRequest request);
 
-    ResponseEntity getTrainingContentById(Long id);
+	ResponseEntity getTrainingContentById(Long id);
 
-    ResponseEntity getAllTrainingContent(int page, int size, String sortBy, String sortDir);
+	ResponseEntity getAllTrainingContent();
 
-    ResponseEntity getContentByTrainingId(Long trainingId);
+	ResponseEntity getTrainingContentByTrainingId(Long trainingId);
 
-    ResponseEntity deleteTrainingContent(Long id);
+	ResponseEntity updateTrainingContent(Long id, TrainingContentRequest request);
+
+	ResponseEntity deleteTrainingContent(Long id);
+
+	ResponseEntity getAllTrainingContent(int page, int size, String sortBy, String sortDir);
 }

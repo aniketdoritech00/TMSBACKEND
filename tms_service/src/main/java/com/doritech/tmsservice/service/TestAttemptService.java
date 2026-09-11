@@ -9,13 +9,18 @@ public interface TestAttemptService {
 
 	ResponseEntity getTestAttemptById(Long testAttemptId);
 
-	ResponseEntity getTestAttemptsByUserId(Long userId);
+	ResponseEntity getAllTestAttempts(int page, int size, String sortBy, String sortDir);
 
-	ResponseEntity getTestAttemptsByTestSetAndUser(Long testSetId, Long userId);
+	ResponseEntity getTestAttemptsByUserId(Long userId, int page, int size, String sortBy, String sortDir);
 
-	ResponseEntity getTestAttemptsByTrainingAssignment(Long trainingAssignmentId);
+	ResponseEntity getTestAttemptsByTestSetAndUser(Long testSetId, Long userId, int page, int size, String sortBy,
+			String sortDir);
 
-	ResponseEntity getUserTestAttemptsByTrainingAssignment(Long trainingAssignmentId, Long userId);
+	ResponseEntity getTestAttemptsByTrainingAssignment(Long trainingAssignmentId, int page, int size, String sortBy,
+			String sortDir);
+
+	ResponseEntity getUserTestAttemptsByTrainingAssignment(Long trainingAssignmentId, Long userId, int page, int size,
+			String sortBy, String sortDir);
 
 	ResponseEntity getInProgressTestAttempt(Long userId);
 

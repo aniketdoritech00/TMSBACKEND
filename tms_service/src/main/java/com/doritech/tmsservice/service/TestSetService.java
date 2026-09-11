@@ -5,15 +5,19 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface TestSetService {
 
-    ResponseEntity createTestSet(TestSetRequest request);
+	ResponseEntity createTestSet(TestSetRequest request);
 
-    ResponseEntity getTestSetById(Long id);
+	ResponseEntity getTestSetById(Long id);
 
-    ResponseEntity getAllTestSet(int page, int size, String sortBy, String sortDir);
+	ResponseEntity getAllTestSets();
 
-    ResponseEntity getTestSetsByTrainingId(Long trainingId);
+	ResponseEntity getAllTestSets(int page, int size, String sortBy, String sortDir);
 
-    ResponseEntity deleteTestSet(Long id);
+	ResponseEntity getTestSetsByTrainingId(Long trainingId);
 
-    ResponseEntity publishTestSet(Long id);
+	ResponseEntity getTestSetsByTrainingId(Long trainingId, int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity updateTestSet(Long id, TestSetRequest request);
+
+	ResponseEntity deleteTestSet(Long id);
 }
