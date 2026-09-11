@@ -1,19 +1,24 @@
 package com.doritech.tmsservice.service;
 
-import java.util.List;
-
 import com.doritech.tmsservice.request.QuestionOptionRequest;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface QuestionOptionService {
 
-    ResponseEntity createQuestionOptions(List<QuestionOptionRequest> requestList);
+	ResponseEntity createQuestionOption(QuestionOptionRequest request);
 
-    ResponseEntity getQuestionOptionById(Long id);
+	ResponseEntity getQuestionOptionById(Long id);
 
-    ResponseEntity getOptionsByQuestionId(Long testQuestionId);
+	ResponseEntity getAllQuestionOptions();
 
-    ResponseEntity getOptionsForAttempt(Long testQuestionId);
+	ResponseEntity getAllQuestionOptions(int page, int size, String sortBy, String sortDir);
 
-    ResponseEntity deleteQuestionOption(Long id);
+	ResponseEntity getQuestionOptionsByTestQuestionId(Long testQuestionId);
+
+	ResponseEntity getQuestionOptionsByTestQuestionId(Long testQuestionId, int page, int size, String sortBy,
+			String sortDir);
+
+	ResponseEntity updateQuestionOption(Long id, QuestionOptionRequest request);
+
+	ResponseEntity deleteQuestionOption(Long id);
 }

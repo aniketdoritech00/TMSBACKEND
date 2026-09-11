@@ -43,6 +43,7 @@ import com.doritech.tmsservice.response.VideoListResponse;
 import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.entity.Video;
+import com.doritech.tmsservice.tms.repository.VideoAccessControlRepository;
 import com.doritech.tmsservice.tms.repository.VideoRepository;
 import com.doritech.tmsservice.tms.repository.VideoSubProductRepository;
 
@@ -59,15 +60,18 @@ public class VideoServiceImpl implements VideoService {
 	private final FileStorageProperties fileStorageProperties;
 	private final VideoMetadataService videoMetadataService;
 	private final VideoSubProductRepository videoSubProductRepository;
+	private final VideoAccessControlRepository videoAccessControlRepository;
 
 	public VideoServiceImpl(VideoRepository videoRepository, FileStorageService fileStorageService,
 			FileStorageProperties fileStorageProperties, VideoMetadataService videoMetadataService,
-			VideoSubProductRepository videoSubProductRepository) {
+			VideoSubProductRepository videoSubProductRepository,
+			VideoAccessControlRepository videoAccessControlRepository) {
 		this.videoRepository = videoRepository;
 		this.fileStorageService = fileStorageService;
 		this.fileStorageProperties = fileStorageProperties;
 		this.videoMetadataService = videoMetadataService;
 		this.videoSubProductRepository = videoSubProductRepository;
+		this.videoAccessControlRepository = videoAccessControlRepository;
 	}
 
 	@Override
@@ -184,28 +188,22 @@ public class VideoServiceImpl implements VideoService {
 	@Override
 	@Transactional(transactionManager = "tmsTransactionManager")
 	public ResponseEntity deleteVideo(Long id) {
-
 		if (id == null || id <= 0) {
 			throw new BadRequestException("Invalid video id");
 		}
-
 		Video video = videoRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Video not found with id: " + id));
-
 		Long mappingCount = videoRepository.countVideoMappings(id);
-
 		if (mappingCount != null && mappingCount > 0) {
 			throw new BadRequestException("Video cannot be deleted because it is mapped with other records");
 		}
-
 		String videoPath = video.getVideoUrl();
-
 		try {
+			videoAccessControlRepository.deleteByVideoId(id);
 			videoRepository.delete(video);
 			if (videoPath != null && !videoPath.trim().isEmpty()) {
 				Files.deleteIfExists(Paths.get(videoPath));
 			}
-
 		} catch (Exception e) {
 
 			throw new DatabaseOperationException("Cannot delete video");
@@ -887,21 +885,19 @@ public class VideoServiceImpl implements VideoService {
 
 	private boolean isClientDisconnected(IOException e) {
 
-	    String message = e.getMessage();
+		String message = e.getMessage();
 
-	    if (message == null) {
-	        return false;
-	    }
+		if (message == null) {
+			return false;
+		}
 
-	    String lowerMessage =
-	            message.toLowerCase();
+		String lowerMessage = message.toLowerCase();
 
-	    return lowerMessage.contains("connection reset")
-	            || lowerMessage.contains("broken pipe")
-	            || lowerMessage.contains("connection aborted")
-	            || lowerMessage.contains("connection was aborted")
-	            || lowerMessage.contains("stream closed");
+		return lowerMessage.contains("connection reset") || lowerMessage.contains("broken pipe")
+				|| lowerMessage.contains("connection aborted") || lowerMessage.contains("connection was aborted")
+				|| lowerMessage.contains("stream closed");
 	}
+
 	private void streamBytesNio(Path filePath, long start, long length, OutputStream out) throws IOException {
 
 		if (!Files.exists(filePath)) {
@@ -972,7 +968,6 @@ public class VideoServiceImpl implements VideoService {
 
 		return "application/octet-stream";
 	}
-
 
 	@Override
 	public org.springframework.http.ResponseEntity<Resource> downloadVideo(Long videoId) {

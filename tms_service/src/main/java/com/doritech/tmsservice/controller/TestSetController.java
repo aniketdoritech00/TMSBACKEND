@@ -1,8 +1,5 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,56 +14,62 @@ import com.doritech.tmsservice.request.TestSetRequest;
 import com.doritech.tmsservice.service.TestSetService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
-import jakarta.validation.Valid;
-
 @RestController
 @RequestMapping("/api/tms/test-sets")
 public class TestSetController {
 
-	private static final Logger log = LoggerFactory.getLogger(TestSetController.class);
-
 	private final TestSetService testSetService;
-	
+
 	public TestSetController(TestSetService testSetService) {
 		this.testSetService = testSetService;
 	}
 
 	@PostMapping("/createTestSet")
-	public ResponseEntity createTestSet(@Valid @RequestBody TestSetRequest request) {
-		log.info("createTestSet :: request received for name={}", request.getTestName());
+	public ResponseEntity createTestSet(@RequestBody TestSetRequest request) {
 		return testSetService.createTestSet(request);
 	}
 
 	@GetMapping("/getTestSetById/{id}")
-	public ResponseEntity getTestSetById(@PathVariable("id") Long id) {
-		log.info("getTestSetById :: request received for id={}", id);
+	public ResponseEntity getTestSetById(@PathVariable Long id) {
 		return testSetService.getTestSetById(id);
 	}
 
-	@GetMapping("/getAllTestSet")
-	public ResponseEntity getAllTestSet(@RequestParam(value = "page", defaultValue = "0") int page,
-			@RequestParam(value = "size", defaultValue = "10") int size,
-			@RequestParam(value = "sortBy", defaultValue = "testSetId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllTestSet :: request received with page={}, size={}", page, size);
-		return testSetService.getAllTestSet(page, size, sortBy, sortDir);
+	@GetMapping("/getAllTestSets/all")
+	public ResponseEntity getAllTestSets() {
+
+		return testSetService.getAllTestSets();
 	}
 
 	@GetMapping("/getTestSetsByTrainingId/{trainingId}")
-	public ResponseEntity getTestSetsByTrainingId(@PathVariable("trainingId") Long trainingId) {
-		log.info("getTestSetsByTrainingId :: request received for trainingId={}", trainingId);
+	public ResponseEntity getTestSetsByTrainingId(@PathVariable Long trainingId) {
+
 		return testSetService.getTestSetsByTrainingId(trainingId);
 	}
 
+	@PutMapping("/updateTestSet/{id}")
+	public ResponseEntity updateTestSet(@PathVariable Long id, @RequestBody TestSetRequest request) {
+		return testSetService.updateTestSet(id, request);
+	}
+
 	@DeleteMapping("/deleteTestSet/{id}")
-	public ResponseEntity deleteTestSet(@PathVariable("id") Long id) {
-		log.info("deleteTestSet :: request received for id={}", id);
+	public ResponseEntity deleteTestSet(@PathVariable Long id) {
 		return testSetService.deleteTestSet(id);
 	}
 
-	@PutMapping("/publishTestSet/{id}")
-	public ResponseEntity publishTestSet(@PathVariable("id") Long id) {
-		log.info("publishTestSet :: request received for id={}", id);
-		return testSetService.publishTestSet(id);
+	@GetMapping("/getAllTestSets/page")
+	public ResponseEntity getAllTestSets(@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "testSetId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+		return testSetService.getAllTestSets(page, size, sortBy, sortDir);
+	}
+
+	@GetMapping("/getTestSetsByTrainingId/{trainingId}/page")
+	public ResponseEntity getTestSetsByTrainingId(@PathVariable Long trainingId,
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "testSetId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+		return testSetService.getTestSetsByTrainingId(trainingId, page, size, sortBy, sortDir);
 	}
 }

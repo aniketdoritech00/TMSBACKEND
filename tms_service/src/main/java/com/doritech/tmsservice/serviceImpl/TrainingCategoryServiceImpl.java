@@ -45,26 +45,20 @@ public class TrainingCategoryServiceImpl implements TrainingCategoryService {
 
 			Long currentUserId = CurrentUser.getUserId();
 
-			// Check duplicate category code
 			if (trainingCategoryRepository.existsByCategoryCode(request.getCategoryCode())) {
 				return new ResponseEntity("Training category code already exists!", HttpStatus.CONFLICT.value(), null);
 			}
 
-			// Check duplicate category name
 			if (trainingCategoryRepository.existsByCategoryName(request.getCategoryName())) {
 				return new ResponseEntity("Training category name already exists!", HttpStatus.CONFLICT.value(), null);
 			}
 
 			TrainingCategory trainingCategory = mapToEntity(request);
-
 			trainingCategory.setCreatedBy(currentUserId);
-
 			TrainingCategory savedTrainingCategory = trainingCategoryRepository.save(trainingCategory);
 
-			// Update parameter/code sequence
 			if (savedTrainingCategory.getCategoryCode() != null
 					&& !savedTrainingCategory.getCategoryCode().trim().isEmpty()) {
-
 				try {
 					paramService.updateCodeValue(savedTrainingCategory.getCategoryCode());
 				} catch (Exception e) {

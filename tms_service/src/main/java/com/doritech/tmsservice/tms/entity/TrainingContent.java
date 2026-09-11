@@ -8,10 +8,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -23,50 +25,31 @@ public class TrainingContent {
 	@Column(name = "training_content_id")
 	private Long trainingContentId;
 
-	@Column(name = "training_id", nullable = false)
-	private Long trainingId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "training_id", nullable = false)
+	private Training training;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "content_type", nullable = false)
 	private ContentType contentType;
 
 	@Column(name = "content_reference_id")
-	private Integer contentReferenceId;
-
-	@Column(name = "document_name", length = 255)
-	private String documentName;
-
-	@Column(name = "document_description", columnDefinition = "TEXT")
-	private String documentDescription;
-
-	@Column(name = "document_url", length = 500)
-	private String documentUrl;
-
-	@Column(name = "file_size_bytes")
-	private Long fileSizeBytes;
-
-	@Column(name = "display_order")
-	private Integer displayOrder = 0;
+	private Long contentReferenceId;
 
 	@Column(name = "is_required")
-	private Boolean isRequired = true;
+	private boolean isRequired;
 
-	@Column(name = "created_at", updatable = false)
+	@Column(name = "created_by")
+	private Long createdBy;
+
+	@Column(name = "updated_by")
+	private Long updatedBy;
+
+	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 
-	public TrainingContent() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-		if (this.displayOrder == null) {
-			this.displayOrder = 0;
-		}
-		if (this.isRequired == null) {
-			this.isRequired = true;
-		}
-	}
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
 
 	public Long getTrainingContentId() {
 		return trainingContentId;
@@ -74,14 +57,6 @@ public class TrainingContent {
 
 	public void setTrainingContentId(Long trainingContentId) {
 		this.trainingContentId = trainingContentId;
-	}
-
-	public Long getTrainingId() {
-		return trainingId;
-	}
-
-	public void setTrainingId(Long trainingId) {
-		this.trainingId = trainingId;
 	}
 
 	public ContentType getContentType() {
@@ -92,60 +67,36 @@ public class TrainingContent {
 		this.contentType = contentType;
 	}
 
-	public Integer getContentReferenceId() {
+	public Long getContentReferenceId() {
 		return contentReferenceId;
 	}
 
-	public void setContentReferenceId(Integer contentReferenceId) {
+	public void setContentReferenceId(Long contentReferenceId) {
 		this.contentReferenceId = contentReferenceId;
 	}
 
-	public String getDocumentName() {
-		return documentName;
-	}
-
-	public void setDocumentName(String documentName) {
-		this.documentName = documentName;
-	}
-
-	public String getDocumentDescription() {
-		return documentDescription;
-	}
-
-	public void setDocumentDescription(String documentDescription) {
-		this.documentDescription = documentDescription;
-	}
-
-	public String getDocumentUrl() {
-		return documentUrl;
-	}
-
-	public void setDocumentUrl(String documentUrl) {
-		this.documentUrl = documentUrl;
-	}
-
-	public Long getFileSizeBytes() {
-		return fileSizeBytes;
-	}
-
-	public void setFileSizeBytes(Long fileSizeBytes) {
-		this.fileSizeBytes = fileSizeBytes;
-	}
-
-	public Integer getDisplayOrder() {
-		return displayOrder;
-	}
-
-	public void setDisplayOrder(Integer displayOrder) {
-		this.displayOrder = displayOrder;
-	}
-
-	public Boolean getIsRequired() {
+	public boolean isRequired() {
 		return isRequired;
 	}
 
-	public void setIsRequired(Boolean isRequired) {
+	public void setRequired(boolean isRequired) {
 		this.isRequired = isRequired;
+	}
+
+	public Long getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
 	}
 
 	public LocalDateTime getCreatedAt() {
@@ -156,9 +107,20 @@ public class TrainingContent {
 		this.createdAt = createdAt;
 	}
 
-	@Override
-	public String toString() {
-		return "TrainingContent [trainingContentId=" + trainingContentId + ", trainingId=" + trainingId
-				+ ", contentType=" + contentType + "]";
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
 	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	public Training getTraining() {
+		return training;
+	}
+
+	public void setTraining(Training training) {
+		this.training = training;
+	}
+
 }
