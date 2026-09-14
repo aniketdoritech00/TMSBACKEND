@@ -9,6 +9,7 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\Docum
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\DocumentSubProductController.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\InTrainingQuestionController.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\InTrainingUserResponseController.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\ObserverAssignmentController.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\ParamController.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\ProductCategoryController.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\ProductController.java
@@ -78,6 +79,7 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\Document
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\DocumentSubProductUploadRequest.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\InTrainingQuestionRequest.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\InTrainingUserResponseRequest.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\ObserverAssignmentRequest.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\ParamRequestDTO.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\ProductCategoryRequest.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\request\ProductRequest.java
@@ -108,6 +110,7 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrain
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingQuestionResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingQuestionSecureResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingUserResponseResponse.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\ObserverAssignmentResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\PageResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\ParamResponseDTO.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\ProductCategoryResponse.java
@@ -144,6 +147,7 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\FileStor
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\InTrainingQuestionService.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\InTrainingUserResponseService.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\LimitedInputStream.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\ObserverAssignmentService.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\ParamService.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\ProductCategoryService.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\ProductService.java
@@ -171,6 +175,7 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\Docu
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\FileStorageServiceImpl.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\InTrainingQuestionServiceImpl.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\InTrainingUserResponseServiceImpl.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\ObserverAssignmentServiceImpl.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\ParamServiceImpl.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\ProductCategoryServiceImpl.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\ProductServiceImpl.java
@@ -195,7 +200,6 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\Docum
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\DocumentSubProduct.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\InTrainingQuestion.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\InTrainingUserResponse.java
-D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\Observer.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\ObserverAssignment.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\Product.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\ProductCategory.java
@@ -223,6 +227,7 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\D
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\DocumentSubProductRepository.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\InTrainingQuestionRepository.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\InTrainingUserResponseRepository.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\ObserverAssignmentRepository.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\ProductCategoryRepository.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\ProductRepository.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\QuestionOptionRepository.java
