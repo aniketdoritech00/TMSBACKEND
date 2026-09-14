@@ -1,8 +1,10 @@
 com\doritech\tmsservice\tms\entity\TrainingSubProductId.class
+com\doritech\tmsservice\request\ObserverAssignmentRequest.class
 com\doritech\tmsservice\response\TestQuestionSecureResponse.class
 com\doritech\tmsservice\serviceImpl\InTrainingUserResponseServiceImpl.class
 com\doritech\tmsservice\service\LimitedInputStream.class
 com\doritech\tmsservice\serviceImpl\VideoMetadataAsyncService.class
+com\doritech\tmsservice\tms\repository\ObserverAssignmentRepository.class
 com\doritech\tmsservice\enums\ViolationType.class
 com\doritech\tmsservice\response\UserBatchResponse.class
 com\doritech\tmsservice\service\TrainingContentService.class
@@ -24,6 +26,7 @@ com\doritech\tmsservice\service\ParamService.class
 com\doritech\tmsservice\serviceImpl\ProductServiceImpl.class
 com\doritech\tmsservice\enums\SupportRequestType.class
 com\doritech\tmsservice\response\ProductCategoryResponse.class
+com\doritech\tmsservice\service\ObserverAssignmentService.class
 com\doritech\tmsservice\service\UserBatchService.class
 com\doritech\tmsservice\exception\DuplicateResourceException.class
 com\doritech\tmsservice\enums\TestResult.class
@@ -115,6 +118,7 @@ com\doritech\tmsservice\request\TrainingContentRequest.class
 com\doritech\tmsservice\config\FileStorageProperties.class
 com\doritech\tmsservice\service\VideoMetadataService.class
 com\doritech\tmsservice\service\ProductCategoryService.class
+com\doritech\tmsservice\controller\ObserverAssignmentController.class
 com\doritech\tmsservice\serviceImpl\QuestionOptionServiceImpl.class
 com\doritech\tmsservice\tms\repository\TrainingContentRepository.class
 com\doritech\tmsservice\controller\VideoStreaming.class
@@ -145,7 +149,6 @@ com\doritech\tmsservice\response\TrainingContentResponse.class
 com\doritech\tmsservice\enums\ScheduleFrequency.class
 com\doritech\tmsservice\tms\entity\SubProduct.class
 com\doritech\tmsservice\serviceImpl\TestQuestionServiceImpl.class
-com\doritech\tmsservice\tms\entity\Observer.class
 com\doritech\tmsservice\serviceImpl\BatchServiceImpl.class
 com\doritech\tmsservice\tms\entity\ResponseEntity.class
 com\doritech\tmsservice\exception\ExternalServiceException.class
@@ -191,6 +194,7 @@ com\doritech\tmsservice\tms\entity\InTrainingQuestion.class
 com\doritech\tmsservice\tms\repository\UserVideoRepository.class
 com\doritech\tmsservice\controller\BatchController.class
 com\doritech\tmsservice\request\TrainingRequest.class
+com\doritech\tmsservice\response\ObserverAssignmentResponse.class
 com\doritech\tmsservice\response\ProductResponse.class
 com\doritech\tmsservice\tms\entity\Training.class
 com\doritech\tmsservice\request\TestQuestionRequest.class
@@ -220,6 +224,7 @@ com\doritech\tmsservice\response\QuestionOptionSecureResponse.class
 com\doritech\tmsservice\tms\entity\ObserverAssignment.class
 com\doritech\tmsservice\controller\TestAttemptController.class
 com\doritech\tmsservice\enums\ReportType.class
+com\doritech\tmsservice\serviceImpl\ObserverAssignmentServiceImpl.class
 com\doritech\tmsservice\request\UserResponseRequest.class
 com\doritech\tmsservice\controller\DocumentController.class
 com\doritech\tmsservice\response\InTrainingQuestionListResponse.class
