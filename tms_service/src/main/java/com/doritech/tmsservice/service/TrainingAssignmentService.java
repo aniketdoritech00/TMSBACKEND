@@ -29,4 +29,6 @@ public interface TrainingAssignmentService {
 	ResponseEntity getTrainingAssignmentsForCurrentUser();
 
 	ResponseEntity getTrainingAssignmentsForCurrentUser(int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity updateTrainingAssignmentProgress(Long trainingAssignmentId);
 }
