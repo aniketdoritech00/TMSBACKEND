@@ -1,5 +1,7 @@
 package com.doritech.tmsservice.serviceImpl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.config.CurrentUser;
+import com.doritech.tmsservice.enums.AssignmentStatus;
 import com.doritech.tmsservice.enums.UserVideoStatus;
 import com.doritech.tmsservice.request.UserVideoRequest;
 import com.doritech.tmsservice.response.PageResponse;
@@ -24,6 +27,7 @@ import com.doritech.tmsservice.tms.entity.TrainingAssignment;
 import com.doritech.tmsservice.tms.entity.UserVideo;
 import com.doritech.tmsservice.tms.entity.Video;
 import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
+import com.doritech.tmsservice.tms.repository.UserBatchRepository;
 import com.doritech.tmsservice.tms.repository.UserVideoRepository;
 import com.doritech.tmsservice.tms.repository.VideoRepository;
 
@@ -33,13 +37,15 @@ public class UserVideoServiceImpl implements UserVideoService {
 	private final UserVideoRepository userVideoRepository;
 	private final VideoRepository videoRepository;
 	private final TrainingAssignmentRepository trainingAssignmentRepository;
+	private final UserBatchRepository userBatchRepository;
 
 	public UserVideoServiceImpl(UserVideoRepository userVideoRepository, VideoRepository videoRepository,
-			TrainingAssignmentRepository trainingAssignmentRepository) {
+			TrainingAssignmentRepository trainingAssignmentRepository, UserBatchRepository userBatchRepository) {
 
 		this.userVideoRepository = userVideoRepository;
 		this.videoRepository = videoRepository;
 		this.trainingAssignmentRepository = trainingAssignmentRepository;
+		this.userBatchRepository = userBatchRepository;
 	}
 
 	@Override
@@ -84,10 +90,33 @@ public class UserVideoServiceImpl implements UserVideoService {
 					return new ResponseEntity("Training assignment not found", HttpStatus.NOT_FOUND.value(), null);
 				}
 
-				if (trainingAssignment.getUserId() == null
-						|| !trainingAssignment.getUserId().equals(request.getUserId())) {
+				Long assignmentUserId = trainingAssignment.getUserId();
 
-					return new ResponseEntity("Training assignment does not belong to the specified user",
+				Long assignmentBatchId = null;
+
+				if (trainingAssignment.getBatch() != null) {
+					assignmentBatchId = trainingAssignment.getBatch().getBatchId();
+				}
+
+				if (assignmentUserId != null && assignmentUserId.equals(request.getUserId())) {
+
+					// Direct user assignment is valid.
+				}
+
+				else if (assignmentBatchId != null && assignmentBatchId > 0) {
+
+					boolean userBelongsToBatch = userBatchRepository.existsByUserIdAndBatch_BatchId(request.getUserId(),
+							assignmentBatchId);
+
+					if (!userBelongsToBatch) {
+						return new ResponseEntity("User does not belong to the batch assigned to this training",
+								HttpStatus.BAD_REQUEST.value(), null);
+					}
+				}
+
+				else {
+
+					return new ResponseEntity("Training assignment does not belong to the specified user or batch",
 							HttpStatus.BAD_REQUEST.value(), null);
 				}
 			}
@@ -95,13 +124,19 @@ public class UserVideoServiceImpl implements UserVideoService {
 			UserVideo userVideo = new UserVideo();
 
 			userVideo.setUserId(request.getUserId());
+
 			userVideo.setVideo(video);
+
 			userVideo.setTrainingAssignment(trainingAssignment);
 
 			userVideo.setStatus(UserVideoStatus.ASSIGNED);
+
 			userVideo.setWatchedCount(0);
 
+			userVideo.setWatchedSeconds(0);
+
 			userVideo.setAssignedAt(LocalDateTime.now());
+
 			userVideo.setExpiryDate(request.getExpiryDate());
 
 			Long currentUserId = CurrentUser.getUserId();
@@ -157,7 +192,6 @@ public class UserVideoServiceImpl implements UserVideoService {
 		}
 	}
 
-
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getAllUserVideos() {
@@ -179,7 +213,6 @@ public class UserVideoServiceImpl implements UserVideoService {
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
-
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
@@ -206,7 +239,6 @@ public class UserVideoServiceImpl implements UserVideoService {
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
-
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
@@ -236,6 +268,72 @@ public class UserVideoServiceImpl implements UserVideoService {
 		}
 	}
 
+//	@Override
+//	@Transactional("tmsTransactionManager")
+//	public ResponseEntity updateWatchStatus(Long id) {
+//
+//		try {
+//
+//			if (id == null || id <= 0) {
+//				return new ResponseEntity("Invalid user video id", HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//
+//			UserVideo userVideo = userVideoRepository.findById(id).orElse(null);
+//
+//			if (userVideo == null) {
+//				return new ResponseEntity("User video not found", HttpStatus.NOT_FOUND.value(), null);
+//			}
+//
+//			LocalDateTime now = LocalDateTime.now();
+//
+//			if (userVideo.getStatus() == UserVideoStatus.ASSIGNED) {
+//
+//				userVideo.setStatus(UserVideoStatus.IN_PROGRESS);
+//				userVideo.setLastWatchedAt(now);
+//
+//				if (userVideo.getWatchedCount() == null) {
+//					userVideo.setWatchedCount(0);
+//				}
+//
+//				userVideo.setWatchedCount(userVideo.getWatchedCount() + 1);
+//
+//			} else if (userVideo.getStatus() == UserVideoStatus.IN_PROGRESS) {
+//
+//				userVideo.setStatus(UserVideoStatus.COMPLETED);
+//				userVideo.setLastWatchedAt(now);
+//				userVideo.setCompletedAt(now);
+//
+//				if (userVideo.getWatchedCount() == null) {
+//					userVideo.setWatchedCount(0);
+//				}
+//
+//				userVideo.setWatchedCount(userVideo.getWatchedCount() + 1);
+//
+//			} else if (userVideo.getStatus() == UserVideoStatus.COMPLETED) {
+//
+//				userVideo.setLastWatchedAt(now);
+//
+//				if (userVideo.getWatchedCount() == null) {
+//					userVideo.setWatchedCount(0);
+//				}
+//
+//				userVideo.setWatchedCount(userVideo.getWatchedCount() + 1);
+//			}
+//
+//			UserVideo savedUserVideo = userVideoRepository.save(userVideo);
+//
+//			return new ResponseEntity("Watch status updated successfully", HttpStatus.OK.value(),
+//					mapToResponse(savedUserVideo));
+//
+//		} catch (Exception e) {
+//
+//			e.printStackTrace();
+//
+//			return new ResponseEntity("Failed to update watch status: " + e.getMessage(),
+//					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+//		}
+//	}
+
 	@Override
 	@Transactional("tmsTransactionManager")
 	public ResponseEntity updateWatchStatus(Long id) {
@@ -243,12 +341,14 @@ public class UserVideoServiceImpl implements UserVideoService {
 		try {
 
 			if (id == null || id <= 0) {
+
 				return new ResponseEntity("Invalid user video id", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			UserVideo userVideo = userVideoRepository.findById(id).orElse(null);
 
 			if (userVideo == null) {
+
 				return new ResponseEntity("User video not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
@@ -264,8 +364,9 @@ public class UserVideoServiceImpl implements UserVideoService {
 				}
 
 				userVideo.setWatchedCount(userVideo.getWatchedCount() + 1);
+			}
 
-			} else if (userVideo.getStatus() == UserVideoStatus.IN_PROGRESS) {
+			else if (userVideo.getStatus() == UserVideoStatus.IN_PROGRESS) {
 
 				userVideo.setStatus(UserVideoStatus.COMPLETED);
 				userVideo.setLastWatchedAt(now);
@@ -276,8 +377,9 @@ public class UserVideoServiceImpl implements UserVideoService {
 				}
 
 				userVideo.setWatchedCount(userVideo.getWatchedCount() + 1);
+			}
 
-			} else if (userVideo.getStatus() == UserVideoStatus.COMPLETED) {
+			else if (userVideo.getStatus() == UserVideoStatus.COMPLETED) {
 
 				userVideo.setLastWatchedAt(now);
 
@@ -290,14 +392,101 @@ public class UserVideoServiceImpl implements UserVideoService {
 
 			UserVideo savedUserVideo = userVideoRepository.save(userVideo);
 
-			return new ResponseEntity("Watch status updated successfully", HttpStatus.OK.value(),
-					mapToResponse(savedUserVideo));
+			TrainingAssignment trainingAssignment = savedUserVideo.getTrainingAssignment();
+
+			if (trainingAssignment == null) {
+
+				return new ResponseEntity("Training assignment not found for user video", HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+
+			Long trainingAssignmentId = trainingAssignment.getTrainingAssignmentId();
+
+			Long userId = savedUserVideo.getUserId();
+
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (userId == null || userId <= 0) {
+
+				return new ResponseEntity("Invalid user id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			long totalVideos = userVideoRepository.countVideosByTrainingAssignmentAndUser(trainingAssignmentId, userId);
+
+			long completedVideos = userVideoRepository
+					.countCompletedVideosByTrainingAssignmentAndUser(trainingAssignmentId, userId);
+
+			BigDecimal progressPercentage;
+
+			if (totalVideos == 0) {
+
+				progressPercentage = BigDecimal.ZERO;
+
+			} else {
+
+				progressPercentage = BigDecimal.valueOf(completedVideos).multiply(BigDecimal.valueOf(100))
+						.divide(BigDecimal.valueOf(totalVideos), 2, RoundingMode.HALF_UP);
+			}
+
+			trainingAssignment.setProgressPercentage(progressPercentage);
+
+			if (progressPercentage.compareTo(BigDecimal.ZERO) == 0) {
+
+				trainingAssignment.setStatus(AssignmentStatus.NOT_STARTED);
+
+			}
+
+			else if (progressPercentage.compareTo(BigDecimal.valueOf(100)) == 0) {
+
+				trainingAssignment.setStatus(AssignmentStatus.COMPLETED);
+
+				trainingAssignment.setCompletionDate(now);
+
+			}
+
+			else {
+
+				trainingAssignment.setStatus(AssignmentStatus.IN_PROGRESS);
+
+				if (trainingAssignment.getStartedAt() == null) {
+
+					trainingAssignment.setStartedAt(now);
+				}
+			}
+
+			TrainingAssignment savedAssignment = trainingAssignmentRepository.save(trainingAssignment);
+
+			java.util.Map<String, Object> response = new java.util.HashMap<>();
+
+			response.put("userVideo", mapToResponse(savedUserVideo));
+
+			response.put("trainingAssignmentId", savedAssignment.getTrainingAssignmentId());
+
+			response.put("userId", savedAssignment.getUserId());
+
+			response.put("totalVideos", totalVideos);
+
+			response.put("completedVideos", completedVideos);
+
+			response.put("progressPercentage", savedAssignment.getProgressPercentage());
+
+			response.put("status", savedAssignment.getStatus());
+
+			response.put("startedAt", savedAssignment.getStartedAt());
+
+			response.put("completionDate", savedAssignment.getCompletionDate());
+
+			return new ResponseEntity("Watch status and training progress updated successfully", HttpStatus.OK.value(),
+					response);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Failed to update watch status: " + e.getMessage(),
+			return new ResponseEntity("Failed to update watch status and training progress: " + e.getMessage(),
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
@@ -410,220 +599,139 @@ public class UserVideoServiceImpl implements UserVideoService {
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getAllUserVideos(int page, int size, String sortBy, String sortDir) {
 
-	    try {
+		try {
 
-	        if (page < 0) {
-	            page = 0;
-	        }
+			if (page < 0) {
+				page = 0;
+			}
 
-	        if (size <= 0) {
-	            size = 10;
-	        }
+			if (size <= 0) {
+				size = 10;
+			}
 
-	        if (sortBy == null || sortBy.trim().isEmpty()) {
-	            sortBy = "userVideoId";
-	        }
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "userVideoId";
+			}
 
-	        Sort.Direction direction = sortDir != null
-	                && sortDir.equalsIgnoreCase("asc")
-	                        ? Sort.Direction.ASC
-	                        : Sort.Direction.DESC;
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
 
-	        Pageable pageable = PageRequest.of(
-	                page,
-	                size,
-	                Sort.by(direction, sortBy)
-	        );
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-	        Page<UserVideo> userVideoPage =
-	                userVideoRepository.findAll(pageable);
+			Page<UserVideo> userVideoPage = userVideoRepository.findAll(pageable);
 
-	        List<UserVideoResponse> response =
-	                userVideoPage.getContent()
-	                        .stream()
-	                        .map(this::mapToResponse)
-	                        .collect(Collectors.toList());
+			List<UserVideoResponse> response = userVideoPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
 
-	        PageResponse<UserVideoResponse> pageResponse =
-	                new PageResponse<>(
-	                        response,
-	                        userVideoPage.getNumber(),
-	                        userVideoPage.getSize(),
-	                        userVideoPage.getTotalElements(),
-	                        userVideoPage.getTotalPages(),
-	                        userVideoPage.isLast()
-	                );
+			PageResponse<UserVideoResponse> pageResponse = new PageResponse<>(response, userVideoPage.getNumber(),
+					userVideoPage.getSize(), userVideoPage.getTotalElements(), userVideoPage.getTotalPages(),
+					userVideoPage.isLast());
 
-	        return new ResponseEntity(
-	                "User videos fetched successfully",
-	                HttpStatus.OK.value(),
-	                pageResponse
-	        );
+			return new ResponseEntity("User videos fetched successfully", HttpStatus.OK.value(), pageResponse);
 
-	    } catch (Exception e) {
+		} catch (Exception e) {
 
-	        e.printStackTrace();
+			e.printStackTrace();
 
-	        return new ResponseEntity(
-	                "Failed to fetch user videos: " + e.getMessage(),
-	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	                null
-	        );
-	    }
+			return new ResponseEntity("Failed to fetch user videos: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
-	public ResponseEntity getUserVideosByUserId(
-	        Long userId,
-	        int page,
-	        int size,
-	        String sortBy,
-	        String sortDir) {
+	public ResponseEntity getUserVideosByUserId(Long userId, int page, int size, String sortBy, String sortDir) {
 
-	    try {
+		try {
 
-	        if (userId == null || userId <= 0) {
-	            return new ResponseEntity(
-	                    "Invalid user id",
-	                    HttpStatus.BAD_REQUEST.value(),
-	                    null);
-	        }
+			if (userId == null || userId <= 0) {
+				return new ResponseEntity("Invalid user id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-	        if (page < 0) {
-	            page = 0;
-	        }
+			if (page < 0) {
+				page = 0;
+			}
 
-	        if (size <= 0) {
-	            size = 10;
-	        }
+			if (size <= 0) {
+				size = 10;
+			}
 
-	        if (sortBy == null || sortBy.trim().isEmpty()) {
-	            sortBy = "userVideoId";
-	        }
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "userVideoId";
+			}
 
-	        Sort.Direction direction =
-	                sortDir != null && sortDir.equalsIgnoreCase("asc")
-	                        ? Sort.Direction.ASC
-	                        : Sort.Direction.DESC;
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
 
-	        Pageable pageable = PageRequest.of(
-	                page,
-	                size,
-	                Sort.by(direction, sortBy)
-	        );
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-	        Page<UserVideo> userVideoPage =
-	                userVideoRepository.findByUserId(userId, pageable);
+			Page<UserVideo> userVideoPage = userVideoRepository.findByUserId(userId, pageable);
 
-	        List<UserVideoResponse> response =
-	                userVideoPage.getContent()
-	                        .stream()
-	                        .map(this::mapToResponse)
-	                        .collect(Collectors.toList());
+			List<UserVideoResponse> response = userVideoPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
 
-	        PageResponse<UserVideoResponse> pageResponse =
-	                new PageResponse<>(
-	                        response,
-	                        userVideoPage.getNumber(),
-	                        userVideoPage.getSize(),
-	                        userVideoPage.getTotalElements(),
-	                        userVideoPage.getTotalPages(),
-	                        userVideoPage.isLast()
-	                );
+			PageResponse<UserVideoResponse> pageResponse = new PageResponse<>(response, userVideoPage.getNumber(),
+					userVideoPage.getSize(), userVideoPage.getTotalElements(), userVideoPage.getTotalPages(),
+					userVideoPage.isLast());
 
-	        return new ResponseEntity(
-	                "User videos fetched successfully",
-	                HttpStatus.OK.value(),
-	                pageResponse);
+			return new ResponseEntity("User videos fetched successfully", HttpStatus.OK.value(), pageResponse);
 
-	    } catch (Exception e) {
+		} catch (Exception e) {
 
-	        e.printStackTrace();
+			e.printStackTrace();
 
-	        return new ResponseEntity(
-	                "Failed to fetch user videos: " + e.getMessage(),
-	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	                null);
-	    }
+			return new ResponseEntity("Failed to fetch user videos: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
-	public ResponseEntity getUserVideosByTrainingAssignmentId(
-	        Long trainingAssignmentId,
-	        int page,
-	        int size,
-	        String sortBy,
-	        String sortDir) {
+	public ResponseEntity getUserVideosByTrainingAssignmentId(Long trainingAssignmentId, int page, int size,
+			String sortBy, String sortDir) {
 
-	    try {
+		try {
 
-	        if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
-	            return new ResponseEntity(
-	                    "Invalid training assignment id",
-	                    HttpStatus.BAD_REQUEST.value(),
-	                    null);
-	        }
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-	        if (page < 0) {
-	            page = 0;
-	        }
+			if (page < 0) {
+				page = 0;
+			}
 
-	        if (size <= 0) {
-	            size = 10;
-	        }
+			if (size <= 0) {
+				size = 10;
+			}
 
-	        if (sortBy == null || sortBy.trim().isEmpty()) {
-	            sortBy = "userVideoId";
-	        }
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "userVideoId";
+			}
 
-	        Sort.Direction direction =
-	                sortDir != null && sortDir.equalsIgnoreCase("asc")
-	                        ? Sort.Direction.ASC
-	                        : Sort.Direction.DESC;
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
 
-	        Pageable pageable = PageRequest.of(
-	                page,
-	                size,
-	                Sort.by(direction, sortBy)
-	        );
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-	        Page<UserVideo> userVideoPage =
-	                userVideoRepository.findByTrainingAssignment_TrainingAssignmentId(
-	                        trainingAssignmentId,
-	                        pageable);
+			Page<UserVideo> userVideoPage = userVideoRepository
+					.findByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId, pageable);
 
-	        List<UserVideoResponse> response =
-	                userVideoPage.getContent()
-	                        .stream()
-	                        .map(this::mapToResponse)
-	                        .collect(Collectors.toList());
+			List<UserVideoResponse> response = userVideoPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
 
-	        PageResponse<UserVideoResponse> pageResponse =
-	                new PageResponse<>(
-	                        response,
-	                        userVideoPage.getNumber(),
-	                        userVideoPage.getSize(),
-	                        userVideoPage.getTotalElements(),
-	                        userVideoPage.getTotalPages(),
-	                        userVideoPage.isLast()
-	                );
+			PageResponse<UserVideoResponse> pageResponse = new PageResponse<>(response, userVideoPage.getNumber(),
+					userVideoPage.getSize(), userVideoPage.getTotalElements(), userVideoPage.getTotalPages(),
+					userVideoPage.isLast());
 
-	        return new ResponseEntity(
-	                "User videos fetched successfully",
-	                HttpStatus.OK.value(),
-	                pageResponse);
+			return new ResponseEntity("User videos fetched successfully", HttpStatus.OK.value(), pageResponse);
 
-	    } catch (Exception e) {
+		} catch (Exception e) {
 
-	        e.printStackTrace();
+			e.printStackTrace();
 
-	        return new ResponseEntity(
-	                "Failed to fetch user videos: " + e.getMessage(),
-	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	                null);
-	    }
+			return new ResponseEntity("Failed to fetch user videos: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	private UserVideoResponse mapToResponse(UserVideo userVideo) {
