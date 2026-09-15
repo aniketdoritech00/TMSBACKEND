@@ -39,18 +39,30 @@ public interface TrainingAssignmentRepository extends JpaRepository<TrainingAssi
 			""")
 	List<TrainingAssignment> findAssignmentsByUserIdOrBatch(@Param("userId") Long userId);
 
-	@Query("""
-			    SELECT ta
-			    FROM TrainingAssignment ta
-			    WHERE ta.userId = :userId
-			       OR (
-			            ta.userId IS NULL
-			            AND ta.batch.batchId IN (
-			                SELECT ub.batch.batchId
-			                FROM UserBatch ub
-			                WHERE ub.userId = :userId
-			            )
-			       )
+	@Query(value = """
+			SELECT DISTINCT ta
+			FROM TrainingAssignment ta
+			WHERE ta.userId = :userId
+			   OR (
+			        ta.userId IS NULL
+			        AND ta.batch.batchId IN (
+			            SELECT ub.batch.batchId
+			            FROM UserBatch ub
+			            WHERE ub.userId = :userId
+			        )
+			   )
+			""", countQuery = """
+			SELECT COUNT(DISTINCT ta.trainingAssignmentId)
+			FROM TrainingAssignment ta
+			WHERE ta.userId = :userId
+			   OR (
+			        ta.userId IS NULL
+			        AND ta.batch.batchId IN (
+			            SELECT ub.batch.batchId
+			            FROM UserBatch ub
+			            WHERE ub.userId = :userId
+			        )
+			   )
 			""")
 	Page<TrainingAssignment> findAssignmentsByUserIdOrBatch(@Param("userId") Long userId, Pageable pageable);
 

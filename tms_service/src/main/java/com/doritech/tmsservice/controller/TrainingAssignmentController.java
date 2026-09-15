@@ -101,4 +101,8 @@ public class TrainingAssignmentController {
 		return trainingAssignmentService.getTrainingAssignmentsForCurrentUser(page, size, sortBy, sortDir);
 	}
 
+	@PutMapping("/updateProgress/{trainingAssignmentId}")
+	public ResponseEntity updateTrainingAssignmentProgress(@PathVariable Long trainingAssignmentId) {
+		return trainingAssignmentService.updateTrainingAssignmentProgress(trainingAssignmentId);
+	}
 }

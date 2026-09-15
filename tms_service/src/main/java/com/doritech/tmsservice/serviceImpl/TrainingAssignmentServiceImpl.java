@@ -1,6 +1,7 @@
 package com.doritech.tmsservice.serviceImpl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ import com.doritech.tmsservice.tms.entity.TrainingAssignment;
 import com.doritech.tmsservice.tms.repository.BatchRepository;
 import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
 import com.doritech.tmsservice.tms.repository.TrainingRepository;
+import com.doritech.tmsservice.tms.repository.UserVideoRepository;
 
 @Service
 public class TrainingAssignmentServiceImpl implements TrainingAssignmentService {
@@ -41,14 +43,18 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 
 	private final BatchRepository batchRepository;
 
+	private final UserVideoRepository userVideoRepository;
+
 	public TrainingAssignmentServiceImpl(TrainingAssignmentRepository trainingAssignmentRepository,
-			TrainingRepository trainingRepository, UserMasterRepository userRepository,
-			BatchRepository batchRepository) {
+			TrainingRepository trainingRepository, UserMasterRepository userRepository, BatchRepository batchRepository,
+			UserVideoRepository userVideoRepository) {
 
 		this.trainingAssignmentRepository = trainingAssignmentRepository;
 		this.trainingRepository = trainingRepository;
 		this.userRepository = userRepository;
 		this.batchRepository = batchRepository;
+		this.userVideoRepository = userVideoRepository;
+
 	}
 
 	@Override
@@ -721,6 +727,14 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			}
 		}
 
+		if (assignment.getUserId() != null) {
+			UserMaster assignedUser = userRepository.findById(assignment.getUserId().intValue()).orElse(null);
+
+			if (assignedUser != null) {
+				response.setUserName(userRepository.findEmployeeNameByUserId(assignment.getUserId().intValue()));
+			}
+		}
+
 		response.setAssignedAt(assignment.getAssignedAt());
 
 		response.setDueDate(assignment.getDueDate());
@@ -867,6 +881,100 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			e.printStackTrace();
 
 			return new ResponseEntity("Failed to fetch training assignments: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager")
+	public ResponseEntity updateTrainingAssignmentProgress(Long trainingAssignmentId) {
+
+		try {
+
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+
+				return new ResponseEntity("Invalid training assignment id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			TrainingAssignment trainingAssignment = trainingAssignmentRepository.findById(trainingAssignmentId)
+					.orElse(null);
+
+			if (trainingAssignment == null) {
+
+				return new ResponseEntity("Training assignment not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			Long userId = trainingAssignment.getUserId();
+
+			if (userId == null || userId <= 0) {
+
+				return new ResponseEntity("Invalid user id in training assignment", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			long totalVideos = userVideoRepository.countVideosByTrainingAssignmentAndUser(trainingAssignmentId, userId);
+
+			long completedVideos = userVideoRepository
+					.countCompletedVideosByTrainingAssignmentAndUser(trainingAssignmentId, userId);
+
+			BigDecimal progressPercentage;
+
+			if (totalVideos == 0) {
+
+				progressPercentage = BigDecimal.ZERO;
+
+			} else {
+
+				progressPercentage = BigDecimal.valueOf(completedVideos).multiply(BigDecimal.valueOf(100))
+						.divide(BigDecimal.valueOf(totalVideos), 2, RoundingMode.HALF_UP);
+			}
+
+			trainingAssignment.setProgressPercentage(progressPercentage);
+
+			if (progressPercentage.compareTo(BigDecimal.ZERO) == 0) {
+
+				trainingAssignment.setStatus(AssignmentStatus.NOT_STARTED);
+
+			} else if (progressPercentage.compareTo(BigDecimal.valueOf(100)) == 0) {
+
+				trainingAssignment.setStatus(AssignmentStatus.COMPLETED);
+
+				trainingAssignment.setCompletionDate(java.time.LocalDateTime.now());
+
+			} else {
+
+				trainingAssignment.setStatus(AssignmentStatus.IN_PROGRESS);
+
+				if (trainingAssignment.getStartedAt() == null) {
+
+					trainingAssignment.setStartedAt(java.time.LocalDateTime.now());
+				}
+			}
+
+			TrainingAssignment savedAssignment = trainingAssignmentRepository.save(trainingAssignment);
+
+			java.util.Map<String, Object> response = new java.util.HashMap<>();
+
+			response.put("trainingAssignmentId", savedAssignment.getTrainingAssignmentId());
+
+			response.put("userId", savedAssignment.getUserId());
+
+			response.put("totalVideos", totalVideos);
+
+			response.put("completedVideos", completedVideos);
+
+			response.put("progressPercentage", savedAssignment.getProgressPercentage());
+
+			response.put("status", savedAssignment.getStatus());
+
+			return new ResponseEntity("Training assignment progress updated successfully", HttpStatus.OK.value(),
+					response);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Failed to update training assignment progress: " + e.getMessage(),
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
