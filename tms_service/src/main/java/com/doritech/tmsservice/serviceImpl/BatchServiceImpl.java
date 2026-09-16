@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -351,4 +352,107 @@ public class BatchServiceImpl implements BatchService {
 		return response;
 	}
 
+	@Override
+	public ResponseEntity getAllBatch(
+	        int page,
+	        int size,
+	        String batchCode,
+	        String batchName) {
+
+	    ResponseEntity response = new ResponseEntity();
+
+	    try {
+
+	        if (page < 0) {
+	            response.setMessage("Page number cannot be negative");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
+
+	        if (size <= 0) {
+	            response.setMessage("Page size must be greater than 0");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
+
+	        Pageable pageable = PageRequest.of(
+	                page,
+	                size,
+	                Sort.by(Sort.Direction.DESC, "batchId")
+	        );
+
+	        Specification<Batch> specification =
+	                Specification.where(null);
+
+	        // Filter by Batch Code
+	        if (batchCode != null && !batchCode.trim().isEmpty()) {
+
+	            specification = specification.and(
+	                    (root, query, criteriaBuilder) ->
+	                            criteriaBuilder.equal(
+	                                    root.get("batchCode"),
+	                                    batchCode.trim()
+	                            )
+	            );
+	        }
+
+	        // Filter by Batch Name
+	        if (batchName != null && !batchName.trim().isEmpty()) {
+
+	            specification = specification.and(
+	                    (root, query, criteriaBuilder) ->
+	                            criteriaBuilder.like(
+	                                    criteriaBuilder.lower(
+	                                            root.get("batchName")
+	                                    ),
+	                                    "%" + batchName.trim().toLowerCase() + "%"
+	                            )
+	            );
+	        }
+
+	        Page<Batch> batchPage =
+	                batchRepository.findAll(specification, pageable);
+
+	        if (batchPage.isEmpty()) {
+	            response.setMessage("No batches found!");
+	            response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	            response.setPayload(null);
+	            return response;
+	        }
+
+	        List<BatchResponse> batchResponses =
+	                batchPage.getContent()
+	                        .stream()
+	                        .map(this::convertToResponse)
+	                        .toList();
+
+	        PageResponse<BatchResponse> pageResponse =
+	                new PageResponse<>();
+
+	        pageResponse.setContent(batchResponses);
+	        pageResponse.setPageNumber(batchPage.getNumber());
+	        pageResponse.setPageSize(batchPage.getSize());
+	        pageResponse.setTotalElements(batchPage.getTotalElements());
+	        pageResponse.setTotalPages(batchPage.getTotalPages());
+	        pageResponse.setLastPage(batchPage.isLast());
+
+	        response.setMessage("Batches found successfully!");
+	        response.setStatusCode(HttpStatus.OK.value());
+	        response.setPayload(pageResponse);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage("Internal server error!");
+	        response.setStatusCode(
+	                HttpStatus.INTERNAL_SERVER_ERROR.value()
+	        );
+	        response.setPayload(null);
+	    }
+
+	    return response;
+	}
 }
