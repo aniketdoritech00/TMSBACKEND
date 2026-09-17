@@ -63,4 +63,15 @@ public class ProductController {
 	public ResponseEntity getAllProduct() {
 		return productService.getAllProduct();
 	}
+
+	@GetMapping("/getAllProductFilter")
+	public ResponseEntity getAllProductFilter(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String productName,
+			@RequestParam(required = false) String productCode, @RequestParam(required = false) Long productCategoryId,
+			@RequestParam(required = false) Boolean isActive, @RequestParam(defaultValue = "productId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir) {
+
+		return productService.getAllProductFilter(page, size, productName, productCode, productCategoryId, isActive,
+				sortBy, sortDir);
+	}
 }
