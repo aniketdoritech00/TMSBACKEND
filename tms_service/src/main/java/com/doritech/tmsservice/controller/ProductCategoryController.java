@@ -45,6 +45,26 @@ public class ProductCategoryController {
 		return productCategoryService.getProductCategoryById(id);
 	}
 
+	@GetMapping("/getAllProductCategoryFilter")
+	public ResponseEntity getAllProductCategoryFilter(
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        @RequestParam(required = false) String productCategoryName,
+	        @RequestParam(required = false) String productCategoryCode,
+	        @RequestParam(defaultValue = "productCategoryId") String sortBy,
+	        @RequestParam(defaultValue = "asc") String sortDir) {
+
+	    return productCategoryService.getAllProductCategoryFilter(
+	            page,
+	            size,
+	            productCategoryName,
+	            productCategoryCode,
+	            sortBy,
+	            sortDir);
+	}
+	
+	
+	
 	@DeleteMapping("/deleteProductCategoryByCategoryId")
 	public ResponseEntity deleteProductCategoryByCategoryId(@RequestParam(required = false) Long id) {
 		if (id == null) {

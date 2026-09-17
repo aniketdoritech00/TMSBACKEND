@@ -1,6 +1,10 @@
 package com.doritech.tmsservice.tms.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.doritech.tmsservice.tms.entity.ProductCategory;
@@ -19,5 +23,19 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
 	boolean existsByProductCategoryNameAndProductCategoryIdNot(String productCategoryName, Long id);
 
 	boolean existsByProductCategoryDisplayOrderAndProductCategoryIdNot(Integer productCategoryDisplayOrder, Long id);
+
+
+	@Query("""
+		       SELECT pc
+		       FROM ProductCategory pc
+		       WHERE (:productCategoryName IS NULL 
+		              OR LOWER(pc.productCategoryName) LIKE LOWER(CONCAT('%', :productCategoryName, '%')))
+		       AND (:productCategoryCode IS NULL 
+		              OR LOWER(pc.productCategoryCode) LIKE LOWER(CONCAT('%', :productCategoryCode, '%')))
+		       """)
+		Page<ProductCategory> findProductCategoryFilter(
+		        @Param("productCategoryName") String productCategoryName,
+		        @Param("productCategoryCode") String productCategoryCode,
+		        Pageable pageable);
 
 }

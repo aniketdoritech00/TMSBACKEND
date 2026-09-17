@@ -73,7 +73,99 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+	
+	
+	@Override
+    public ResponseEntity getAllProductCategoryFilter(
+            int page,
+            int size,
+            String productCategoryName,
+            String productCategoryCode,
+            String sortBy,
+            String sortDir) {
 
+        try {
+
+            // ---------------------------------------------
+            // 1. Create sorting
+            // ---------------------------------------------
+
+            Sort sort;
+
+            if (sortDir.equalsIgnoreCase("desc")) {
+
+                sort = Sort.by(sortBy).descending();
+
+            } else {
+
+                sort = Sort.by(sortBy).ascending();
+            }
+
+
+            // ---------------------------------------------
+            // 2. Create Pageable
+            // ---------------------------------------------
+
+            Pageable pageable =
+                    PageRequest.of(page, size, sort);
+
+
+            // ---------------------------------------------
+            // 3. Get filtered data from database
+            // ---------------------------------------------
+
+            Page<ProductCategory> productCategoryPage =
+                    productCategoryRepository.findProductCategoryFilter(
+                            productCategoryName,
+                            productCategoryCode,
+                            pageable);
+
+
+            // ---------------------------------------------
+            // 4. Get content
+            // ---------------------------------------------
+
+            List<ProductCategory> content =
+                    productCategoryPage.getContent();
+
+
+            // ---------------------------------------------
+            // 5. Create PageResponse
+            // ---------------------------------------------
+
+            PageResponse<ProductCategory> pageResponse =
+                    new PageResponse<>(
+                            content,
+                            productCategoryPage.getNumber(),
+                            productCategoryPage.getSize(),
+                            productCategoryPage.getTotalElements(),
+                            productCategoryPage.getTotalPages(),
+                            productCategoryPage.isLast());
+
+
+            // ---------------------------------------------
+            // 6. Return response
+            // ---------------------------------------------
+
+            return new ResponseEntity(
+                    "Product categories fetched successfully!",
+                    HttpStatus.OK.value(),
+                    pageResponse);
+
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return new ResponseEntity(
+                    "Internal server error!",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    null);
+        }
+    }
+
+
+    
 	@Override
 	public ResponseEntity getProductCategoryById(Long id) {
 		try {
@@ -89,7 +181,11 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 			return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
-
+	
+	
+	
+	
+	
 	@Override
 	public ResponseEntity getAllProductCategory(int page, int size, String sortBy, String sortDir) {
 
