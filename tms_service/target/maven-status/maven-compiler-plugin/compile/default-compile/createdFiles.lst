@@ -212,6 +212,7 @@ com\doritech\tmsservice\tms\entity\DocumentSubProduct.class
 com\doritech\tmsservice\response\TrainingAssignmentResponse.class
 com\doritech\tmsservice\service\TestQuestionService.class
 com\doritech\tmsservice\service\UserResponseService.class
+com\doritech\tmsservice\response\InTrainingQuestionResultResponse.class
 com\doritech\tmsservice\controller\VideoAccessControlController.class
 com\doritech\tmsservice\request\SubProductRequest.class
 com\doritech\tmsservice\controller\TrainingAssignmentController.class
@@ -251,4 +252,5 @@ com\doritech\tmsservice\response\InTrainingQuestionSecureResponse.class
 com\doritech\tmsservice\serviceImpl\TestAttemptServiceImpl.class
 com\doritech\tmsservice\tms\repository\SubProductRepository.class
 com\doritech\tmsservice\serviceImpl\InTrainingQuestionServiceImpl.class
+com\doritech\tmsservice\response\InTrainingResultResponse.class
 com\doritech\tmsservice\enums\SupportPriority.class

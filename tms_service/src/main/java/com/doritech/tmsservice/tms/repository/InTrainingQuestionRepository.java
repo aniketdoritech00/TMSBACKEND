@@ -19,4 +19,5 @@ public interface InTrainingQuestionRepository extends JpaRepository<InTrainingQu
 	List<InTrainingQuestion> findByVideo_VideoIdOrderByDisplayOrderAsc(Long videoId);
 
 	Page<InTrainingQuestion> findByVideo_VideoId(Long videoId, Pageable pageable);
+	
 }

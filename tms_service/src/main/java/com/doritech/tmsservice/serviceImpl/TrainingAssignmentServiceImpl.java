@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.enums.AssignmentStatus;
+import com.doritech.tmsservice.enums.UserVideoStatus;
 import com.doritech.tmsservice.erp.entity.UserMaster;
 import com.doritech.tmsservice.erp.repository.UserMasterRepository;
 import com.doritech.tmsservice.request.TrainingAssignmentRequest;
@@ -27,10 +28,15 @@ import com.doritech.tmsservice.tms.entity.Batch;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.entity.Training;
 import com.doritech.tmsservice.tms.entity.TrainingAssignment;
+import com.doritech.tmsservice.tms.entity.TrainingContent;
+import com.doritech.tmsservice.tms.entity.UserVideo;
+import com.doritech.tmsservice.tms.entity.Video;
 import com.doritech.tmsservice.tms.repository.BatchRepository;
 import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
+import com.doritech.tmsservice.tms.repository.TrainingContentRepository;
 import com.doritech.tmsservice.tms.repository.TrainingRepository;
 import com.doritech.tmsservice.tms.repository.UserVideoRepository;
+import com.doritech.tmsservice.tms.repository.VideoRepository;
 
 @Service
 public class TrainingAssignmentServiceImpl implements TrainingAssignmentService {
@@ -45,16 +51,22 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 
 	private final UserVideoRepository userVideoRepository;
 
+	private final TrainingContentRepository trainingContentRepository;
+
+	private final VideoRepository videoRepository;
+
 	public TrainingAssignmentServiceImpl(TrainingAssignmentRepository trainingAssignmentRepository,
 			TrainingRepository trainingRepository, UserMasterRepository userRepository, BatchRepository batchRepository,
-			UserVideoRepository userVideoRepository) {
+			UserVideoRepository userVideoRepository, TrainingContentRepository trainingContentRepository,
+			VideoRepository videoRepository) {
 
 		this.trainingAssignmentRepository = trainingAssignmentRepository;
 		this.trainingRepository = trainingRepository;
 		this.userRepository = userRepository;
 		this.batchRepository = batchRepository;
 		this.userVideoRepository = userVideoRepository;
-
+		this.trainingContentRepository = trainingContentRepository;
+		this.videoRepository = videoRepository;
 	}
 
 	@Override
@@ -64,19 +76,16 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 		try {
 
 			if (request == null) {
-
 				return new ResponseEntity("Training assignment data is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			if (request.getTrainingId() == null || request.getTrainingId() <= 0) {
-
 				return new ResponseEntity("Valid training id is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			Training training = trainingRepository.findById(request.getTrainingId()).orElse(null);
 
 			if (training == null) {
-
 				return new ResponseEntity("Training not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
@@ -98,7 +107,6 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 				user = userRepository.findById(userIdInt).orElse(null);
 
 				if (user == null) {
-
 					return new ResponseEntity("User not found", HttpStatus.NOT_FOUND.value(), null);
 				}
 
@@ -159,11 +167,8 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			trainingAssignment.setTraining(training);
 
 			if (user != null) {
-
 				trainingAssignment.setUserId(user.getUserId().longValue());
-
 			} else {
-
 				trainingAssignment.setUserId(null);
 			}
 
@@ -194,6 +199,73 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			trainingAssignment.setStartedAt(null);
 
 			TrainingAssignment savedAssignment = trainingAssignmentRepository.save(trainingAssignment);
+
+			if (user != null) {
+
+				Long assignedUserId = user.getUserId().longValue();
+
+				List<TrainingContent> trainingContents = trainingContentRepository
+						.findByTraining_TrainingId(request.getTrainingId());
+
+				if (trainingContents != null && !trainingContents.isEmpty()) {
+
+					for (TrainingContent trainingContent : trainingContents) {
+						if (trainingContent.getContentType() == null) {
+							continue;
+						}
+
+						if (!trainingContent.getContentType().name().equalsIgnoreCase("VIDEO")) {
+
+							continue;
+						}
+
+						Long videoId = trainingContent.getContentReferenceId();
+
+						if (videoId == null || videoId <= 0) {
+							continue;
+						}
+
+						boolean videoAlreadyExists = userVideoRepository.existsByUserIdAndVideo_VideoId(assignedUserId,
+								videoId);
+
+						if (videoAlreadyExists) {
+							continue;
+						}
+
+						Video video = videoRepository.findById(videoId).orElse(null);
+
+						if (video == null) {
+							continue;
+						}
+
+						UserVideo userVideo = new UserVideo();
+
+						userVideo.setUserId(assignedUserId);
+
+						userVideo.setVideo(video);
+
+						userVideo.setTrainingAssignment(savedAssignment);
+
+						userVideo.setStatus(UserVideoStatus.ASSIGNED);
+
+						userVideo.setWatchedCount(0);
+
+						userVideo.setWatchedSeconds(0);
+
+						userVideo.setLastWatchedAt(null);
+
+						userVideo.setCompletedAt(null);
+
+						userVideo.setExpiryDate(request.getDueDate());
+
+						userVideo.setAssignedAt(LocalDateTime.now());
+
+						userVideo.setAssignedBy(assignedBy.getUserId().longValue());
+
+						userVideoRepository.save(userVideo);
+					}
+				}
+			}
 
 			TrainingAssignmentResponse response = convertToResponse(savedAssignment);
 

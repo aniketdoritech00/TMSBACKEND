@@ -1,5 +1,6 @@
 package com.doritech.tmsservice.tms.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -28,4 +29,6 @@ public interface InTrainingUserResponseRepository extends JpaRepository<InTraini
 			String userAnswer);
 
 	void deleteByTrainingAssignment_TrainingAssignmentId(Long trainingAssignmentId);
+
+	List<InTrainingUserResponse> findByTrainingAssignment_TrainingAssignmentId(Long trainingAssignmentId);
 }

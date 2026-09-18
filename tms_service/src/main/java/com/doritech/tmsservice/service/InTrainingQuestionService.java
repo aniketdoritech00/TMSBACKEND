@@ -1,11 +1,13 @@
 package com.doritech.tmsservice.service;
 
+import java.util.List;
+
 import com.doritech.tmsservice.request.InTrainingQuestionRequest;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface InTrainingQuestionService {
 
-	ResponseEntity createInTrainingQuestion(InTrainingQuestionRequest request);
+//	ResponseEntity createInTrainingQuestion(InTrainingQuestionRequest request);
 
 	ResponseEntity getInTrainingQuestionById(Long id);
 
@@ -20,4 +22,10 @@ public interface InTrainingQuestionService {
 	ResponseEntity updateInTrainingQuestion(Long id, InTrainingQuestionRequest request);
 
 	ResponseEntity deleteInTrainingQuestion(Long id);
+
+	ResponseEntity getInTrainingQuestionsByVideoId(Long videoId, Long trainingAssignmentId);
+
+	ResponseEntity createInTrainingQuestion(List<InTrainingQuestionRequest> requests);
+	
+	ResponseEntity getInTrainingResultByVideoId(Long videoId, Long trainingAssignmentId);
 }

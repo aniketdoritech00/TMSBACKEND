@@ -20,15 +20,16 @@ import org.springframework.web.multipart.MultipartFile;
 import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.config.FileStorageProperties;
 import com.doritech.tmsservice.enums.VideoStatus;
-import com.doritech.tmsservice.event.VideoMetadataProcessEvent;
 import com.doritech.tmsservice.exception.BadRequestException;
 import com.doritech.tmsservice.exception.DatabaseOperationException;
+import com.doritech.tmsservice.request.VideoMetadata;
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.request.VideoSubProductRequest;
 import com.doritech.tmsservice.request.VideoUpdateRequest;
 import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.response.VideoSubProductResponse;
 import com.doritech.tmsservice.service.FileStorageService;
+import com.doritech.tmsservice.service.VideoMetadataService;
 import com.doritech.tmsservice.service.VideoSubProductService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.entity.SubProduct;
@@ -50,17 +51,19 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 	private final FileStorageService fileStorageService;
 	private final ApplicationEventPublisher eventPublisher;
 	private final SubProductRepository subProductRepository;
+	private final VideoMetadataService videoMetadataService;
 
 	public VideoSubProductServiceImpl(VideoSubProductRepository videoSubProductRepository,
 			FileStorageProperties fileStorageProperties, VideoRepository videoRepository,
 			FileStorageService fileStorageService, ApplicationEventPublisher eventPublisher,
-			SubProductRepository subProductRepository) {
+			SubProductRepository subProductRepository, VideoMetadataService videoMetadataService) {
 		this.videoSubProductRepository = videoSubProductRepository;
 		this.fileStorageProperties = fileStorageProperties;
 		this.fileStorageService = fileStorageService;
 		this.videoRepository = videoRepository;
 		this.eventPublisher = eventPublisher;
 		this.subProductRepository = subProductRepository;
+		this.videoMetadataService = videoMetadataService;
 	}
 
 	@Override
@@ -191,6 +194,7 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 				entity.getAssignedAt(), entity.getAssignedBy());
 	}
 
+	@Override
 	public ResponseEntity uploadVideAndThumbnail(VideoRequest request, MultipartFile videoFile,
 			MultipartFile thumbnailFile, List<Long> subProductIds) {
 
@@ -245,7 +249,22 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 				thumbnailPath = fileStorageService.storeFile(thumbnailFile, fileStorageProperties.getImagePath());
 			}
 
-			String videoFormat = getVideoFormat(videoFile.getOriginalFilename());
+			VideoMetadata metadata = videoMetadataService.extractMetadata(Paths.get(videoPath));
+
+			log.info("Video metadata extracted successfully. Duration={}, Format={}, Resolution={}",
+					metadata.getDurationSeconds(), metadata.getVideoFormat(), metadata.getResolution());
+
+			String videoFormat = metadata.getVideoFormat();
+
+			if (videoFormat != null && !videoFormat.trim().isEmpty()) {
+				videoFormat = videoFormat.split(",")[0].trim();
+			}
+
+			if (videoFormat == null || videoFormat.trim().isEmpty()) {
+				videoFormat = getVideoFormat(videoFile.getOriginalFilename());
+			}
+
+			System.out.println("Video format is " + videoFormat);
 
 			Video video = new Video();
 
@@ -255,8 +274,8 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 			video.setThumbnailUrl(thumbnailPath);
 			video.setFileSizeBytes(videoFile.getSize());
 
-			video.setDurationSeconds(null);
-			video.setResolution(null);
+			video.setDurationSeconds(metadata.getDurationSeconds());
+			video.setResolution(metadata.getResolution());
 
 			video.setVideoFormat(videoFormat);
 
@@ -292,8 +311,6 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 			if (!mappings.isEmpty()) {
 				videoSubProductRepository.saveAll(mappings);
 			}
-
-			eventPublisher.publishEvent(new VideoMetadataProcessEvent(savedVideo.getVideoId(), videoPath));
 
 			return new ResponseEntity("Video uploaded and assigned to sub products successfully",
 					HttpStatus.CREATED.value(), mapToFullResponse(savedVideo));
@@ -379,10 +396,10 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 			return new ResponseEntity("allowScreenshot is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
 
-		if (request.getSubProductIds() == null || request.getSubProductIds().isEmpty()) {
-
-			return new ResponseEntity("At least one sub product is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
+//		if (request.getSubProductIds() == null || request.getSubProductIds().isEmpty()) {
+//
+//			return new ResponseEntity("At least one sub product is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
 
 		for (Long subProductId : request.getSubProductIds()) {
 

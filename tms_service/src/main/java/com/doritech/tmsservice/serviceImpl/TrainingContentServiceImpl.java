@@ -17,91 +17,269 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.enums.ContentType;
+import com.doritech.tmsservice.enums.UserVideoStatus;
 import com.doritech.tmsservice.request.TrainingContentRequest;
 import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.TrainingContentResponse;
 import com.doritech.tmsservice.service.TrainingContentService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.entity.Training;
+import com.doritech.tmsservice.tms.entity.TrainingAssignment;
 import com.doritech.tmsservice.tms.entity.TrainingContent;
+import com.doritech.tmsservice.tms.entity.UserVideo;
+import com.doritech.tmsservice.tms.entity.Video;
+import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
 import com.doritech.tmsservice.tms.repository.TrainingContentRepository;
 import com.doritech.tmsservice.tms.repository.TrainingRepository;
+import com.doritech.tmsservice.tms.repository.UserVideoRepository;
+import com.doritech.tmsservice.tms.repository.VideoRepository;
 
 @Service
 public class TrainingContentServiceImpl implements TrainingContentService {
 
 	private final TrainingContentRepository trainingContentRepository;
 	private final TrainingRepository trainingRepository;
+	private final VideoRepository videoRepository;
+	private final TrainingAssignmentRepository trainingAssignmentRepository;
+	private final UserVideoRepository userVideoRepository;
 
 	public TrainingContentServiceImpl(TrainingContentRepository trainingContentRepository,
-			TrainingRepository trainingRepository) {
+			TrainingRepository trainingRepository, VideoRepository videoRepository, TrainingAssignmentRepository trainingAssignmentRepository, UserVideoRepository userVideoRepository) {
 
 		this.trainingContentRepository = trainingContentRepository;
 		this.trainingRepository = trainingRepository;
+		this.videoRepository = videoRepository;
+		this.trainingAssignmentRepository = trainingAssignmentRepository;
+		this.userVideoRepository = userVideoRepository;
 	}
 
+//	@Override
+//	public ResponseEntity createTrainingContent(TrainingContentRequest request) {
+//
+//		try {
+//
+//			if (request == null) {
+//				return new ResponseEntity("Training content data is required!", HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//			if (request.getTrainingId() == null || request.getTrainingId() <= 0) {
+//				return new ResponseEntity("Valid training id is required!", HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//			if (request.getContentType() == null || request.getContentType().trim().isEmpty()) {
+//				return new ResponseEntity("Content type is required!", HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//			if (request.getContentReferenceId() == null || request.getContentReferenceId() <= 0) {
+//				return new ResponseEntity("Valid content reference id is required!", HttpStatus.BAD_REQUEST.value(),
+//						null);
+//			}
+//
+//			Long currentUserId = CurrentUser.getUserId();
+//			Optional<Training> trainingOptional = trainingRepository.findById(request.getTrainingId());
+//			if (trainingOptional.isEmpty()) {
+//				return new ResponseEntity("Training not found with id: " + request.getTrainingId(),
+//						HttpStatus.NOT_FOUND.value(), null);
+//			}
+//			Training training = trainingOptional.get();
+//			ContentType contentType;
+//			try {
+//				contentType = ContentType.valueOf(request.getContentType().trim().toUpperCase());
+//			} catch (IllegalArgumentException e) {
+//				return new ResponseEntity("Invalid content type: " + request.getContentType(),
+//						HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//			boolean alreadyExists = trainingContentRepository
+//					.existsByTraining_TrainingIdAndContentTypeAndContentReferenceId(request.getTrainingId(),
+//							contentType, request.getContentReferenceId());
+//
+//			if (alreadyExists) {
+//				return new ResponseEntity("Training content already exists for this training!",
+//						HttpStatus.CONFLICT.value(), null);
+//			}
+//
+//			TrainingContent trainingContent = new TrainingContent();
+//			trainingContent.setTraining(training);
+//			trainingContent.setContentType(contentType);
+//			trainingContent.setContentReferenceId(request.getContentReferenceId());
+//			trainingContent.setRequired(request.getIsRequired() != null ? request.getIsRequired() : false);
+//
+//			trainingContent.setCreatedBy(currentUserId);
+//			trainingContent.setCreatedAt(LocalDateTime.now());
+//			TrainingContent savedTrainingContent = trainingContentRepository.save(trainingContent);
+//
+//			return new ResponseEntity("Training content created successfully!", HttpStatus.CREATED.value(),
+//					mapToResponse(savedTrainingContent));
+//
+//		} catch (DataIntegrityViolationException e) {
+//			e.printStackTrace();
+//			return new ResponseEntity("Training content already exists or violates database constraints!",
+//					HttpStatus.CONFLICT.value(), null);
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+//		}
+//	}
+//
+
 	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity createTrainingContent(TrainingContentRequest request) {
 
 		try {
 
 			if (request == null) {
+
 				return new ResponseEntity("Training content data is required!", HttpStatus.BAD_REQUEST.value(), null);
 			}
+
 			if (request.getTrainingId() == null || request.getTrainingId() <= 0) {
+
 				return new ResponseEntity("Valid training id is required!", HttpStatus.BAD_REQUEST.value(), null);
 			}
+
 			if (request.getContentType() == null || request.getContentType().trim().isEmpty()) {
+
 				return new ResponseEntity("Content type is required!", HttpStatus.BAD_REQUEST.value(), null);
 			}
+
 			if (request.getContentReferenceId() == null || request.getContentReferenceId() <= 0) {
+
 				return new ResponseEntity("Valid content reference id is required!", HttpStatus.BAD_REQUEST.value(),
 						null);
 			}
 
 			Long currentUserId = CurrentUser.getUserId();
+
 			Optional<Training> trainingOptional = trainingRepository.findById(request.getTrainingId());
+
 			if (trainingOptional.isEmpty()) {
+
 				return new ResponseEntity("Training not found with id: " + request.getTrainingId(),
 						HttpStatus.NOT_FOUND.value(), null);
 			}
+
 			Training training = trainingOptional.get();
+
 			ContentType contentType;
+
 			try {
+
 				contentType = ContentType.valueOf(request.getContentType().trim().toUpperCase());
+
 			} catch (IllegalArgumentException e) {
+
 				return new ResponseEntity("Invalid content type: " + request.getContentType(),
 						HttpStatus.BAD_REQUEST.value(), null);
 			}
+
 			boolean alreadyExists = trainingContentRepository
 					.existsByTraining_TrainingIdAndContentTypeAndContentReferenceId(request.getTrainingId(),
 							contentType, request.getContentReferenceId());
 
 			if (alreadyExists) {
+
 				return new ResponseEntity("Training content already exists for this training!",
 						HttpStatus.CONFLICT.value(), null);
 			}
 
+			Video video = null;
+
+			if (contentType == ContentType.VIDEO) {
+
+				video = videoRepository.findById(request.getContentReferenceId()).orElse(null);
+
+				if (video == null) {
+
+					return new ResponseEntity("Video not found with id: " + request.getContentReferenceId(),
+							HttpStatus.NOT_FOUND.value(), null);
+				}
+			}
+
+			/*
+			 * Create Training Content
+			 */
 			TrainingContent trainingContent = new TrainingContent();
+
 			trainingContent.setTraining(training);
+
 			trainingContent.setContentType(contentType);
+
 			trainingContent.setContentReferenceId(request.getContentReferenceId());
+
 			trainingContent.setRequired(request.getIsRequired() != null ? request.getIsRequired() : false);
 
 			trainingContent.setCreatedBy(currentUserId);
+
 			trainingContent.setCreatedAt(LocalDateTime.now());
+
 			TrainingContent savedTrainingContent = trainingContentRepository.save(trainingContent);
+
+			if (contentType == ContentType.VIDEO) {
+
+				Long videoId = request.getContentReferenceId();
+
+				List<TrainingAssignment> assignments = trainingAssignmentRepository
+						.findByTraining_TrainingId(request.getTrainingId());
+
+				if (assignments != null && !assignments.isEmpty()) {
+
+					for (TrainingAssignment assignment : assignments) {
+						Long userId = assignment.getUserId();
+
+						if (userId == null || userId <= 0) {
+							continue;
+						}
+
+						boolean userVideoExists = userVideoRepository.existsByUserIdAndVideo_VideoId(userId, videoId);
+						if (userVideoExists) {
+							continue;
+						}
+
+						UserVideo userVideo = new UserVideo();
+
+						userVideo.setUserId(userId);
+
+						userVideo.setVideo(video);
+
+						userVideo.setTrainingAssignment(assignment);
+
+						userVideo.setStatus(UserVideoStatus.ASSIGNED);
+
+						userVideo.setWatchedCount(0);
+
+						userVideo.setWatchedSeconds(0);
+
+						userVideo.setLastWatchedAt(null);
+
+						userVideo.setCompletedAt(null);
+
+						userVideo.setExpiryDate(assignment.getDueDate());
+
+						userVideo.setAssignedAt(LocalDateTime.now());
+
+						userVideo.setAssignedBy(currentUserId);
+
+						/*
+						 * Save UserVideo
+						 */
+						userVideoRepository.save(userVideo);
+					}
+				}
+			}
 
 			return new ResponseEntity("Training content created successfully!", HttpStatus.CREATED.value(),
 					mapToResponse(savedTrainingContent));
 
 		} catch (DataIntegrityViolationException e) {
+
 			e.printStackTrace();
+
 			return new ResponseEntity("Training content already exists or violates database constraints!",
 					HttpStatus.CONFLICT.value(), null);
 
 		} catch (Exception e) {
+
 			e.printStackTrace();
+
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
