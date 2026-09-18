@@ -11,7 +11,7 @@ public class ProductRequest {
 	@NotNull(message = "{product.categoryId.notnull}")
 	private Long productCategoryId;
 
-	@NotNull(message = "{product.name.notnull}")
+	@NotNull(message = "{product.name.notnull}") 
 	@NotBlank(message = "{product.name.notblank}")
 	@Size(min = 2, max = 255, message = "{product.name.size}")
 	private String productName;

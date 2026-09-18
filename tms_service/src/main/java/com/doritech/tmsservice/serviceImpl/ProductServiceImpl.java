@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.doritech.tmsservice.request.ProductRequest;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.ProductResponse;
 import com.doritech.tmsservice.service.ParamService;
 import com.doritech.tmsservice.service.ProductService;
@@ -299,6 +300,44 @@ public class ProductServiceImpl implements ProductService {
 
 			return new ResponseEntity("Something went wrong while fetching products",
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	public ResponseEntity getAllProductFilter(int page, int size, String productName, String productCode,
+			Long productCategoryId, Boolean isActive, String sortBy, String sortDir) {
+
+		try {
+
+			Sort sort;
+
+			if (sortDir.equalsIgnoreCase("desc")) {
+
+				sort = Sort.by(sortBy).descending();
+
+			} else {
+
+				sort = Sort.by(sortBy).ascending();
+			}
+
+			Pageable pageable = PageRequest.of(page, size, sort);
+
+			Page<Product> productPage = productRepository.findProductFilter(productName, productCode, productCategoryId,
+					isActive, pageable);
+
+			List<Product> content = productPage.getContent();
+
+			PageResponse<Product> pageResponse = new PageResponse<>(content, productPage.getNumber(),
+					productPage.getSize(), productPage.getTotalElements(), productPage.getTotalPages(),
+					productPage.isLast());
+
+			return new ResponseEntity("Products fetched successfully!", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
