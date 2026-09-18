@@ -305,6 +305,7 @@ public class VideoServiceImpl implements VideoService {
 
 			Path path = Paths.get(videoPath);
 
+			System.out.println("Video metadataservice called");
 			metadata = videoMetadataService.extractMetadata(path);
 
 			log.info("Video metadata extracted successfully. Duration={}, Format={}, Resolution={}",

@@ -1,5 +1,7 @@
 package com.doritech.tmsservice.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,9 +26,14 @@ public class InTrainingQuestionController {
 		this.inTrainingQuestionService = inTrainingQuestionService;
 	}
 
+//	@PostMapping("/createInTrainingQuestion")
+//	public ResponseEntity createInTrainingQuestion(@RequestBody InTrainingQuestionRequest request) {
+//		return inTrainingQuestionService.createInTrainingQuestion(request);
+//	}
+
 	@PostMapping("/createInTrainingQuestion")
-	public ResponseEntity createInTrainingQuestion(@RequestBody InTrainingQuestionRequest request) {
-		return inTrainingQuestionService.createInTrainingQuestion(request);
+	public ResponseEntity createInTrainingQuestion(@RequestBody List<InTrainingQuestionRequest> requests) {
+		return inTrainingQuestionService.createInTrainingQuestion(requests);
 	}
 
 	@GetMapping("/getInTrainingQuestionById/{id}")
@@ -42,8 +49,13 @@ public class InTrainingQuestionController {
 
 	@GetMapping("/getInTrainingQuestionsByVideoId/{videoId}")
 	public ResponseEntity getInTrainingQuestionsByVideoId(@PathVariable Long videoId) {
-
 		return inTrainingQuestionService.getInTrainingQuestionsByVideoId(videoId);
+	}
+
+	@GetMapping("/getInTrainingQuestionsByVideoIdByVideoIdAndTrainingAssinmentId")
+	public ResponseEntity getInTrainingQuestionsByVideoId(@RequestParam Long videoId,
+			@RequestParam Long trainingAssignmentId) {
+		return inTrainingQuestionService.getInTrainingQuestionsByVideoId(videoId, trainingAssignmentId);
 	}
 
 	@PutMapping("/updateInTrainingQuestion/{id}")
@@ -73,5 +85,11 @@ public class InTrainingQuestionController {
 			@RequestParam(value = "sortBy", defaultValue = "displayOrder") String sortBy,
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
 		return inTrainingQuestionService.getInTrainingQuestionsByVideoId(videoId, page, size, sortBy, sortDir);
+	}
+
+	@GetMapping("/getInTrainingResultByVideoIdAndTrainingAssignmentId")
+	public ResponseEntity getInTrainingResultByVideoId(@RequestParam Long videoId,
+			@RequestParam Long trainingAssignmentId) {
+		return inTrainingQuestionService.getInTrainingResultByVideoId(videoId, trainingAssignmentId);
 	}
 }

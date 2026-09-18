@@ -108,7 +108,9 @@ D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\Documen
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\DocumentSubProductResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingQuestionListResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingQuestionResponse.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingQuestionResultResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingQuestionSecureResponse.java
+D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingResultResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\InTrainingUserResponseResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\ObserverAssignmentResponse.java
 D:\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\PageResponse.java

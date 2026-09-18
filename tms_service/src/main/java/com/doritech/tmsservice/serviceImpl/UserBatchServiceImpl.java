@@ -1,6 +1,7 @@
 package com.doritech.tmsservice.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.request.UserBatchRequest;
@@ -35,170 +37,284 @@ public class UserBatchServiceImpl implements UserBatchService {
 	}
 
 	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity assignBatchToUser(UserBatchRequest request) {
-		Long currentUserId = CurrentUser.getUserId();
-		ResponseEntity response = new ResponseEntity();
-		if (request == null) {
-			response.setMessage("Request is null!");
-			response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-			response.setPayload(null);
-			return response;
-		}
-		try {
-			if (request.getUserId() == null) {
-				response.setMessage("User ID is required!");
-				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-				response.setPayload(null);
 
-				return response;
-			}
-			if (request.getBatchId() == null) {
-				response.setMessage("Batch ID is required!");
-				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-				response.setPayload(null);
-				return response;
-			}
+	    Long currentUserId = CurrentUser.getUserId();
 
-			Optional<Batch> optionalBatch = batchRepository.findById(request.getBatchId());
+	    ResponseEntity response = new ResponseEntity();
 
-			if (optionalBatch.isEmpty()) {
-				response.setMessage("Batch not found!");
-				response.setStatusCode(HttpStatus.NOT_FOUND.value());
-				response.setPayload(null);
-				return response;
-			}
-			
-			if (userBatchRepository.existsByUserIdAndBatch_BatchId(request.getUserId(), request.getBatchId())) {
-				response.setMessage("Batch is already assigned to this user!");
-				response.setStatusCode(HttpStatus.CONFLICT.value());
-				response.setPayload(null);
+	    if (request == null) {
+	        response.setMessage("Request is null!");
+	        response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	        response.setPayload(null);
+	        return response;
+	    }
 
-				return response;
-			}
+	    try {
 
-			UserBatch userBatch = convertToEntity(request, optionalBatch.get());
-			userBatch.setAssignedBy(currentUserId);
-			userBatch.setAssignedAt(LocalDateTime.now());
+	        // Validate user IDs
+	        if (request.getUserIds() == null || request.getUserIds().isEmpty()) {
 
-			UserBatch savedUserBatch = userBatchRepository.save(userBatch);
+	            response.setMessage("User IDs are required!");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-			UserBatchResponse userBatchResponse = convertToResponse(savedUserBatch);
+	        // Validate batch ID
+	        if (request.getBatchId() == null) {
 
-			response.setMessage("Batch assigned to user successfully!");
-			response.setStatusCode(HttpStatus.CREATED.value());
-			response.setPayload(userBatchResponse);
+	            response.setMessage("Batch ID is required!");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-		} catch (DataIntegrityViolationException e) {
-			e.printStackTrace();
+	        // Check batch
+	        Optional<Batch> optionalBatch =
+	                batchRepository.findById(request.getBatchId());
 
-			response.setMessage("Batch assignment already exists or violates database constraints!");
-			response.setStatusCode(HttpStatus.CONFLICT.value());
-			response.setPayload(null);
+	        if (optionalBatch.isEmpty()) {
 
-		} catch (Exception e) {
-			e.printStackTrace();
+	            response.setMessage("Batch not found!");
+	            response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-			response.setMessage("Internal server error!");
-			response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-			response.setPayload(null);
-		}
+	        Batch batch = optionalBatch.get();
 
-		return response;
+	        List<UserBatchResponse> assignedUsers = new ArrayList<>();
+	        List<Long> alreadyAssignedUsers = new ArrayList<>();
+
+	        for (Long userId : request.getUserIds()) {
+
+	            if (userId == null || userId <= 0) {
+	                continue;
+	            }
+
+	            // Check duplicate assignment
+	            if (userBatchRepository.existsByUserIdAndBatch_BatchId(
+	                    userId, request.getBatchId())) {
+
+	                alreadyAssignedUsers.add(userId);
+	                continue;
+	            }
+
+	            UserBatch userBatch = convertToEntity(request, batch, userId);
+
+	            userBatch.setUserId(userId);
+	            userBatch.setAssignedBy(currentUserId);
+	            userBatch.setAssignedAt(LocalDateTime.now());
+
+	            UserBatch savedUserBatch =
+	                    userBatchRepository.save(userBatch);
+
+	            UserBatchResponse userBatchResponse =
+	                    convertToResponse(savedUserBatch);
+
+	            assignedUsers.add(userBatchResponse);
+	        }
+
+	        // Nothing was assigned
+	        if (assignedUsers.isEmpty()) {
+
+	            response.setMessage(
+	                    "All selected users are already assigned to this batch!");
+
+	            response.setStatusCode(HttpStatus.CONFLICT.value());
+	            response.setPayload(alreadyAssignedUsers);
+
+	            return response;
+	        }
+
+	        // Some users were assigned, some were already assigned
+	        if (!alreadyAssignedUsers.isEmpty()) {
+
+	            response.setMessage(
+	                    "Batch assigned successfully to new users. Some users were already assigned.");
+
+	            response.setStatusCode(HttpStatus.CREATED.value());
+
+	            response.setPayload(assignedUsers);
+
+	            return response;
+	        }
+
+	        // All users successfully assigned
+	        response.setMessage(
+	                "Batch assigned to all users successfully!");
+
+	        response.setStatusCode(HttpStatus.CREATED.value());
+	        response.setPayload(assignedUsers);
+
+	    } catch (DataIntegrityViolationException e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage(
+	                "Batch assignment already exists or violates database constraints!");
+
+	        response.setStatusCode(HttpStatus.CONFLICT.value());
+	        response.setPayload(null);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage("Internal server error!");
+	        response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+	        response.setPayload(null);
+	    }
+
+	    return response;
 	}
 
 	@Override
 	public ResponseEntity updateUserBatch(Long userBatchId, UserBatchRequest request) {
-		ResponseEntity response = new ResponseEntity();
-		if (request == null) {
-			response.setMessage("Request is null!");
-			response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-			response.setPayload(null);
-			return response;
-		}
 
-		try {
-			if (userBatchId == null) {
-				response.setMessage("User Batch ID is required!");
-				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-				response.setPayload(null);
+	    ResponseEntity response = new ResponseEntity();
 
-				return response;
-			}
+	    if (request == null) {
+	        response.setMessage("Request is null!");
+	        response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	        response.setPayload(null);
+	        return response;
+	    }
 
-			if (request.getUserId() == null) {
-				response.setMessage("User ID is required!");
-				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-				response.setPayload(null);
+	    try {
 
-				return response;
-			}
+	        if (userBatchId == null || userBatchId <= 0) {
+	            response.setMessage("Valid User Batch ID is required!");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-			if (request.getBatchId() == null) {
-				response.setMessage("Batch ID is required!");
-				response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-				response.setPayload(null);
+	        if (request.getUserIds() == null || request.getUserIds().isEmpty()) {
+	            response.setMessage("User ID is required!");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-				return response;
-			}
+	        if (request.getUserIds().size() != 1) {
+	            response.setMessage(
+	                    "Exactly one User ID is required while updating a user batch assignment!"
+	            );
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-			Optional<UserBatch> optionalUserBatch = userBatchRepository.findById(userBatchId);
+	        Long userId = request.getUserIds().get(0);
 
-			if (optionalUserBatch.isEmpty()) {
-				response.setMessage("User batch assignment not found!");
-				response.setStatusCode(HttpStatus.NOT_FOUND.value());
-				response.setPayload(null);
+	        if (userId == null || userId <= 0) {
+	            response.setMessage("Valid User ID is required!");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-				return response;
-			}
-			Optional<Batch> optionalBatch = batchRepository.findById(request.getBatchId());
-			if (optionalBatch.isEmpty()) {
-				response.setMessage("Batch not found!");
-				response.setStatusCode(HttpStatus.NOT_FOUND.value());
-				response.setPayload(null);
+	        if (request.getBatchId() == null || request.getBatchId() <= 0) {
+	            response.setMessage("Valid Batch ID is required!");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-				return response;
-			}
-			Optional<UserBatch> duplicateAssignment = userBatchRepository
-					.findByUserIdAndBatch_BatchId(request.getUserId(), request.getBatchId());
+	        Optional<UserBatch> optionalUserBatch =
+	                userBatchRepository.findById(userBatchId);
 
-			if (duplicateAssignment.isPresent() && !duplicateAssignment.get().getUserBatchId().equals(userBatchId)) {
-				response.setMessage("Batch is already assigned to this user!");
-				response.setStatusCode(HttpStatus.CONFLICT.value());
-				response.setPayload(null);
+	        if (optionalUserBatch.isEmpty()) {
+	            response.setMessage("User batch assignment not found!");
+	            response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-				return response;
-			}
+	        UserBatch userBatch = optionalUserBatch.get();
 
-			UserBatch userBatch = optionalUserBatch.get();
+	        Optional<Batch> optionalBatch =
+	                batchRepository.findById(request.getBatchId());
 
-			userBatch.setUserId(request.getUserId());
-			userBatch.setBatch(optionalBatch.get());
-			userBatch.setAssignedAt(optionalUserBatch.get().getAssignedAt());
-			UserBatch updatedUserBatch = userBatchRepository.save(userBatch);
+	        if (optionalBatch.isEmpty()) {
+	            response.setMessage("Batch not found!");
+	            response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-			UserBatchResponse userBatchResponse = convertToResponse(updatedUserBatch);
+	        /*
+	         * Check whether another UserBatch record already
+	         * exists for the same user and batch.
+	         */
+	        Optional<UserBatch> duplicateAssignment =
+	                userBatchRepository.findByUserIdAndBatch_BatchId(
+	                        userId,
+	                        request.getBatchId()
+	                );
 
-			response.setMessage("User batch assignment updated successfully!");
+	        if (duplicateAssignment.isPresent()
+	                && !duplicateAssignment.get()
+	                        .getUserBatchId()
+	                        .equals(userBatchId)) {
 
-			response.setStatusCode(HttpStatus.OK.value());
-			response.setPayload(userBatchResponse);
+	            response.setMessage(
+	                    "Batch is already assigned to this user!"
+	            );
+	            response.setStatusCode(HttpStatus.CONFLICT.value());
+	            response.setPayload(null);
+	            return response;
+	        }
 
-		} catch (DataIntegrityViolationException e) {
-			e.printStackTrace();
-			response.setMessage("Batch assignment violates database constraints!");
-			response.setStatusCode(HttpStatus.CONFLICT.value());
+	        /*
+	         * Update existing assignment
+	         */
+	        userBatch.setUserId(userId);
+	        userBatch.setBatch(optionalBatch.get());
 
-			response.setPayload(null);
+	        /*
+	         * Keep original assignment date.
+	         * No need to call setAssignedAt() because
+	         * it is already present in the existing entity.
+	         */
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			response.setMessage("Internal server error!");
-			response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+	        UserBatch updatedUserBatch =
+	                userBatchRepository.save(userBatch);
 
-			response.setPayload(null);
-		}
+	        UserBatchResponse userBatchResponse =
+	                convertToResponse(updatedUserBatch);
 
-		return response;
+	        response.setMessage(
+	                "User batch assignment updated successfully!"
+	        );
+	        response.setStatusCode(HttpStatus.OK.value());
+	        response.setPayload(userBatchResponse);
+
+	    } catch (DataIntegrityViolationException e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage(
+	                "Batch assignment violates database constraints!"
+	        );
+	        response.setStatusCode(HttpStatus.CONFLICT.value());
+	        response.setPayload(null);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage("Internal server error!");
+	        response.setStatusCode(
+	                HttpStatus.INTERNAL_SERVER_ERROR.value()
+	        );
+	        response.setPayload(null);
+	    }
+
+	    return response;
 	}
 
 	@Override
@@ -356,12 +472,14 @@ public class UserBatchServiceImpl implements UserBatchService {
 		return response;
 	}
 
-	private UserBatch convertToEntity(UserBatchRequest request, Batch batch) {
-		UserBatch userBatch = new UserBatch();
-		userBatch.setUserId(request.getUserId());
-		userBatch.setBatch(batch);
+	private UserBatch convertToEntity(UserBatchRequest request, Batch batch, Long userId) {
 
-		return userBatch;
+	    UserBatch userBatch = new UserBatch();
+
+	    userBatch.setUserId(userId);
+	    userBatch.setBatch(batch);
+
+	    return userBatch;
 	}
 
 	private UserBatchResponse convertToResponse(UserBatch userBatch) {

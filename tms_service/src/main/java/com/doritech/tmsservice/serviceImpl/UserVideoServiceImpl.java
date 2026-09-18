@@ -770,6 +770,7 @@ public class UserVideoServiceImpl implements UserVideoService {
 
 		response.setAssignedBy(userVideo.getAssignedBy());
 		response.setWatchedCount(userVideo.getWatchedCount());
+		response.setWatchedSeconds(userVideo.getWatchedSeconds());
 
 		return response;
 	}

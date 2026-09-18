@@ -1,5 +1,7 @@
 package com.doritech.tmsservice.serviceImpl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,9 +25,11 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 import com.doritech.tmsservice.tms.entity.TestAttempt;
 import com.doritech.tmsservice.tms.entity.TestSet;
 import com.doritech.tmsservice.tms.entity.TrainingAssignment;
+import com.doritech.tmsservice.tms.entity.UserResponse;
 import com.doritech.tmsservice.tms.repository.TestAttemptRepository;
 import com.doritech.tmsservice.tms.repository.TestSetRepository;
 import com.doritech.tmsservice.tms.repository.TrainingAssignmentRepository;
+import com.doritech.tmsservice.tms.repository.UserResponseRepository;
 
 @Service
 public class TestAttemptServiceImpl implements TestAttemptService {
@@ -33,13 +37,15 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 	private final TestAttemptRepository testAttemptRepository;
 	private final TestSetRepository testSetRepository;
 	private final TrainingAssignmentRepository trainingAssignmentRepository;
+	private final UserResponseRepository userResponseRepository;
 
 	public TestAttemptServiceImpl(TestAttemptRepository testAttemptRepository, TestSetRepository testSetRepository,
-			TrainingAssignmentRepository trainingAssignmentRepository) {
+			TrainingAssignmentRepository trainingAssignmentRepository, UserResponseRepository userResponseRepository) {
 
 		this.testAttemptRepository = testAttemptRepository;
 		this.testSetRepository = testSetRepository;
 		this.trainingAssignmentRepository = trainingAssignmentRepository;
+		this.userResponseRepository = userResponseRepository;
 	}
 
 	@Override
@@ -556,43 +562,100 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 		try {
 
 			if (testAttemptId == null || testAttemptId <= 0) {
-
 				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			Optional<TestAttempt> optional = testAttemptRepository.findById(testAttemptId);
 
 			if (optional.isEmpty()) {
-
 				return new ResponseEntity("Test attempt not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			TestAttempt attempt = optional.get();
 
 			if (attempt.getStatus() == TestAttemptStatus.COMPLETED) {
-
 				return new ResponseEntity("Test attempt is already completed", HttpStatus.CONFLICT.value(),
 						mapToResponse(attempt));
 			}
 
 			if (attempt.getStatus() == TestAttemptStatus.ABANDONED) {
-
 				return new ResponseEntity("Abandoned test attempt cannot be completed", HttpStatus.CONFLICT.value(),
 						null);
 			}
 
-			attempt.setStatus(TestAttemptStatus.COMPLETED);
+			List<UserResponse> responses = userResponseRepository.findByTestAttempt_TestAttemptId(testAttemptId);
 
-			attempt.setEndTime(LocalDateTime.now());
+			int totalQuestions = 0;
+			int correctAnswers = 0;
+			int wrongAnswers = 0;
+			int skippedQuestions = 0;
 
-			if (attempt.getPassingPercentage() != null && attempt.getTotalQuestions() != null
-					&& attempt.getTotalQuestions() > 0) {
+			BigDecimal totalScore = BigDecimal.ZERO;
 
-				int correctAnswers = attempt.getCorrectAnswers() != null ? attempt.getCorrectAnswers() : 0;
+			if (responses != null && !responses.isEmpty()) {
 
-				double percentage = ((double) correctAnswers / attempt.getTotalQuestions()) * 100;
+				totalQuestions = responses.size();
 
-				if (percentage >= attempt.getPassingPercentage().doubleValue()) {
+				for (UserResponse response : responses) {
+
+					String userAnswer = response.getUserAnswer();
+
+					Boolean isCorrect = response.getIsCorrect();
+
+					if (userAnswer == null || userAnswer.trim().isEmpty()) {
+
+						skippedQuestions++;
+
+						response.setIsCorrect(false);
+
+					} else if (Boolean.TRUE.equals(isCorrect)) {
+
+						correctAnswers++;
+
+						if (response.getTestQuestion() != null && response.getTestQuestion().getMarks() != null) {
+
+							totalScore = totalScore.add(response.getTestQuestion().getMarks());
+						}
+
+					}
+					// Wrong answer
+					else {
+
+						wrongAnswers++;
+					}
+				}
+			}
+
+			/*
+			 * Save calculated values
+			 */
+			attempt.setTotalQuestions(totalQuestions);
+			attempt.setCorrectAnswers(correctAnswers);
+			attempt.setWrongAnswers(wrongAnswers);
+			attempt.setSkippedQuestions(skippedQuestions);
+			attempt.setTotalScore(totalScore);
+
+			/*
+			 * Calculate percentage
+			 *
+			 * Example: Total Questions = 3 Correct Answers = 3
+			 *
+			 * Percentage = (3 / 3) * 100 = 100%
+			 */
+			BigDecimal percentage = BigDecimal.ZERO;
+
+			if (totalQuestions > 0) {
+
+				percentage = BigDecimal.valueOf(correctAnswers)
+						.divide(BigDecimal.valueOf(totalQuestions), 4, RoundingMode.HALF_UP)
+						.multiply(new BigDecimal("100"));
+			}
+
+			BigDecimal passingPercentage = attempt.getPassingPercentage();
+
+			if (passingPercentage != null && totalQuestions > 0) {
+
+				if (percentage.compareTo(passingPercentage) >= 0) {
 
 					attempt.setResult(TestResult.PASS);
 
@@ -601,6 +664,8 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 					attempt.setResult(TestResult.FAIL);
 				}
 			}
+			attempt.setStatus(TestAttemptStatus.COMPLETED);
+			attempt.setEndTime(LocalDateTime.now());
 
 			TestAttempt saved = testAttemptRepository.save(attempt);
 
@@ -744,44 +809,69 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 		}
 	}
 
-	private TestAttemptResponse mapToResponse(TestAttempt entity) {
+	private TestAttemptResponse mapToResponse(TestAttempt attempt) {
 
-		TestAttemptResponse response = new TestAttemptResponse();
+	    TestAttemptResponse response = new TestAttemptResponse();
 
-		response.setTestAttemptId(entity.getTestAttemptId());
+	    response.setTestAttemptId(attempt.getTestAttemptId());
 
-		response.setTestSetId(entity.getTestSet() != null ? entity.getTestSet().getTestSetId() : null);
+	    if (attempt.getTestSet() != null) {
+	        response.setTestSetId(attempt.getTestSet().getTestSetId());
+	    }
 
-		response.setUserId(entity.getUserId());
+	    response.setUserId(attempt.getUserId());
 
-		response.setTrainingAssignmentId(
-				entity.getTrainingAssignment() != null ? entity.getTrainingAssignment().getTrainingAssignmentId()
-						: null);
+	    if (attempt.getTrainingAssignment() != null) {
+	        response.setTrainingAssignmentId(
+	                attempt.getTrainingAssignment().getTrainingAssignmentId()
+	        );
+	    }
 
-		response.setStartTime(entity.getStartTime());
+	    response.setStartTime(attempt.getStartTime());
+	    response.setEndTime(attempt.getEndTime());
 
-		response.setEndTime(entity.getEndTime());
+	    response.setTotalScore(attempt.getTotalScore());
 
-		response.setTotalScore(entity.getTotalScore());
+	    response.setTotalQuestions(attempt.getTotalQuestions());
+	    response.setCorrectAnswers(attempt.getCorrectAnswers());
+	    response.setWrongAnswers(attempt.getWrongAnswers());
+	    response.setSkippedQuestions(attempt.getSkippedQuestions());
 
-		response.setTotalQuestions(entity.getTotalQuestions());
+	    response.setPassingPercentage(attempt.getPassingPercentage());
 
-		response.setCorrectAnswers(entity.getCorrectAnswers());
+	    /*
+	     * Calculate percentage
+	     *
+	     * Example:
+	     * Correct = 2
+	     * Total = 3
+	     *
+	     * Percentage = (2 / 3) * 100
+	     *             = 66.67
+	     */
+	    BigDecimal percentage = BigDecimal.ZERO;
 
-		response.setWrongAnswers(entity.getWrongAnswers());
+	    if (attempt.getTotalQuestions() != null
+	            && attempt.getTotalQuestions() > 0
+	            && attempt.getCorrectAnswers() != null) {
 
-		response.setSkippedQuestions(entity.getSkippedQuestions());
+	        percentage = BigDecimal.valueOf(attempt.getCorrectAnswers())
+	                .divide(
+	                        BigDecimal.valueOf(attempt.getTotalQuestions()),
+	                        2,
+	                        RoundingMode.HALF_UP
+	                )
+	                .multiply(new BigDecimal("100"));
+	    }
 
-		response.setPassingPercentage(entity.getPassingPercentage());
+	    response.setPercentage(percentage);
 
-		response.setResult(entity.getResult() != null ? entity.getResult().name() : null);
+	    response.setResult(attempt.getResult());
+	    response.setStatus(attempt.getStatus());
 
-		response.setStatus(entity.getStatus() != null ? entity.getStatus().name() : null);
+	    response.setViolationCount(attempt.getViolationCount());
+	    response.setAttemptNumber(attempt.getAttemptNumber());
 
-		response.setViolationCount(entity.getViolationCount());
-
-		response.setAttemptNumber(entity.getAttemptNumber());
-
-		return response;
+	    return response;
 	}
 }

@@ -9,6 +9,7 @@ public class InTrainingQuestionResponse {
 	private Long videoId;
 	private Integer timestampSeconds;
 	private String questionText;
+	private Boolean isAttempted;
 	private String questionType;
 	private List<String> options;
 	private String correctAnswer;
@@ -17,6 +18,14 @@ public class InTrainingQuestionResponse {
 	private Integer displayOrder;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
+
+	public Boolean getIsAttempted() {
+		return isAttempted;
+	}
+
+	public void setIsAttempted(Boolean isAttempted) {
+		this.isAttempted = isAttempted;
+	}
 
 	public InTrainingQuestionResponse() {
 	}
