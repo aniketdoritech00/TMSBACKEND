@@ -50,11 +50,6 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 			if (productCategoryRepository.existsByProductCategoryName(request.getProductCategoryName())) {
 				return new ResponseEntity("Product category name already exists!", HttpStatus.CONFLICT.value(), null);
 			}
-			if (productCategoryRepository
-					.existsByProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder())) {
-				return new ResponseEntity("Product category display order already exists!", HttpStatus.CONFLICT.value(),
-						null);
-			}
 
 			ProductCategory productCategory = mapToEntity(request);
 			productCategory.setCreatedBy(currentUserId);
@@ -73,70 +68,42 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
-	
-	
+
 	@Override
-	public ResponseEntity getAllProductCategoryFilter(
-	        int page,
-	        int size,
-	        String productCategoryName,
-	        String productCategoryCode,
-	        Boolean isActive,
-	        String sortBy,
-	        String sortDir) {
+	public ResponseEntity getAllProductCategoryFilter(int page, int size, String productCategoryName,
+			String productCategoryCode, Boolean isActive, String sortBy, String sortDir) {
 
-	    try {
+		try {
 
-	        Sort sort;
+			Sort sort;
 
-	        if (sortDir.equalsIgnoreCase("desc")) {
-	            sort = Sort.by(sortBy).descending();
-	        } else {
-	            sort = Sort.by(sortBy).ascending();
-	        }
+			if (sortDir.equalsIgnoreCase("desc")) {
+				sort = Sort.by(sortBy).descending();
+			} else {
+				sort = Sort.by(sortBy).ascending();
+			}
 
-	        Pageable pageable = PageRequest.of(page, size, sort);
+			Pageable pageable = PageRequest.of(page, size, sort);
 
+			Page<ProductCategory> productCategoryPage = productCategoryRepository
+					.findProductCategoryFilter(productCategoryName, productCategoryCode, isActive, pageable);
 
-	        Page<ProductCategory> productCategoryPage =
-	                productCategoryRepository.findProductCategoryFilter(
-	                        productCategoryName,
-	                        productCategoryCode,
-	                        isActive,
-	                        pageable);
+			List<ProductCategory> content = productCategoryPage.getContent();
 
+			PageResponse<ProductCategory> pageResponse = new PageResponse<>(content, productCategoryPage.getNumber(),
+					productCategoryPage.getSize(), productCategoryPage.getTotalElements(),
+					productCategoryPage.getTotalPages(), productCategoryPage.isLast());
 
-	        List<ProductCategory> content =
-	                productCategoryPage.getContent();
+			return new ResponseEntity("Product categories fetched successfully!", HttpStatus.OK.value(), pageResponse);
 
-	        PageResponse<ProductCategory> pageResponse =
-	                new PageResponse<>(
-	                        content,
-	                        productCategoryPage.getNumber(),
-	                        productCategoryPage.getSize(),
-	                        productCategoryPage.getTotalElements(),
-	                        productCategoryPage.getTotalPages(),
-	                        productCategoryPage.isLast());
+		} catch (Exception e) {
 
+			e.printStackTrace();
 
-	        return new ResponseEntity(
-	                "Product categories fetched successfully!",
-	                HttpStatus.OK.value(),
-	                pageResponse);
-
-	    } catch (Exception e) {
-
-	        e.printStackTrace();
-
-	        return new ResponseEntity(
-	                "Internal server error!",
-	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	                null);
-	    }
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
-
-    
 	@Override
 	public ResponseEntity getProductCategoryById(Long id) {
 		try {
@@ -152,11 +119,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 			return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
-	
-	
-	
-	
-	
+
 	@Override
 	public ResponseEntity getAllProductCategory(int page, int size, String sortBy, String sortDir) {
 
@@ -242,7 +205,6 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		productCategory.setProductCategoryName(request.getProductCategoryName());
 		productCategory.setProductCategoryCode(request.getProductCategoryCode());
 		productCategory.setProductCategoryDescription(request.getProductCategoryDescription());
-		productCategory.setProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder());
 		productCategory.setIsActive(request.getIsActive());
 
 		productCategory.setCreatedAt(LocalDateTime.now());
@@ -257,7 +219,6 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		response.setProductCategoryName(entity.getProductCategoryName());
 		response.setProductCategoryCode(entity.getProductCategoryCode());
 		response.setProductCategoryDescription(entity.getProductCategoryDescription());
-		response.setProductCategoryDisplayOrder(entity.getProductCategoryDisplayOrder());
 		response.setIsActive(entity.getIsActive());
 		response.setCreatedAt(entity.getCreatedAt());
 		response.setUpdatedAt(entity.getUpdatedAt());
@@ -297,15 +258,9 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 					.existsByProductCategoryNameAndProductCategoryIdNot(request.getProductCategoryName(), id)) {
 				return new ResponseEntity("Product category name already exists!", HttpStatus.CONFLICT.value(), null);
 			}
-			if (productCategoryRepository.existsByProductCategoryDisplayOrderAndProductCategoryIdNot(
-					request.getProductCategoryDisplayOrder(), id)) {
-				return new ResponseEntity("Product category display order already exists!", HttpStatus.CONFLICT.value(),
-						null);
-			}
 
 			productCategory.setProductCategoryName(request.getProductCategoryName());
 			productCategory.setProductCategoryDescription(request.getProductCategoryDescription());
-			productCategory.setProductCategoryDisplayOrder(request.getProductCategoryDisplayOrder());
 			productCategory.setIsActive(request.getIsActive());
 			productCategory.setUpdatedBy(currentUserId);
 			productCategory.setUpdatedAt(LocalDateTime.now());

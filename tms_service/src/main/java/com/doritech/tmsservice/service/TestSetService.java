@@ -20,4 +20,6 @@ public interface TestSetService {
 	ResponseEntity updateTestSet(Long id, TestSetRequest request);
 
 	ResponseEntity deleteTestSet(Long id);
+
+	ResponseEntity publishTestSet(Long id);
 }
