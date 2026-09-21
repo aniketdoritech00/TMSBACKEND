@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.doritech.tmsservice.request.SubProductRequest;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.SubProductResponse;
 import com.doritech.tmsservice.service.ParamService;
 import com.doritech.tmsservice.service.SubProductService;
@@ -382,4 +383,106 @@ public class SubProductServiceImpl implements SubProductService {
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+
+	/*@Override
+	public ResponseEntity getAllSubProductFilter(int page, int size, String productName, String subProductName, Bollean isActive) {
+
+		try {
+
+			if (page < 0) {
+				return new ResponseEntity("Page number cannot be negative", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size <= 0) {
+				return new ResponseEntity("Page size must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			// Convert empty values to null
+			if (productName != null && productName.trim().isEmpty()) {
+				productName = null;
+			}
+
+			if (subProductName != null && subProductName.trim().isEmpty()) {
+				subProductName = null;
+			}
+
+			Pageable pageable = PageRequest.of(page, size);
+
+			Page<SubProduct> subProductPage = subProductRepository.findSubProductByFilter(productName, subProductName,isActive,
+					pageable);
+
+			List<SubProductResponse> responseList = subProductPage.getContent().stream().map(this::mapToResponse)
+					.toList();
+
+			PageResponse<SubProductResponse> pageResponse = new PageResponse<>();
+
+			pageResponse.setContent(responseList);
+			pageResponse.setPageNumber(subProductPage.getNumber());
+			pageResponse.setPageSize(subProductPage.getSize());
+			pageResponse.setTotalElements(subProductPage.getTotalElements());
+			pageResponse.setTotalPages(subProductPage.getTotalPages());
+			pageResponse.setLastPage(subProductPage.isLast());
+
+			return new ResponseEntity("Sub products found successfully!", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Something went wrong while fetching sub products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}*/
+
+	@Override
+	public ResponseEntity getAllSubProductFilter(int page, int size, String productName, String subProductName,
+			Boolean isActive) {
+		try {
+
+			if (page < 0) {
+				return new ResponseEntity("Page number cannot be negative", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size <= 0) {
+				return new ResponseEntity("Page size must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			// Convert empty values to null
+			if (productName != null && productName.trim().isEmpty()) {
+				productName = null;
+			}
+
+			if (subProductName != null && subProductName.trim().isEmpty()) {
+				subProductName = null;
+			}
+
+			Pageable pageable = PageRequest.of(page, size);
+
+			Page<SubProduct> subProductPage = subProductRepository.findSubProductByFilter(productName, subProductName,isActive,
+					pageable);
+
+			List<SubProductResponse> responseList = subProductPage.getContent().stream().map(this::mapToResponse)
+					.toList();
+
+			PageResponse<SubProductResponse> pageResponse = new PageResponse<>();
+
+			pageResponse.setContent(responseList);
+			pageResponse.setPageNumber(subProductPage.getNumber());
+			pageResponse.setPageSize(subProductPage.getSize());
+			pageResponse.setTotalElements(subProductPage.getTotalElements());
+			pageResponse.setTotalPages(subProductPage.getTotalPages());
+			pageResponse.setLastPage(subProductPage.isLast());
+
+			return new ResponseEntity("Sub products found successfully!", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Something went wrong while fetching sub products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
 }
+
+	

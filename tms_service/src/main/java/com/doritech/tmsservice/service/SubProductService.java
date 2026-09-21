@@ -20,4 +20,9 @@ public interface SubProductService {
 	ResponseEntity updateSubProduct(Long id, @Valid SubProductRequest request);
 
 	ResponseEntity getAllSubProductWithoutPagination();
+
+	
+
+	ResponseEntity getAllSubProductFilter(int page, int size, String productName, String subProductName,
+			Boolean isActive);
 }
