@@ -16,8 +16,6 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
 
 	boolean existsByProductCategoryName(String productCategoryName);
 
-	boolean existsByProductCategoryDisplayOrder(Integer productCategoryDisplayOrder);
-
 	boolean existsByProductCategoryCodeAndProductCategoryIdNot(String productCategoryCode, Long id);
 
 	boolean existsByProductCategoryNameAndProductCategoryIdNot(String productCategoryName, Long id);
