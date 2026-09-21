@@ -76,93 +76,64 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 	
 	
 	@Override
-    public ResponseEntity getAllProductCategoryFilter(
-            int page,
-            int size,
-            String productCategoryName,
-            String productCategoryCode,
-            String sortBy,
-            String sortDir) {
+	public ResponseEntity getAllProductCategoryFilter(
+	        int page,
+	        int size,
+	        String productCategoryName,
+	        String productCategoryCode,
+	        Boolean isActive,
+	        String sortBy,
+	        String sortDir) {
 
-        try {
+	    try {
 
-            // ---------------------------------------------
-            // 1. Create sorting
-            // ---------------------------------------------
+	        Sort sort;
 
-            Sort sort;
+	        if (sortDir.equalsIgnoreCase("desc")) {
+	            sort = Sort.by(sortBy).descending();
+	        } else {
+	            sort = Sort.by(sortBy).ascending();
+	        }
 
-            if (sortDir.equalsIgnoreCase("desc")) {
-
-                sort = Sort.by(sortBy).descending();
-
-            } else {
-
-                sort = Sort.by(sortBy).ascending();
-            }
+	        Pageable pageable = PageRequest.of(page, size, sort);
 
 
-            // ---------------------------------------------
-            // 2. Create Pageable
-            // ---------------------------------------------
-
-            Pageable pageable =
-                    PageRequest.of(page, size, sort);
-
-
-            // ---------------------------------------------
-            // 3. Get filtered data from database
-            // ---------------------------------------------
-
-            Page<ProductCategory> productCategoryPage =
-                    productCategoryRepository.findProductCategoryFilter(
-                            productCategoryName,
-                            productCategoryCode,
-                            pageable);
+	        Page<ProductCategory> productCategoryPage =
+	                productCategoryRepository.findProductCategoryFilter(
+	                        productCategoryName,
+	                        productCategoryCode,
+	                        isActive,
+	                        pageable);
 
 
-            // ---------------------------------------------
-            // 4. Get content
-            // ---------------------------------------------
+	        List<ProductCategory> content =
+	                productCategoryPage.getContent();
 
-            List<ProductCategory> content =
-                    productCategoryPage.getContent();
-
-
-            // ---------------------------------------------
-            // 5. Create PageResponse
-            // ---------------------------------------------
-
-            PageResponse<ProductCategory> pageResponse =
-                    new PageResponse<>(
-                            content,
-                            productCategoryPage.getNumber(),
-                            productCategoryPage.getSize(),
-                            productCategoryPage.getTotalElements(),
-                            productCategoryPage.getTotalPages(),
-                            productCategoryPage.isLast());
+	        PageResponse<ProductCategory> pageResponse =
+	                new PageResponse<>(
+	                        content,
+	                        productCategoryPage.getNumber(),
+	                        productCategoryPage.getSize(),
+	                        productCategoryPage.getTotalElements(),
+	                        productCategoryPage.getTotalPages(),
+	                        productCategoryPage.isLast());
 
 
-            // ---------------------------------------------
-            // 6. Return response
-            // ---------------------------------------------
+	        return new ResponseEntity(
+	                "Product categories fetched successfully!",
+	                HttpStatus.OK.value(),
+	                pageResponse);
 
-            return new ResponseEntity(
-                    "Product categories fetched successfully!",
-                    HttpStatus.OK.value(),
-                    pageResponse);
+	    } catch (Exception e) {
 
+	        e.printStackTrace();
 
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return new ResponseEntity(
-                    "Internal server error!",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    null);
-        }
-    }
+	        return new ResponseEntity(
+	                "Internal server error!",
+	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+	                null);
+	    }
+	}
 
 
     

@@ -24,18 +24,18 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
 
 	boolean existsByProductCategoryDisplayOrderAndProductCategoryIdNot(Integer productCategoryDisplayOrder, Long id);
 
-
 	@Query("""
-		       SELECT pc
-		       FROM ProductCategory pc
-		       WHERE (:productCategoryName IS NULL 
-		              OR LOWER(pc.productCategoryName) LIKE LOWER(CONCAT('%', :productCategoryName, '%')))
-		       AND (:productCategoryCode IS NULL 
-		              OR LOWER(pc.productCategoryCode) LIKE LOWER(CONCAT('%', :productCategoryCode, '%')))
-		       """)
-		Page<ProductCategory> findProductCategoryFilter(
-		        @Param("productCategoryName") String productCategoryName,
-		        @Param("productCategoryCode") String productCategoryCode,
-		        Pageable pageable);
+			SELECT pc
+			FROM ProductCategory pc
+			WHERE (:productCategoryName IS NULL
+			       OR LOWER(pc.productCategoryName) LIKE LOWER(CONCAT('%', :productCategoryName, '%')))
+			AND (:productCategoryCode IS NULL
+			       OR LOWER(pc.productCategoryCode) LIKE LOWER(CONCAT('%', :productCategoryCode, '%')))
+			AND (:isActive IS NULL
+			       OR pc.isActive = :isActive)
+			""")
+	Page<ProductCategory> findProductCategoryFilter(@Param("productCategoryName") String productCategoryName,
+			@Param("productCategoryCode") String productCategoryCode, @Param("isActive") Boolean isActive,
+			Pageable pageable);
 
 }
