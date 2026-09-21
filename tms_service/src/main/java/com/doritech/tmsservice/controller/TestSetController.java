@@ -50,6 +50,12 @@ public class TestSetController {
 	public ResponseEntity updateTestSet(@PathVariable Long id, @RequestBody TestSetRequest request) {
 		return testSetService.updateTestSet(id, request);
 	}
+	
+	@PutMapping("/publishTestSet/{id}")
+	public ResponseEntity publishTestSet(@PathVariable Long id) {
+	    return testSetService.publishTestSet(id);
+	}
+
 
 	@DeleteMapping("/deleteTestSet/{id}")
 	public ResponseEntity deleteTestSet(@PathVariable Long id) {

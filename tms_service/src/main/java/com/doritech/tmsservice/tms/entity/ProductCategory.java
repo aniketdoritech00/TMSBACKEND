@@ -12,7 +12,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
@@ -34,9 +33,6 @@ public class ProductCategory {
 	@Column(name = "product_category_description", columnDefinition = "TEXT")
 	private String productCategoryDescription;
 
-	@Column(name = "product_category_display_order")
-	private Integer productCategoryDisplayOrder = 0;
-
 	@Column(name = "is_active")
 	private Boolean isActive = true;
 
@@ -57,21 +53,6 @@ public class ProductCategory {
 	private List<Product> products = new ArrayList<>();
 
 	public ProductCategory() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-
-		this.createdAt = LocalDateTime.now();
-		this.updatedAt = LocalDateTime.now();
-
-		if (this.productCategoryDisplayOrder == null) {
-			this.productCategoryDisplayOrder = 0;
-		}
-
-		if (this.isActive == null) {
-			this.isActive = true;
-		}
 	}
 
 	@PreUpdate
@@ -109,14 +90,6 @@ public class ProductCategory {
 
 	public void setProductCategoryDescription(String productCategoryDescription) {
 		this.productCategoryDescription = productCategoryDescription;
-	}
-
-	public Integer getProductCategoryDisplayOrder() {
-		return productCategoryDisplayOrder;
-	}
-
-	public void setProductCategoryDisplayOrder(Integer productCategoryDisplayOrder) {
-		this.productCategoryDisplayOrder = productCategoryDisplayOrder;
 	}
 
 	public Boolean getIsActive() {
