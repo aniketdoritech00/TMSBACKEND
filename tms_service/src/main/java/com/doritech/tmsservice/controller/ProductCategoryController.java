@@ -46,25 +46,17 @@ public class ProductCategoryController {
 	}
 
 	@GetMapping("/getAllProductCategoryFilter")
-	public ResponseEntity getAllProductCategoryFilter(
-	        @RequestParam(defaultValue = "0") int page,
-	        @RequestParam(defaultValue = "10") int size,
-	        @RequestParam(required = false) String productCategoryName,
-	        @RequestParam(required = false) String productCategoryCode,
-	        @RequestParam(defaultValue = "productCategoryId") String sortBy,
-	        @RequestParam(defaultValue = "asc") String sortDir) {
+	public ResponseEntity getAllProductCategoryFilter(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String productCategoryName,
+			@RequestParam(required = false) String productCategoryCode,
+			@RequestParam(required = false) Boolean isActive,
+			@RequestParam(defaultValue = "productCategoryId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir) {
 
-	    return productCategoryService.getAllProductCategoryFilter(
-	            page,
-	            size,
-	            productCategoryName,
-	            productCategoryCode,
-	            sortBy,
-	            sortDir);
+		return productCategoryService.getAllProductCategoryFilter(page, size, productCategoryName, productCategoryCode,
+				isActive, sortBy, sortDir);
 	}
-	
-	
-	
+
 	@DeleteMapping("/deleteProductCategoryByCategoryId")
 	public ResponseEntity deleteProductCategoryByCategoryId(@RequestParam(required = false) Long id) {
 		if (id == null) {
@@ -79,9 +71,8 @@ public class ProductCategoryController {
 	}
 
 	@PutMapping("/updateProductCategory/{id}")
-	public ResponseEntity updateProductCategory(
-	        @PathVariable Long id,
-	        @Valid @RequestBody ProductCategoryRequest request) {
-	    return productCategoryService.updateProductCategory(id, request);
+	public ResponseEntity updateProductCategory(@PathVariable Long id,
+			@Valid @RequestBody ProductCategoryRequest request) {
+		return productCategoryService.updateProductCategory(id, request);
 	}
 }
