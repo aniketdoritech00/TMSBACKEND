@@ -20,6 +20,6 @@ public interface ProductCategoryService {
 	ResponseEntity updateProductCategory(Long id, @Valid ProductCategoryRequest request);
 
 	ResponseEntity getAllProductCategoryFilter(int page, int size, String productCategoryName,
-			String productCategoryCode, String sortBy, String sortDir);
+			String productCategoryCode, Boolean isActive, String sortBy, String sortDir);
 
 }
