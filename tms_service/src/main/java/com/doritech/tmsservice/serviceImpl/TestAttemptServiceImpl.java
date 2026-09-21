@@ -811,67 +811,89 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 
 	private TestAttemptResponse mapToResponse(TestAttempt attempt) {
 
-	    TestAttemptResponse response = new TestAttemptResponse();
+		TestAttemptResponse response = new TestAttemptResponse();
 
-	    response.setTestAttemptId(attempt.getTestAttemptId());
+		response.setTestAttemptId(attempt.getTestAttemptId());
 
-	    if (attempt.getTestSet() != null) {
-	        response.setTestSetId(attempt.getTestSet().getTestSetId());
-	    }
+		if (attempt.getTestSet() != null) {
+			response.setTestSetId(attempt.getTestSet().getTestSetId());
+		}
 
-	    response.setUserId(attempt.getUserId());
+		response.setUserId(attempt.getUserId());
 
-	    if (attempt.getTrainingAssignment() != null) {
-	        response.setTrainingAssignmentId(
-	                attempt.getTrainingAssignment().getTrainingAssignmentId()
-	        );
-	    }
+		if (attempt.getTrainingAssignment() != null) {
+			response.setTrainingAssignmentId(attempt.getTrainingAssignment().getTrainingAssignmentId());
+		}
 
-	    response.setStartTime(attempt.getStartTime());
-	    response.setEndTime(attempt.getEndTime());
+		response.setStartTime(attempt.getStartTime());
+		response.setEndTime(attempt.getEndTime());
 
-	    response.setTotalScore(attempt.getTotalScore());
+		response.setTotalScore(attempt.getTotalScore());
 
-	    response.setTotalQuestions(attempt.getTotalQuestions());
-	    response.setCorrectAnswers(attempt.getCorrectAnswers());
-	    response.setWrongAnswers(attempt.getWrongAnswers());
-	    response.setSkippedQuestions(attempt.getSkippedQuestions());
+		response.setTotalQuestions(attempt.getTotalQuestions());
+		response.setCorrectAnswers(attempt.getCorrectAnswers());
+		response.setWrongAnswers(attempt.getWrongAnswers());
+		response.setSkippedQuestions(attempt.getSkippedQuestions());
 
-	    response.setPassingPercentage(attempt.getPassingPercentage());
+		response.setPassingPercentage(attempt.getPassingPercentage());
 
-	    /*
-	     * Calculate percentage
-	     *
-	     * Example:
-	     * Correct = 2
-	     * Total = 3
-	     *
-	     * Percentage = (2 / 3) * 100
-	     *             = 66.67
-	     */
-	    BigDecimal percentage = BigDecimal.ZERO;
+		BigDecimal percentage = BigDecimal.ZERO;
 
-	    if (attempt.getTotalQuestions() != null
-	            && attempt.getTotalQuestions() > 0
-	            && attempt.getCorrectAnswers() != null) {
+		if (attempt.getTotalQuestions() != null && attempt.getTotalQuestions() > 0
+				&& attempt.getCorrectAnswers() != null) {
 
-	        percentage = BigDecimal.valueOf(attempt.getCorrectAnswers())
-	                .divide(
-	                        BigDecimal.valueOf(attempt.getTotalQuestions()),
-	                        2,
-	                        RoundingMode.HALF_UP
-	                )
-	                .multiply(new BigDecimal("100"));
-	    }
+			percentage = BigDecimal.valueOf(attempt.getCorrectAnswers())
+					.divide(BigDecimal.valueOf(attempt.getTotalQuestions()), 2, RoundingMode.HALF_UP)
+					.multiply(new BigDecimal("100"));
+		}
 
-	    response.setPercentage(percentage);
+		response.setPercentage(percentage);
 
-	    response.setResult(attempt.getResult());
-	    response.setStatus(attempt.getStatus());
+		response.setResult(attempt.getResult());
+		response.setStatus(attempt.getStatus());
 
-	    response.setViolationCount(attempt.getViolationCount());
-	    response.setAttemptNumber(attempt.getAttemptNumber());
+		response.setViolationCount(attempt.getViolationCount());
+		response.setAttemptNumber(attempt.getAttemptNumber());
 
-	    return response;
+		return response;
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getTestSetStatusByTestSetId(Long testSetId) {
+
+		try {
+
+			if (testSetId == null || testSetId <= 0) {
+				return new ResponseEntity("Invalid test set id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<TestAttempt> optionalAttempt = testAttemptRepository
+					.findTopByTestSet_TestSetIdOrderByTestAttemptIdDesc(testSetId);
+
+			if (optionalAttempt.isEmpty()) {
+
+				return new ResponseEntity("Test set status fetched successfully", HttpStatus.OK.value(), "NOT_STARTED");
+			}
+
+			TestAttempt testAttempt = optionalAttempt.get();
+
+			TestAttemptStatus status = testAttempt.getStatus();
+
+			String testSetStatus;
+
+			if (status == null) {
+				testSetStatus = "NOT_STARTED";
+			} else {
+				testSetStatus = status.name();
+			}
+
+			return new ResponseEntity("Test set status fetched successfully", HttpStatus.OK.value(), testSetStatus);
+
+		} catch (Exception e) {
+
+			return new ResponseEntity("Failed to fetch test set status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+					null);
+		}
 	}
 }

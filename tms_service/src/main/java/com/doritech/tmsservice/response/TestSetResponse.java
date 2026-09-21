@@ -24,6 +24,7 @@ public class TestSetResponse {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 	private LocalDateTime publishedAt;
+	private String testSetStatus;
 
 	public String getTrainingName() {
 		return trainingName;
@@ -178,6 +179,14 @@ public class TestSetResponse {
 
 	public void setPublishedAt(LocalDateTime publishedAt) {
 		this.publishedAt = publishedAt;
+	}
+
+	public String getTestSetStatus() {
+		return testSetStatus;
+	}
+
+	public void setTestSetStatus(String testSetStatus) {
+		this.testSetStatus = testSetStatus;
 	}
 
 }

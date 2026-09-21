@@ -104,4 +104,9 @@ public class TestAttemptController {
 	public ResponseEntity deleteTestAttempt(@PathVariable Long testAttemptId) {
 		return testAttemptService.deleteTestAttempt(testAttemptId);
 	}
+
+	@GetMapping("/getTestSetStatus")
+	public ResponseEntity getTestSetStatus(@RequestParam Long testSetId) {
+		return testAttemptService.getTestSetStatusByTestSetId(testSetId);
+	}
 }
