@@ -21,8 +21,10 @@ import com.doritech.tmsservice.response.TestSetResponse;
 import com.doritech.tmsservice.service.ParamService;
 import com.doritech.tmsservice.service.TestSetService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TestAttempt;
 import com.doritech.tmsservice.tms.entity.TestSet;
 import com.doritech.tmsservice.tms.entity.Training;
+import com.doritech.tmsservice.tms.repository.TestAttemptRepository;
 import com.doritech.tmsservice.tms.repository.TestSetRepository;
 import com.doritech.tmsservice.tms.repository.TrainingRepository;
 
@@ -32,12 +34,14 @@ public class TestSetServiceImpl implements TestSetService {
 	private final TestSetRepository testSetRepository;
 	private final TrainingRepository trainingRepository;
 	private final ParamService paramService;
+	private final TestAttemptRepository testAttemptRepository;
 
 	public TestSetServiceImpl(TestSetRepository testSetRepository, TrainingRepository trainingRepository,
-			ParamService paramService) {
+			ParamService paramService, TestAttemptRepository testAttemptRepository) {
 		this.testSetRepository = testSetRepository;
 		this.trainingRepository = trainingRepository;
 		this.paramService = paramService;
+		this.testAttemptRepository = testAttemptRepository;
 	}
 
 	@Override
@@ -251,6 +255,39 @@ public class TestSetServiceImpl implements TestSetService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+
+//	@Override
+//	@Transactional(value = "tmsTransactionManager", readOnly = true)
+//	public ResponseEntity getTestSetsByTrainingId(Long trainingId) {
+//
+//		try {
+//
+//			if (trainingId == null || trainingId <= 0) {
+//
+//				return new ResponseEntity("Invalid training id", HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//
+//			Optional<Training> optionalTraining = trainingRepository.findById(trainingId);
+//
+//			if (optionalTraining.isEmpty()) {
+//
+//				return new ResponseEntity("Training not found with id: " + trainingId, HttpStatus.NOT_FOUND.value(),
+//						null);
+//			}
+//
+//			List<TestSet> testSets = testSetRepository.findByTraining_TrainingIdOrderByTestSetIdDesc(trainingId);
+//
+//			List<TestSetResponse> response = testSets.stream().map(this::mapToResponse).collect(Collectors.toList());
+//
+//			return new ResponseEntity("Test sets fetched successfully", HttpStatus.OK.value(), response);
+//
+//		} catch (Exception e) {
+//
+//			e.printStackTrace();
+//
+//			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+//		}
+//	}
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
@@ -559,6 +596,27 @@ public class TestSetServiceImpl implements TestSetService {
 		response.setUpdatedAt(testSet.getUpdatedAt());
 
 		response.setPublishedAt(testSet.getPublishedAt());
+
+		Optional<TestAttempt> optionalAttempt = testAttemptRepository
+				.findTopByTestSet_TestSetIdOrderByTestAttemptIdDesc(testSet.getTestSetId());
+
+		if (optionalAttempt.isEmpty()) {
+
+			response.setTestSetStatus("NOT_STARTED");
+
+		} else {
+
+			TestAttempt testAttempt = optionalAttempt.get();
+
+			if (testAttempt.getStatus() != null) {
+
+				response.setTestSetStatus(testAttempt.getStatus().name());
+
+			} else {
+
+				response.setTestSetStatus("NOT_STARTED");
+			}
+		}
 
 		return response;
 	}

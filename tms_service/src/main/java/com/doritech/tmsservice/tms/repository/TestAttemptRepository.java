@@ -34,4 +34,7 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 			Pageable pageable);
 
 	Optional<TestAttempt> findByUserIdAndStatus(Long userId, TestAttemptStatus status);
+
+	Optional<TestAttempt> findTopByTestSet_TestSetIdOrderByTestAttemptIdDesc(Long testSetId);
+
 }
