@@ -48,10 +48,10 @@ public class SubProductController {
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
 		return subProductService.getAllSubProduct(page, size, sortBy, sortDir);
 	}
-	
+
 	@GetMapping("/getAllSubProductWithoutPagination")
 	public ResponseEntity getAllSubProductWithoutPagination() {
-	    return subProductService.getAllSubProductWithoutPagination();
+		return subProductService.getAllSubProductWithoutPagination();
 	}
 
 	@GetMapping("/getSubProductsByProductId/{productId}")
@@ -62,5 +62,21 @@ public class SubProductController {
 	@DeleteMapping("/deleteSubProduct")
 	public ResponseEntity deleteSubProduct(@RequestParam Long id) {
 		return subProductService.deleteSubProduct(id);
+	}
+
+	@GetMapping("/getAllSubProductFilter")
+	public ResponseEntity getAllSubProductFilter(
+
+			@RequestParam(value = "page", defaultValue = "0") int page,
+
+			@RequestParam(value = "size", defaultValue = "10") int size,
+
+			@RequestParam(value = "productName", required = false) String productName,
+
+			@RequestParam(value = "subProductName", required = false) String subProductName,
+
+			@RequestParam(value = "isActive", required = false) Boolean isActive) {
+
+		return subProductService.getAllSubProductFilter(page, size, productName, subProductName, isActive);
 	}
 }
