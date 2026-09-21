@@ -17,4 +17,6 @@ public interface BatchService {
 
 	ResponseEntity getAllBatches();
 
+	ResponseEntity getAllBatch(int page, int size, String branchCode, String branchName);
+
 }
