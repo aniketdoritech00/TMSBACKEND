@@ -19,4 +19,8 @@ public interface ProductService {
 
 	ResponseEntity getAllProduct();
 
+	ResponseEntity getAllProductFilter(int page, int size, String productName, String productCode,
+			Long productCategoryId, Boolean isActive, String sortBy, String sortDir);
+
+	
 }
