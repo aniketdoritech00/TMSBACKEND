@@ -510,6 +510,65 @@ public class TestSetServiceImpl implements TestSetService {
 
 	@Override
 	@Transactional("tmsTransactionManager")
+	public ResponseEntity publishTestSet(Long id) {
+
+		try {
+
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid test set id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<TestSet> optionalTestSet = testSetRepository.findById(id);
+
+			if (optionalTestSet.isEmpty()) {
+				return new ResponseEntity("Test set not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			TestSet testSet = optionalTestSet.get();
+
+			if (testSet.getPublishedAt() != null) {
+				return new ResponseEntity("Test set is already published", HttpStatus.CONFLICT.value(), null);
+			}
+
+			if (testSet.getTestName() == null || testSet.getTestName().trim().isEmpty()) {
+
+				return new ResponseEntity("Test name is required before publishing", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			if (testSet.getTraining() == null) {
+				return new ResponseEntity("Training is required before publishing", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			if (testSet.getStartDateTime() != null && testSet.getEndDateTime() != null
+					&& testSet.getEndDateTime().isBefore(testSet.getStartDateTime())) {
+
+				return new ResponseEntity("End date time cannot be before start date time",
+						HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			LocalDateTime now = LocalDateTime.now();
+
+			testSet.setPublishedAt(now);
+			testSet.setIsActive(true);
+			testSet.setUpdatedAt(now);
+
+			TestSet publishedTestSet = testSetRepository.save(testSet);
+
+			return new ResponseEntity("Test set published successfully", HttpStatus.OK.value(),
+					mapToResponse(publishedTestSet));
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteTestSet(Long id) {
 
 		try {
