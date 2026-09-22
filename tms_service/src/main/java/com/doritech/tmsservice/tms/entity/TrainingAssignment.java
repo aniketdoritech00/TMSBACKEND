@@ -13,14 +13,20 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "training_assignments", uniqueConstraints = @UniqueConstraint(columnNames = { "training_id", "user_id" }))
+@Table(name = "training_assignments", uniqueConstraints = {
+		@UniqueConstraint(name = "uk_training_assignment_training_user", columnNames = { "training_id",
+				"user_id" }) }, indexes = {
+						@Index(name = "idx_training_assignment_training", columnList = "training_id"),
+						@Index(name = "idx_training_assignment_user", columnList = "user_id"),
+						@Index(name = "idx_training_assignment_batch", columnList = "batch_id"),
+						@Index(name = "idx_training_assignment_status", columnList = "status") })
 public class TrainingAssignment {
 
 	@Id
@@ -84,38 +90,6 @@ public class TrainingAssignment {
 
 	@Column(name = "started_at")
 	private LocalDateTime startedAt;
-
-	public TrainingAssignment() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.assignedAt = LocalDateTime.now();
-		if (this.status == null) {
-			this.status = AssignmentStatus.NOT_STARTED;
-		}
-		if (this.progressPercentage == null) {
-			this.progressPercentage = BigDecimal.ZERO;
-		}
-		if (this.isPassed == null) {
-			this.isPassed = false;
-		}
-		if (this.certificateGenerated == null) {
-			this.certificateGenerated = false;
-		}
-		if (this.attemptedQuestions == null) {
-			this.attemptedQuestions = 0;
-		}
-		if (this.correctAnswers == null) {
-			this.correctAnswers = 0;
-		}
-		if (this.wrongAnswers == null) {
-			this.wrongAnswers = 0;
-		}
-		if (this.totalQuestions == null) {
-			this.totalQuestions = 0;
-		}
-	}
 
 	public Long getTrainingAssignmentId() {
 		return trainingAssignmentId;
@@ -268,4 +242,5 @@ public class TrainingAssignment {
 	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
+
 }
