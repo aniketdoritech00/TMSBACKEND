@@ -1,5 +1,8 @@
 package com.doritech.tmsservice.controller;
 
+import java.time.LocalDateTime;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -7,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.doritech.tmsservice.enums.SecurityViolationType;
 import com.doritech.tmsservice.request.SecurityLogRequest;
 import com.doritech.tmsservice.service.SecurityLogService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
@@ -26,6 +30,23 @@ public class SecurityLogController {
 	@PostMapping("/createSecurityLog")
 	public ResponseEntity createSecurityLog(@RequestBody SecurityLogRequest request, HttpServletRequest httpRequest) {
 		return securityLogService.createSecurityLog(request, httpRequest);
+	}
+
+	@GetMapping("/getAllSecurityLogsFilter")
+	public ResponseEntity getAllSecurityLogsFilter(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "securityLogId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir,
+
+			@RequestParam(required = false) SecurityViolationType violationType,
+
+			@RequestParam(required = false) Boolean warningShown,
+
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate) {
+
+		return securityLogService.getAllSecurityLogsFilter(page, size, sortBy, sortDir, violationType, warningShown,
+				fromDate, toDate);
 	}
 
 	@GetMapping("/getAllSecurityLogs")
