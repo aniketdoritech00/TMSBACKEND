@@ -8,13 +8,18 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "video_assessment_questions")
+@Table(name = "video_assessment_questions", indexes = {
+		@Index(name = "idx_video_assessment_question_training", columnList = "training_id") })
 public class VideoAssessmentQuestion {
 
 	@Id
@@ -22,8 +27,9 @@ public class VideoAssessmentQuestion {
 	@Column(name = "video_assessment_question_id")
 	private Long videoAssessmentQuestionId;
 
-	@Column(name = "training_id", nullable = false)
-	private Long trainingId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "training_id", nullable = false)
+	private Training training;
 
 	@Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
 	private String questionText;
@@ -35,6 +41,16 @@ public class VideoAssessmentQuestion {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 
+	private Long createBy;
+
+	public Long getCreateBy() {
+		return createBy;
+	}
+
+	public void setCreateBy(Long createBy) {
+		this.createBy = createBy;
+	}
+
 	public Long getVideoAssessmentQuestionId() {
 		return videoAssessmentQuestionId;
 	}
@@ -43,12 +59,12 @@ public class VideoAssessmentQuestion {
 		this.videoAssessmentQuestionId = videoAssessmentQuestionId;
 	}
 
-	public Long getTrainingId() {
-		return trainingId;
+	public Training getTraining() {
+		return training;
 	}
 
-	public void setTrainingId(Long trainingId) {
-		this.trainingId = trainingId;
+	public void setTraining(Training training) {
+		this.training = training;
 	}
 
 	public String getQuestionText() {

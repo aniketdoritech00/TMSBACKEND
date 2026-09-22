@@ -13,10 +13,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "trainings")
+@Table(name = "trainings", indexes = { @Index(name = "idx_training_code", columnList = "training_code"),
+		@Index(name = "idx_training_category", columnList = "training_category_id"),
+		@Index(name = "idx_training_trainer", columnList = "trainer_id"),
+		@Index(name = "idx_training_status", columnList = "status") })
 public class Training {
 
 	@Id
@@ -216,20 +220,20 @@ public class Training {
 		this.updatedAt = updatedAt;
 	}
 
-	public LocalDateTime getPublishedAt() {
-		return publishedAt;
-	}
-
-	public void setPublishedAt(LocalDateTime publishedAt) {
-		this.publishedAt = publishedAt;
-	}
-
 	public Long getUpdatedBy() {
 		return updatedBy;
 	}
 
 	public void setUpdatedBy(Long updatedBy) {
 		this.updatedBy = updatedBy;
+	}
+
+	public LocalDateTime getPublishedAt() {
+		return publishedAt;
+	}
+
+	public void setPublishedAt(LocalDateTime publishedAt) {
+		this.publishedAt = publishedAt;
 	}
 
 }
