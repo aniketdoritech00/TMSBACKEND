@@ -74,5 +74,5 @@ public class ProductCategoryController {
 	public ResponseEntity updateProductCategory(@PathVariable Long id,
 			@Valid @RequestBody ProductCategoryRequest request) {
 		return productCategoryService.updateProductCategory(id, request);
-	}
+	}	
 }
