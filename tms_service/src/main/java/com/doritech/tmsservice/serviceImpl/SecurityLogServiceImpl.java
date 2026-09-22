@@ -1,5 +1,6 @@
 package com.doritech.tmsservice.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.config.CurrentUser;
+import com.doritech.tmsservice.enums.SecurityViolationType;
 import com.doritech.tmsservice.request.SecurityLogRequest;
 import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.SecurityLogResponse;
@@ -96,7 +98,100 @@ public class SecurityLogServiceImpl implements SecurityLogService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity getAllSecurityLogsFilter(
+	        int page,
+	        int size,
+	        String sortBy,
+	        String sortDir,
+	        SecurityViolationType violationType,
+	        Boolean warningShown,
+	        LocalDateTime fromDate,
+	        LocalDateTime toDate) {
 
+	    try {
+
+	        // Validate page
+	        if (page < 0) {
+	            return new ResponseEntity(
+	                    "Page number cannot be negative",
+	                    HttpStatus.BAD_REQUEST.value(),
+	                    null);
+	        }
+
+	        // Validate size
+	        if (size <= 0) {
+	            return new ResponseEntity(
+	                    "Page size must be greater than 0",
+	                    HttpStatus.BAD_REQUEST.value(),
+	                    null);
+	        }
+
+	        // Validate date range
+	        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+	            return new ResponseEntity(
+	                    "From date cannot be greater than to date",
+	                    HttpStatus.BAD_REQUEST.value(),
+	                    null);
+	        }
+
+	        // Sorting
+	        Sort sort;
+
+	        if ("desc".equalsIgnoreCase(sortDir)) {
+	            sort = Sort.by(sortBy).descending();
+	        } else {
+	            sort = Sort.by(sortBy).ascending();
+	        }
+
+	        Pageable pageable = PageRequest.of(page, size, sort);
+
+	        // Fetch filtered security logs
+	        Page<SecurityLog> securityLogPage =
+	                securityLogRepository.findSecurityLogsByFilter(
+	                        violationType,
+	                        warningShown,
+	                        fromDate,
+	                        toDate,
+	                        pageable);
+
+	        // Convert entity to response
+	        List<SecurityLogResponse> responseList =
+	                securityLogPage.getContent()
+	                        .stream()
+	                        .map(this::mapToResponse)
+	                        .toList();
+
+	        // Page response
+	        PageResponse<SecurityLogResponse> pageResponse =
+	                new PageResponse<>();
+
+	        pageResponse.setContent(responseList);
+	        pageResponse.setPageNumber(securityLogPage.getNumber());
+	        pageResponse.setPageSize(securityLogPage.getSize());
+	        pageResponse.setTotalElements(
+	                securityLogPage.getTotalElements());
+	        pageResponse.setTotalPages(
+	                securityLogPage.getTotalPages());
+	        pageResponse.setLastPage(
+	                securityLogPage.isLast());
+
+	        return new ResponseEntity(
+	                "Security logs found successfully!",
+	                HttpStatus.OK.value(),
+	                pageResponse);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        return new ResponseEntity(
+	                "Something went wrong while fetching security logs",
+	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+	                null);
+	    }
+	}
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getAllSecurityLogs(int page, int size, String sortBy, String sortDir) {
