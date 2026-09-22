@@ -199,6 +199,7 @@ public class TrainingServiceImpl implements TrainingService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+	
 
 	@Override
 	public ResponseEntity deleteTraining(Long id) {
@@ -236,6 +237,9 @@ public class TrainingServiceImpl implements TrainingService {
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+	
+	
+	
 
 	@Override
 	public ResponseEntity publishTraining(Long id) {
@@ -264,6 +268,87 @@ public class TrainingServiceImpl implements TrainingService {
 			e.printStackTrace();
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
+	}
+	
+	@Override
+	public ResponseEntity getAllTrainingFilter(
+	        int page,
+	        int size,
+	        String sortBy,
+	        String sortDir,
+	        Long trainingCategoryId,
+	        String trainingName,
+	        TrainingStatus status) {
+
+	    try {
+
+	        // Validate page
+	        if (page < 0) {
+	            return new ResponseEntity(
+	                    "Page number cannot be negative",
+	                    HttpStatus.BAD_REQUEST.value(),
+	                    null);
+	        }
+
+	        // Validate size
+	        if (size <= 0) {
+	            return new ResponseEntity(
+	                    "Page size must be greater than 0",
+	                    HttpStatus.BAD_REQUEST.value(),
+	                    null);
+	        }
+
+	        // Convert empty training name to null
+	        if (trainingName != null && trainingName.trim().isEmpty()) {
+	            trainingName = null;
+	        }
+
+	        // Sorting
+	        Sort sort;
+
+	        if ("desc".equalsIgnoreCase(sortDir)) {
+	            sort = Sort.by(sortBy).descending();
+	        } else {
+	            sort = Sort.by(sortBy).ascending();
+	        }
+
+	        Pageable pageable = PageRequest.of(page, size, sort);
+
+	        // Fetch filtered data
+	        Page<Training> trainingPage =
+	                trainingRepository.findTrainingByFilter(
+	                        trainingCategoryId,
+	                        trainingName,
+	                        status,
+	                        pageable);
+
+	        // Convert to response
+	        List<Training> trainingList = trainingPage.getContent();
+
+	        // Page response
+	        PageResponse<Training> pageResponse = new PageResponse<>();
+
+	        pageResponse.setContent(trainingList);
+	        pageResponse.setPageNumber(trainingPage.getNumber());
+	        pageResponse.setPageSize(trainingPage.getSize());
+	        pageResponse.setTotalElements(trainingPage.getTotalElements());
+	        pageResponse.setTotalPages(trainingPage.getTotalPages());
+	        pageResponse.setLastPage(trainingPage.isLast());
+
+	        return new ResponseEntity(
+	                "Trainings found successfully!",
+	                HttpStatus.OK.value(),
+	                pageResponse);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        return new ResponseEntity(
+	                "Something went wrong while fetching trainings",
+	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+	                null);
+	    }
 	}
 
 	@Override
