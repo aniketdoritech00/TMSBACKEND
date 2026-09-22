@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.doritech.tmsservice.enums.TrainingStatus;
 import com.doritech.tmsservice.request.TrainingRequest;
 import com.doritech.tmsservice.service.TrainingService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
@@ -59,14 +60,26 @@ public class TrainingController {
 		return trainingService.deleteTraining(id);
 	}
 
+	@GetMapping("/getAllTrainingFilter")
+	public ResponseEntity getAllTrainingFilter(@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "sortBy", defaultValue = "trainingId") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
+			@RequestParam(value = "trainingCategoryId", required = false) Long trainingCategoryId,
+			@RequestParam(value = "trainingName", required = false) String trainingName,
+			@RequestParam(value = "status", required = false) TrainingStatus status) {
+
+		return trainingService.getAllTrainingFilter(page, size, sortBy, sortDir, trainingCategoryId, trainingName,
+				status);
+	}
+
 	@PutMapping("/publishTraining/{id}")
 	public ResponseEntity publishTraining(@PathVariable Long id) {
 		return trainingService.publishTraining(id);
 	}
-	
+
 	@GetMapping("/getTrainingByCategoryId/{trainingCategoryId}")
-	public ResponseEntity getTrainingByCategoryId(
-			@PathVariable Long trainingCategoryId) {
+	public ResponseEntity getTrainingByCategoryId(@PathVariable Long trainingCategoryId) {
 		return trainingService.getTrainingByCategoryId(trainingCategoryId);
 	}
 }
