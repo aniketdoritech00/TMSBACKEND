@@ -130,8 +130,8 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 		if (size <= 0) {
 			throw new BadRequestException("Page size must be greater than 0");
 		}
-
-		if (size > 100) {
+		
+		if (size > 400) {
 			throw new BadRequestException("Page size cannot exceed 100");
 		}
 

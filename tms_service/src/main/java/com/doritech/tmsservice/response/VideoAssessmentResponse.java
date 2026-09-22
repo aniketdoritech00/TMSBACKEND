@@ -1,4 +1,4 @@
-package com.doritech.tmsservice.tms.entity;
+package com.doritech.tmsservice.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -6,74 +6,38 @@ import java.time.LocalDateTime;
 import com.doritech.tmsservice.enums.AssessmentResult;
 import com.doritech.tmsservice.enums.AssessmentStatus;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+public class VideoAssessmentResponse {
 
-@Entity
-@Table(name = "video_assessments", indexes = {
-		@Index(name = "idx_video_assessment_training", columnList = "training_id"),
-		@Index(name = "idx_video_assessment_user", columnList = "user_id"),
-		@Index(name = "idx_video_assessment_assignment", columnList = "training_assignment_id"),
-		@Index(name = "idx_video_assessment_status", columnList = "status"),
-		@Index(name = "idx_video_assessment_submitted", columnList = "submitted_at") })
-public class VideoAssessment {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "video_assessment_id")
 	private Long videoAssessmentId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "training_id", nullable = false)
-	private Training training;
+	private Long trainingId;
 
-	@Column(name = "user_id", nullable = false)
+	private String trainingCode;
+
+	private String trainingName;
+
 	private Long userId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "training_assignment_id", nullable = false)
-	private TrainingAssignment trainingAssignment;
+	private Long trainingAssignmentId;
 
-	@Column(name = "video_url", nullable = false, length = 500)
 	private String videoUrl;
 
-	@Column(name = "video_duration_seconds")
 	private Integer videoDurationSeconds;
 
-	@Column(name = "file_size_bytes")
 	private Long fileSizeBytes;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "status")
-	private AssessmentStatus status = AssessmentStatus.SUBMITTED;
+	private AssessmentStatus status;
 
-	@Column(name = "submitted_at")
 	private LocalDateTime submittedAt;
 
-	@Column(name = "evaluated_at")
 	private LocalDateTime evaluatedAt;
 
-	@Column(name = "evaluated_by")
 	private Long evaluatedBy;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "result")
 	private AssessmentResult result;
 
-	@Column(name = "evaluation_notes", columnDefinition = "TEXT")
 	private String evaluationNotes;
 
-	@Column(name = "score", precision = 5, scale = 2)
 	private BigDecimal score;
 
 	public Long getVideoAssessmentId() {
@@ -84,12 +48,28 @@ public class VideoAssessment {
 		this.videoAssessmentId = videoAssessmentId;
 	}
 
-	public Training getTraining() {
-		return training;
+	public Long getTrainingId() {
+		return trainingId;
 	}
 
-	public void setTraining(Training training) {
-		this.training = training;
+	public void setTrainingId(Long trainingId) {
+		this.trainingId = trainingId;
+	}
+
+	public String getTrainingCode() {
+		return trainingCode;
+	}
+
+	public void setTrainingCode(String trainingCode) {
+		this.trainingCode = trainingCode;
+	}
+
+	public String getTrainingName() {
+		return trainingName;
+	}
+
+	public void setTrainingName(String trainingName) {
+		this.trainingName = trainingName;
 	}
 
 	public Long getUserId() {
@@ -100,12 +80,12 @@ public class VideoAssessment {
 		this.userId = userId;
 	}
 
-	public TrainingAssignment getTrainingAssignment() {
-		return trainingAssignment;
+	public Long getTrainingAssignmentId() {
+		return trainingAssignmentId;
 	}
 
-	public void setTrainingAssignment(TrainingAssignment trainingAssignment) {
-		this.trainingAssignment = trainingAssignment;
+	public void setTrainingAssignmentId(Long trainingAssignmentId) {
+		this.trainingAssignmentId = trainingAssignmentId;
 	}
 
 	public String getVideoUrl() {

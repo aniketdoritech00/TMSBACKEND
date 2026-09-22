@@ -551,17 +551,11 @@ public class VideoServiceImpl implements VideoService {
 
 		log.info("streamVideo :: request received for videoId={}", videoId);
 
-		// ---------------------------------------------------------
-		// 1. Validate video ID
-		// ---------------------------------------------------------
 		if (videoId == null || videoId <= 0) {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid video id");
 			return;
 		}
 
-		// ---------------------------------------------------------
-		// 2. Fetch video from database
-		// ---------------------------------------------------------
 		Video video;
 
 		try {
@@ -589,9 +583,6 @@ public class VideoServiceImpl implements VideoService {
 			return;
 		}
 
-		// ---------------------------------------------------------
-		// 3. Get video path from database
-		// ---------------------------------------------------------
 		String videoPath = video.getVideoUrl();
 
 		log.info("streamVideo :: video path={}", videoPath);
@@ -605,9 +596,6 @@ public class VideoServiceImpl implements VideoService {
 			return;
 		}
 
-		// ---------------------------------------------------------
-		// 4. Resolve physical file
-		// ---------------------------------------------------------
 		Path filePath;
 
 		try {
@@ -643,9 +631,6 @@ public class VideoServiceImpl implements VideoService {
 			return;
 		}
 
-		// ---------------------------------------------------------
-		// 5. Get file size
-		// ---------------------------------------------------------
 		long fileSize;
 
 		try {
@@ -670,14 +655,8 @@ public class VideoServiceImpl implements VideoService {
 			return;
 		}
 
-		// ---------------------------------------------------------
-		// 6. Determine Content-Type
-		// ---------------------------------------------------------
 		String contentType = resolveVideoContentType(filePath);
 
-		// ---------------------------------------------------------
-		// 7. Set common response headers
-		// ---------------------------------------------------------
 		response.setContentType(contentType);
 
 		response.setHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
@@ -689,22 +668,12 @@ public class VideoServiceImpl implements VideoService {
 
 		response.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
 
-		/*
-		 * For video streaming, don't use no-store. Let the browser handle the media
-		 * cache.
-		 */
 		response.setHeader("Cache-Control", "public, max-age=3600");
 
-		// ---------------------------------------------------------
-		// 8. Get Range header
-		// ---------------------------------------------------------
 		String rangeHeader = request.getHeader(HttpHeaders.RANGE);
 
 		log.info("streamVideo :: Range header={}", rangeHeader);
 
-		// =========================================================
-		// CASE 1: Browser did NOT send Range header
-		// =========================================================
 		if (rangeHeader == null || !rangeHeader.startsWith("bytes=")) {
 
 			log.info("streamVideo :: streaming complete file. size={}", fileSize);
@@ -721,10 +690,6 @@ public class VideoServiceImpl implements VideoService {
 
 			} catch (IOException e) {
 
-				/*
-				 * Browser/client can disconnect while video is being streamed. This is not
-				 * necessarily a server-side failure.
-				 */
 				if (isClientDisconnected(e)) {
 
 					log.warn("streamVideo :: client disconnected while streaming video: {}", filePath);
@@ -740,18 +705,8 @@ public class VideoServiceImpl implements VideoService {
 			return;
 		}
 
-		// =========================================================
-		// CASE 2: Browser sent Range header
-		// =========================================================
 		try {
 
-			/*
-			 * Example:
-			 *
-			 * Range: bytes=0-1023 Range: bytes=1000-
-			 *
-			 * We only process the first range.
-			 */
 			String rangeValue = rangeHeader.substring(6).split(",")[0].trim();
 
 			String[] rangeParts = rangeValue.split("-", 2);
@@ -767,24 +722,12 @@ public class VideoServiceImpl implements VideoService {
 
 			long start;
 
-			/*
-			 * Normal browser request:
-			 *
-			 * bytes=0-1023
-			 */
 			if (!rangeParts[0].trim().isEmpty()) {
 
 				start = Long.parseLong(rangeParts[0].trim());
 
 			} else {
 
-				/*
-				 * Suffix range:
-				 *
-				 * bytes=-500
-				 *
-				 * Means last 500 bytes.
-				 */
 				long suffixLength = Long.parseLong(rangeParts.length > 1 ? rangeParts[1].trim() : "0");
 
 				if (suffixLength <= 0) {
@@ -800,10 +743,6 @@ public class VideoServiceImpl implements VideoService {
 			}
 
 			long end;
-
-			/*
-			 * bytes=0-
-			 */
 			if (rangeParts.length > 1 && !rangeParts[1].trim().isEmpty()) {
 
 				end = Long.parseLong(rangeParts[1].trim());
@@ -813,9 +752,6 @@ public class VideoServiceImpl implements VideoService {
 				end = fileSize - 1;
 			}
 
-			// -----------------------------------------------------
-			// Validate range
-			// -----------------------------------------------------
 			if (start < 0 || start >= fileSize || start > end) {
 
 				log.warn("streamVideo :: invalid range. videoId={}, range={}, fileSize={}", videoId, rangeHeader,
@@ -828,16 +764,10 @@ public class VideoServiceImpl implements VideoService {
 				return;
 			}
 
-			// -----------------------------------------------------
-			// Make sure end never exceeds file size
-			// -----------------------------------------------------
 			end = Math.min(end, fileSize - 1);
 
 			long contentLength = end - start + 1;
 
-			// -----------------------------------------------------
-			// Return Partial Content
-			// -----------------------------------------------------
 			response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
 
 			response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + fileSize);
@@ -849,9 +779,6 @@ public class VideoServiceImpl implements VideoService {
 			log.info("streamVideo :: streaming range. videoId={}, start={}, end={}, length={}, totalSize={}", videoId,
 					start, end, contentLength, fileSize);
 
-			// -----------------------------------------------------
-			// Stream requested bytes only
-			// -----------------------------------------------------
 			try {
 
 				streamBytesNio(filePath, start, contentLength, response.getOutputStream());
