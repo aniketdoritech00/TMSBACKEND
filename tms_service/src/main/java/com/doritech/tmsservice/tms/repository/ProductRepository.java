@@ -46,4 +46,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 			""")
 	Page<Product> findProductFilter(@Param("productName") String productName, @Param("productCode") String productCode,
 			@Param("productCategoryId") Long productCategoryId, @Param("isActive") Boolean isActive, Pageable pageable);
+
+	List<Product> findByIsActiveTrue();
 }

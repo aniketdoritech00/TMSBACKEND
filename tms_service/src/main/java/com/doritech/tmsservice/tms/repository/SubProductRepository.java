@@ -48,4 +48,6 @@ public interface SubProductRepository extends JpaRepository<SubProduct, Long> {
 			""")
 	Page<SubProduct> findSubProductByFilter(@Param("productName") String productName,
 			@Param("subProductName") String subProductName, @Param("isActive") Boolean isActive, Pageable pageable);
+
+	List<SubProduct> findByIsActiveTrue();
 }
