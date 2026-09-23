@@ -546,7 +546,7 @@ public class TrainingContentServiceImpl implements TrainingContentService {
 			if (size <= 0) {
 				return new ResponseEntity("Page size must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
 			}
-			if (size > 100) {
+			if (size > 400) {
 				return new ResponseEntity("Page size cannot exceed 100", HttpStatus.BAD_REQUEST.value(), null);
 			}
 			if (sortBy == null || sortBy.trim().isEmpty()) {

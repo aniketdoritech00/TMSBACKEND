@@ -256,9 +256,7 @@ public class VideoServiceImpl implements VideoService {
 			throw new BadRequestException("Video file is required");
 		}
 
-		if (thumbnailFile == null || thumbnailFile.isEmpty()) {
-			throw new BadRequestException("Thumbnail file is required");
-		}
+		
 
 		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
 			throw new BadRequestException("Video title is required");

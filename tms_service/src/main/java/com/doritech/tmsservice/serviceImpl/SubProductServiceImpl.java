@@ -221,7 +221,7 @@ public class SubProductServiceImpl implements SubProductService {
 	@Override
 	public ResponseEntity getAllSubProductWithoutPagination() {
 		try {
-			List<SubProduct> subProducts = subProductRepository.findAll();
+			List<SubProduct> subProducts = subProductRepository.findByIsActiveTrue();
 			if (subProducts == null || subProducts.isEmpty()) {
 				return new ResponseEntity("No sub products found", HttpStatus.NOT_FOUND.value(), null);
 			}
