@@ -9,27 +9,37 @@ import com.doritech.tmsservice.enums.TestResult;
 public class TestAttemptResponse {
 
 	private Long testAttemptId;
+
 	private Long testSetId;
+
 	private Long userId;
+
 	private Long trainingAssignmentId;
 
 	private LocalDateTime startTime;
+
 	private LocalDateTime endTime;
 
 	private BigDecimal totalScore;
 
 	private Integer totalQuestions;
+
 	private Integer correctAnswers;
+
 	private Integer wrongAnswers;
+
 	private Integer skippedQuestions;
 
 	private BigDecimal passingPercentage;
+
 	private BigDecimal percentage;
 
 	private TestResult result;
+
 	private TestAttemptStatus status;
 
 	private Integer violationCount;
+
 	private Integer attemptNumber;
 
 	public Long getTestAttemptId() {
@@ -167,5 +177,4 @@ public class TestAttemptResponse {
 	public void setAttemptNumber(Integer attemptNumber) {
 		this.attemptNumber = attemptNumber;
 	}
-
 }
