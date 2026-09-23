@@ -55,6 +55,11 @@ public class VideoAssessmentQuestionController {
 				sortDir);
 	}
 
+	@GetMapping("/getByTrainingIdWithoutPagination/{trainingId}")
+	public ResponseEntity getByTrainingIdWithoutPagination(@PathVariable Long trainingId) {
+		return videoAssessmentQuestionService.getVideoAssessmentQuestionsByTrainingId(trainingId);
+	}
+
 	@PutMapping("/update/{videoAssessmentQuestionId}")
 	public ResponseEntity updateVideoAssessmentQuestion(@PathVariable Long videoAssessmentQuestionId,
 			@RequestBody VideoAssessmentQuestionRequest request) {

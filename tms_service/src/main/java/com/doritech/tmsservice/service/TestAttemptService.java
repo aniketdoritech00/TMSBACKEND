@@ -35,4 +35,6 @@ public interface TestAttemptService {
 	ResponseEntity deleteTestAttempt(Long testAttemptId);
 
 	ResponseEntity getTestSetStatusByTestSetId(Long testSetId);
+
+	ResponseEntity getTestAttemptByTestSetId(Long testSetId);
 }
