@@ -228,7 +228,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 	@Override
 	public ResponseEntity getAllProductCategory() {
 		try {
-			List<ProductCategory> categories = productCategoryRepository.findAll();
+			List<ProductCategory> categories = productCategoryRepository.findByIsActiveTrue();
 			if (categories.isEmpty()) {
 				return new ResponseEntity("Product category not found", HttpStatus.NOT_FOUND.value(), null);
 			}

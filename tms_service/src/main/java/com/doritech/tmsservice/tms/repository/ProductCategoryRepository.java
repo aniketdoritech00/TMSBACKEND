@@ -1,5 +1,7 @@
 package com.doritech.tmsservice.tms.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,5 +35,7 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
 	Page<ProductCategory> findProductCategoryFilter(@Param("productCategoryName") String productCategoryName,
 			@Param("productCategoryCode") String productCategoryCode, @Param("isActive") Boolean isActive,
 			Pageable pageable);
+
+	List<ProductCategory> findByIsActiveTrue();
 
 }
