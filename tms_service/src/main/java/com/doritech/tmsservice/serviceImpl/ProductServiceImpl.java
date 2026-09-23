@@ -412,7 +412,7 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public ResponseEntity getAllProduct() {
 		try {
-			List<Product> productList = productRepository.findAll();
+			List<Product> productList = productRepository.findByIsActiveTrue();
 
 			if (productList == null || productList.isEmpty()) {
 				return new ResponseEntity("No products found", HttpStatus.NOT_FOUND.value(), null);
