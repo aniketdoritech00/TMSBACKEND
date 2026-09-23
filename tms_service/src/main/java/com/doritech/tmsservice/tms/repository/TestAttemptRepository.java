@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.doritech.tmsservice.enums.TestAttemptStatus;
 import com.doritech.tmsservice.tms.entity.TestAttempt;
+import com.doritech.tmsservice.tms.entity.Training;
 
 public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> {
 
@@ -36,5 +37,8 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 	Optional<TestAttempt> findByUserIdAndStatus(Long userId, TestAttemptStatus status);
 
 	Optional<TestAttempt> findTopByTestSet_TestSetIdOrderByTestAttemptIdDesc(Long testSetId);
+
+	 Optional<TestAttempt> findTopByTestSet_TestSetIdAndUserIdOrderByAttemptNumberDesc(
+	            Long testSetId, Long userId);
 
 }
