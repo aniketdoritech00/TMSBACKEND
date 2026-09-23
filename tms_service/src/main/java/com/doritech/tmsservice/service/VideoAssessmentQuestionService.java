@@ -22,4 +22,6 @@ public interface VideoAssessmentQuestionService {
 	ResponseEntity getAllVideoAssessmentQuestionsWithoutPaginatioan();
 
 	ResponseEntity createVideoAssessmentQuestion(List<VideoAssessmentQuestionRequest> requests);
+
+	ResponseEntity getVideoAssessmentQuestionsByTrainingId(Long trainingId);
 }

@@ -740,4 +740,95 @@ public class VideoAssessmentServiceImpl implements VideoAssessmentService {
 
 		return "application/octet-stream";
 	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getStatusByTrainingAssignmentId(Long trainingAssignmentId) {
+
+		try {
+
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+				return new ResponseEntity("Training assignment ID is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			List<VideoAssessment> assessments = videoAssessmentRepository
+					.findByTrainingAssignment_TrainingAssignmentId(trainingAssignmentId);
+
+			if (assessments == null || assessments.isEmpty()) {
+				return new ResponseEntity("Video assessment not found for this training assignment",
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			VideoAssessment videoAssessment = assessments.get(assessments.size() - 1);
+
+			return new ResponseEntity("Video assessment status fetched successfully", HttpStatus.OK.value(),
+					videoAssessment.getStatus());
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Failed to fetch video assessment status",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getByTrainingAssignmentId(Long trainingAssignmentId) {
+
+		try {
+
+			if (trainingAssignmentId == null || trainingAssignmentId <= 0) {
+				return new ResponseEntity("Training assignment ID is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<VideoAssessment> optionalAssessment = videoAssessmentRepository
+					.findTopByTrainingAssignment_TrainingAssignmentIdOrderByVideoAssessmentIdDesc(trainingAssignmentId);
+
+			if (optionalAssessment.isEmpty()) {
+				return new ResponseEntity("Video assessment not found for this training assignment",
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			VideoAssessment videoAssessment = optionalAssessment.get();
+
+			VideoAssessmentResponse response = new VideoAssessmentResponse();
+
+			response.setVideoAssessmentId(videoAssessment.getVideoAssessmentId());
+
+			if (videoAssessment.getTraining() != null) {
+				response.setTrainingId(videoAssessment.getTraining().getTrainingId());
+			}
+
+			response.setUserId(videoAssessment.getUserId());
+
+			if (videoAssessment.getTrainingAssignment() != null) {
+				response.setTrainingAssignmentId(videoAssessment.getTrainingAssignment().getTrainingAssignmentId());
+			}
+
+			response.setVideoUrl(videoAssessment.getVideoUrl());
+			response.setVideoDurationSeconds(videoAssessment.getVideoDurationSeconds());
+			response.setFileSizeBytes(videoAssessment.getFileSizeBytes());
+			response.setStatus(videoAssessment.getStatus());
+			response.setSubmittedAt(videoAssessment.getSubmittedAt());
+			response.setEvaluatedAt(videoAssessment.getEvaluatedAt());
+			response.setEvaluatedBy(videoAssessment.getEvaluatedBy());
+			response.setResult(videoAssessment.getResult());
+			response.setEvaluationNotes(videoAssessment.getEvaluationNotes());
+			response.setScore(videoAssessment.getScore());
+			response.setTrainingCode(videoAssessment.getTrainingAssignment().getTraining().getTrainingCode());
+			response.setTrainingName(videoAssessment.getTrainingAssignment().getTraining().getTrainingName());
+
+			return new ResponseEntity("Video assessment fetched successfully", HttpStatus.OK.value(), response);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Failed to fetch video assessment", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+					null);
+		}
+	}
+
 }

@@ -109,4 +109,9 @@ public class TestAttemptController {
 	public ResponseEntity getTestSetStatus(@RequestParam Long testSetId) {
 		return testAttemptService.getTestSetStatusByTestSetId(testSetId);
 	}
+
+	@GetMapping("/getByTestSetId/{testSetId}")
+	public ResponseEntity getTestAttemptByTestSetId(@PathVariable Long testSetId) {
+		return testAttemptService.getTestAttemptByTestSetId(testSetId);
+	}
 }
