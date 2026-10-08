@@ -22,6 +22,14 @@ public class InTrainingQuestionResultResponse {
 
 	private Boolean skipped;
 
+	private Long videoId;
+
+	private String question;
+
+	private Boolean isCorrect;
+
+	private Boolean isSkipped;
+
 	private Integer timeTakenSeconds;
 
 	public Long getQuestionId() {
@@ -111,4 +119,37 @@ public class InTrainingQuestionResultResponse {
 	public void setTimeTakenSeconds(Integer timeTakenSeconds) {
 		this.timeTakenSeconds = timeTakenSeconds;
 	}
+
+	public Long getVideoId() {
+		return videoId;
+	}
+
+	public void setVideoId(Long videoId) {
+		this.videoId = videoId;
+	}
+
+	public String getQuestion() {
+		return question;
+	}
+
+	public void setQuestion(String question) {
+		this.question = question;
+	}
+
+	public Boolean getIsCorrect() {
+		return isCorrect;
+	}
+
+	public void setIsCorrect(Boolean isCorrect) {
+		this.isCorrect = isCorrect;
+	}
+
+	public Boolean getIsSkipped() {
+		return isSkipped;
+	}
+
+	public void setIsSkipped(Boolean isSkipped) {
+		this.isSkipped = isSkipped;
+	}
+
 }

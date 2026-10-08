@@ -1,6 +1,8 @@
 package com.doritech.tmsservice.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -228,6 +230,41 @@ public class TestQuestionServiceImpl implements TestQuestionService {
 		}
 	}
 
+//	@Override
+//	@Transactional(value = "tmsTransactionManager", readOnly = true)
+//	public ResponseEntity getTestQuestionsByTestSetId(Long testSetId) {
+//
+//		try {
+//
+//			if (testSetId == null || testSetId <= 0) {
+//
+//				return new ResponseEntity("Invalid test set id", HttpStatus.BAD_REQUEST.value(), null);
+//			}
+//
+//			Optional<TestSet> optionalTestSet = testSetRepository.findById(testSetId);
+//
+//			if (optionalTestSet.isEmpty()) {
+//
+//				return new ResponseEntity("Test set not found with id: " + testSetId, HttpStatus.NOT_FOUND.value(),
+//						null);
+//			}
+//
+//			List<TestQuestion> questions = testQuestionRepository
+//					.findByTestSet_TestSetIdOrderByDisplayOrderAsc(testSetId);
+//
+//			List<TestQuestionResponse> response = questions.stream().map(this::mapToResponse)
+//					.collect(Collectors.toList());
+//
+//			return new ResponseEntity("Test questions fetched successfully", HttpStatus.OK.value(), response);
+//
+//		} catch (Exception e) {
+//
+//			e.printStackTrace();
+//
+//			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+//		}
+//	}
+
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getTestQuestionsByTestSetId(Long testSetId) {
@@ -235,23 +272,41 @@ public class TestQuestionServiceImpl implements TestQuestionService {
 		try {
 
 			if (testSetId == null || testSetId <= 0) {
-
 				return new ResponseEntity("Invalid test set id", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			Optional<TestSet> optionalTestSet = testSetRepository.findById(testSetId);
 
 			if (optionalTestSet.isEmpty()) {
-
 				return new ResponseEntity("Test set not found with id: " + testSetId, HttpStatus.NOT_FOUND.value(),
 						null);
 			}
 
+			TestSet testSet = optionalTestSet.get();
+
 			List<TestQuestion> questions = testQuestionRepository
 					.findByTestSet_TestSetIdOrderByDisplayOrderAsc(testSetId);
 
-			List<TestQuestionResponse> response = questions.stream().map(this::mapToResponse)
-					.collect(Collectors.toList());
+			if (Boolean.TRUE.equals(testSet.getShuffleQuestions())) {
+				Collections.shuffle(questions);
+			}
+
+			List<TestQuestionResponse> response = new ArrayList<>();
+
+			for (TestQuestion question : questions) {
+
+				TestQuestionResponse questionResponse = mapToResponse(question);
+
+				if (Boolean.TRUE.equals(testSet.getShuffleOptions())) {
+
+					if (questionResponse.getOptions() != null && !questionResponse.getOptions().isEmpty()) {
+
+						Collections.shuffle(questionResponse.getOptions());
+					}
+				}
+
+				response.add(questionResponse);
+			}
 
 			return new ResponseEntity("Test questions fetched successfully", HttpStatus.OK.value(), response);
 
