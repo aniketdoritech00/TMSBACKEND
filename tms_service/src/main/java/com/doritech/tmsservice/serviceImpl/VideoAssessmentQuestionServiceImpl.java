@@ -296,6 +296,52 @@ public class VideoAssessmentQuestionServiceImpl implements VideoAssessmentQuesti
 		}
 	}
 
+
+@Override
+@Transactional(value = "tmsTransactionManager", readOnly = true)
+public ResponseEntity getVideoAssessmentQuestionsByTrainingId(Long trainingId) {
+
+    try {
+
+        if (trainingId == null || trainingId <= 0) {
+            return new ResponseEntity(
+                    "Training ID is required",
+                    HttpStatus.BAD_REQUEST.value(),
+                    null);
+        }
+
+        Training training = trainingRepository.findById(trainingId).orElse(null);
+
+        if (training == null) {
+            return new ResponseEntity(
+                    "Training not found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null);
+        }
+
+        List<VideoAssessmentQuestion> questions =
+                videoAssessmentQuestionRepository.findByTrainingId(trainingId);
+
+        List<VideoAssessmentQuestionResponse> responseList =
+                questions.stream()
+                        .map(this::convertToResponse)
+                        .collect(Collectors.toList());
+
+        return new ResponseEntity(
+                "Video assessment questions fetched successfully",
+                HttpStatus.OK.value(),
+                responseList);
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        return new ResponseEntity(
+                "Failed to fetch video assessment questions",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null);
+    }
+}
 	@Override
 	@Transactional(value = "tmsTransactionManager")
 	public ResponseEntity updateVideoAssessmentQuestion(Long videoAssessmentQuestionId,

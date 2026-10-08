@@ -24,4 +24,8 @@ public interface VideoAssessmentRepository extends JpaRepository<VideoAssessment
 	Optional<VideoAssessment> findByVideoAssessmentIdAndUserId(Long videoAssessmentId, Long userId);
 
 	boolean existsByTrainingAssignment_TrainingAssignmentIdAndUserId(Long trainingAssignmentId, Long userId);
+
+	Optional<VideoAssessment> findTopByTrainingAssignment_TrainingAssignmentIdOrderByVideoAssessmentIdDesc(
+			Long trainingAssignmentId);
+
 }

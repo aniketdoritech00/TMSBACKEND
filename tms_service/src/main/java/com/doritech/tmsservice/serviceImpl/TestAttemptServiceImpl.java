@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.enums.TestAttemptStatus;
 import com.doritech.tmsservice.enums.TestResult;
 import com.doritech.tmsservice.request.TestAttemptRequest;
@@ -895,5 +896,155 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 			return new ResponseEntity("Failed to fetch test set status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
 					null);
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true, transactionManager = "tmsTransactionManager")
+	public ResponseEntity getTestAttemptByTestSetId(Long testSetId) {
+
+	    ResponseEntity response = new ResponseEntity();
+
+	    try {
+
+	        if (testSetId == null || testSetId <= 0) {
+	            response.setMessage("Invalid test set ID");
+	            response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	            response.setPayload(null);
+	            return response;
+	        }
+
+	        Long userId = CurrentUser.getUserId();
+
+	        if (userId == null) {
+	            response.setMessage("Current user not found");
+	            response.setStatusCode(HttpStatus.UNAUTHORIZED.value());
+	            response.setPayload(null);
+	            return response;
+	        }
+
+	        TestAttempt testAttempt = testAttemptRepository
+	                .findTopByTestSet_TestSetIdAndUserIdOrderByAttemptNumberDesc(
+	                        testSetId, userId)
+	                .orElse(null);
+
+	        if (testAttempt == null) {
+	            response.setMessage(
+	                    "No test attempt found for the current user");
+	            response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	            response.setPayload(null);
+	            return response;
+	        }
+
+	        TestAttemptResponse result = new TestAttemptResponse();
+
+	        result.setTestAttemptId(
+	                testAttempt.getTestAttemptId());
+
+	        /*
+	         * Get only the ID from the lazy TestSet relationship.
+	         * Do not return the TestSet entity itself.
+	         */
+	        if (testAttempt.getTestSet() != null) {
+	            result.setTestSetId(
+	                    testAttempt.getTestSet().getTestSetId());
+	        }
+
+	        result.setUserId(
+	                testAttempt.getUserId());
+
+	        /*
+	         * Get only the ID from TrainingAssignment.
+	         */
+	        if (testAttempt.getTrainingAssignment() != null) {
+	            result.setTrainingAssignmentId(
+	                    testAttempt.getTrainingAssignment()
+	                            .getTrainingAssignmentId());
+	        }
+
+	        result.setStartTime(
+	                testAttempt.getStartTime());
+
+	        result.setEndTime(
+	                testAttempt.getEndTime());
+
+	        result.setTotalScore(
+	                testAttempt.getTotalScore());
+
+	        result.setTotalQuestions(
+	                testAttempt.getTotalQuestions());
+
+	        result.setCorrectAnswers(
+	                testAttempt.getCorrectAnswers());
+
+	        result.setWrongAnswers(
+	                testAttempt.getWrongAnswers());
+
+	        result.setSkippedQuestions(
+	                testAttempt.getSkippedQuestions());
+
+	        result.setPassingPercentage(
+	                testAttempt.getPassingPercentage());
+
+	        /*
+	         * Calculate percentage.
+	         *
+	         * Example:
+	         * correctAnswers = 8
+	         * totalQuestions = 10
+	         * percentage = 80.00
+	         */
+	        if (testAttempt.getTotalQuestions() != null
+	                && testAttempt.getTotalQuestions() > 0
+	                && testAttempt.getCorrectAnswers() != null) {
+
+	            BigDecimal percentage = BigDecimal.valueOf(
+	                    testAttempt.getCorrectAnswers())
+	                    .multiply(BigDecimal.valueOf(100))
+	                    .divide(
+	                            BigDecimal.valueOf(
+	                                    testAttempt.getTotalQuestions()),
+	                            2,
+	                            java.math.RoundingMode.HALF_UP);
+
+	            result.setPercentage(percentage);
+
+	        } else {
+	            result.setPercentage(BigDecimal.ZERO);
+	        }
+
+	        result.setResult(
+	                testAttempt.getResult());
+
+	        result.setStatus(
+	                testAttempt.getStatus());
+
+	        result.setViolationCount(
+	                testAttempt.getViolationCount());
+
+	        result.setAttemptNumber(
+	                testAttempt.getAttemptNumber());
+
+	        response.setMessage(
+	                "Test attempt details fetched successfully");
+
+	        response.setStatusCode(
+	                HttpStatus.OK.value());
+
+	        response.setPayload(result);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        response.setMessage(
+	                "Failed to fetch test attempt details");
+
+	        response.setStatusCode(
+	                HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+	        response.setPayload(null);
+	    }
+
+	    return response;
 	}
 }
