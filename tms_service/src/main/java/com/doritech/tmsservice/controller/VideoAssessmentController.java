@@ -57,5 +57,11 @@ public class VideoAssessmentController {
 			HttpServletResponse response) throws IOException {
 		videoAssessmentService.streamVideo(videoAssessmentId, request, response);
 	}
-
+	@GetMapping("/getAllVideoAssessments")
+	public ResponseEntity getAllVideoAssessments(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "videoAssessmentId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return videoAssessmentService.getAllVideoAssessments(page, size, sortBy, sortDir);
+	}
 }

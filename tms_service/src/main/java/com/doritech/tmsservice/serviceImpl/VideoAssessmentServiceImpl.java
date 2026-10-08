@@ -740,4 +740,50 @@ public class VideoAssessmentServiceImpl implements VideoAssessmentService {
 
 		return "application/octet-stream";
 	}
+	
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getAllVideoAssessments(int page, int size, String sortBy, String sortDir) {
+
+		try {
+
+			if (page < 0) {
+				return new ResponseEntity("Page number cannot be negative", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size <= 0) {
+				return new ResponseEntity("Page size must be greater than zero", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Sort.Direction direction;
+
+			if ("asc".equalsIgnoreCase(sortDir)) {
+				direction = Sort.Direction.ASC;
+			} else {
+				direction = Sort.Direction.DESC;
+			}
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<VideoAssessment> assessmentPage = videoAssessmentRepository.findAll(pageable);
+			List<VideoAssessmentResponse> responseList = assessmentPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			PageResponse<VideoAssessmentResponse> pageResponse = new PageResponse<>(responseList,
+					assessmentPage.getNumber(), assessmentPage.getSize(), assessmentPage.getTotalElements(),
+					assessmentPage.getTotalPages(), assessmentPage.isLast());
+
+			return new ResponseEntity("Video assessments fetched successfully", HttpStatus.OK.value(), pageResponse);
+
+		} catch (PropertyReferenceException e) {
+
+			return new ResponseEntity("Invalid sort field: " + sortBy, HttpStatus.BAD_REQUEST.value(), null);
+
+		} catch (Exception e) {
+
+			return new ResponseEntity("Failed to fetch video assessments: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
 }

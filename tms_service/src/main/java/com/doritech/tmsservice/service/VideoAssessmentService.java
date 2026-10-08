@@ -19,4 +19,6 @@ public interface VideoAssessmentService {
 	ResponseEntity getVideoAssessmentById(Long videoAssessmentId);
 
 	void streamVideo(Long videoId, HttpServletRequest request, HttpServletResponse response) throws IOException;
+
+	ResponseEntity getAllVideoAssessments(int page, int size, String sortBy, String sortDir);
 }
