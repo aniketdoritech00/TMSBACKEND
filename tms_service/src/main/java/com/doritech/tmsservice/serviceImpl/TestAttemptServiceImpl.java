@@ -252,10 +252,6 @@ public class TestAttemptServiceImpl implements TestAttemptService {
 				size = 10;
 			}
 
-			if (size > 100) {
-				size = 100;
-			}
-
 			if (sortBy == null || sortBy.trim().isEmpty()) {
 
 				sortBy = "testAttemptId";

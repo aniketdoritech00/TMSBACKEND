@@ -294,17 +294,203 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 //					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 //		}
 //	}
+	/*
+	 * @Override
+	 * 
+	 * @Transactional("tmsTransactionManager") public ResponseEntity
+	 * createTrainingAssignment(TrainingAssignmentRequest request) { try {
+	 * 
+	 * if (request == null) { return new
+	 * ResponseEntity("Training assignment data is required",
+	 * HttpStatus.BAD_REQUEST.value(), null); }
+	 * 
+	 * if (request.getTrainingId() == null || request.getTrainingId() <= 0) { return
+	 * new ResponseEntity("Valid training id is required",
+	 * HttpStatus.BAD_REQUEST.value(), null); }
+	 * 
+	 * Training training =
+	 * trainingRepository.findById(request.getTrainingId()).orElse(null);
+	 * 
+	 * if (training == null) { return new ResponseEntity("Training not found",
+	 * HttpStatus.NOT_FOUND.value(), null); }
+	 * 
+	 * if (request.getTestSetId() != null || request.getTestSetId() < 0) { TestSet
+	 * testSet = testSetRepository.findById(request.getTestSetId()).orElse(null);
+	 * 
+	 * if (testSet == null) { return new ResponseEntity("Test set not found",
+	 * HttpStatus.NOT_FOUND.value(), null); }
+	 * 
+	 * // Make sure selected test set belongs to the selected training if
+	 * (testSet.getTraining() == null || testSet.getTraining().getTrainingId() ==
+	 * null ||
+	 * !testSet.getTraining().getTrainingId().equals(training.getTrainingId())) {
+	 * 
+	 * return new
+	 * ResponseEntity("Selected test set does not belong to this training",
+	 * HttpStatus.BAD_REQUEST.value(), null); } }
+	 * 
+	 * UserMaster user = null;
+	 * 
+	 * if (request.getUserId() != null) {
+	 * 
+	 * Integer userIdInt;
+	 * 
+	 * try { userIdInt = Math.toIntExact(request.getUserId()); } catch
+	 * (ArithmeticException e) { return new ResponseEntity("Invalid user id",
+	 * HttpStatus.BAD_REQUEST.value(), null); }
+	 * 
+	 * user = userRepository.findById(userIdInt).orElse(null);
+	 * 
+	 * if (user == null) { return new ResponseEntity("User not found",
+	 * HttpStatus.NOT_FOUND.value(), null); }
+	 * 
+	 * boolean alreadyExists = trainingAssignmentRepository
+	 * .existsByTraining_TrainingIdAndUserId(request.getTrainingId(),
+	 * request.getUserId());
+	 * 
+	 * if (alreadyExists) { return new
+	 * ResponseEntity("Training is already assigned to this user",
+	 * HttpStatus.CONFLICT.value(), null); } }
+	 * 
+	 * Long currentUserIdLong = CurrentUser.getUserId();
+	 * 
+	 * if (currentUserIdLong == null || currentUserIdLong <= 0) { return new
+	 * ResponseEntity("Unable to identify current user",
+	 * HttpStatus.UNAUTHORIZED.value(), null); }
+	 * 
+	 * Integer currentUserId;
+	 * 
+	 * try { currentUserId = Math.toIntExact(currentUserIdLong); } catch
+	 * (ArithmeticException e) { return new
+	 * ResponseEntity("Invalid current user id", HttpStatus.UNAUTHORIZED.value(),
+	 * null); }
+	 * 
+	 * UserMaster assignedBy = userRepository.findById(currentUserId).orElse(null);
+	 * 
+	 * if (assignedBy == null) { return new
+	 * ResponseEntity("Assigning user not found", HttpStatus.NOT_FOUND.value(),
+	 * null); }
+	 * 
+	 * Batch batch = null;
+	 * 
+	 * if (request.getBatchId() != null) {
+	 * 
+	 * if (request.getBatchId() <= 0) { return new
+	 * ResponseEntity("Invalid batch id", HttpStatus.BAD_REQUEST.value(), null); }
+	 * 
+	 * batch = batchRepository.findById(request.getBatchId()).orElse(null);
+	 * 
+	 * if (batch == null) { return new ResponseEntity("Batch not found",
+	 * HttpStatus.NOT_FOUND.value(), null); } }
+	 * 
+	 * // Create training assignment TrainingAssignment trainingAssignment = new
+	 * TrainingAssignment();
+	 * 
+	 * trainingAssignment.setTraining(training);
+	 * 
+	 * if (user != null) {
+	 * trainingAssignment.setUserId(user.getUserId().longValue()); } else {
+	 * trainingAssignment.setUserId(null); }
+	 * 
+	 * trainingAssignment.setBatch(batch);
+	 * trainingAssignment.setAssignedBy(assignedBy.getUserId().longValue());
+	 * trainingAssignment.setAssignedAt(LocalDateTime.now());
+	 * trainingAssignment.setDueDate(request.getDueDate());
+	 * trainingAssignment.setStatus(AssignmentStatus.NOT_STARTED);
+	 * trainingAssignment.setProgressPercentage(new BigDecimal("0.00"));
+	 * trainingAssignment.setIsPassed(false);
+	 * trainingAssignment.setCertificateGenerated(false);
+	 * trainingAssignment.setAttemptedQuestions(0);
+	 * trainingAssignment.setCorrectAnswers(0);
+	 * trainingAssignment.setWrongAnswers(0);
+	 * trainingAssignment.setTotalQuestions(0);
+	 * trainingAssignment.setStartedAt(null);
+	 * 
+	 * TrainingAssignment savedAssignment =
+	 * trainingAssignmentRepository.save(trainingAssignment);
+	 * 
+	 * // Map selected test set with the newly created training assignment
+	 * TrainingAssignmentTestSet assignmentTestSet = new
+	 * TrainingAssignmentTestSet();
+	 * 
+	 * assignmentTestSet.setTrainingAssignment(savedAssignment);
+	 * assignmentTestSet.setTestSet(testSet);
+	 * assignmentTestSet.setAssignedAt(LocalDateTime.now());
+	 * assignmentTestSet.setAssignedBy(assignedBy.getUserId().longValue());
+	 * 
+	 * trainingAssignmentTestSetRepository.save(assignmentTestSet);
+	 * 
+	 * // Assign training videos to user if (user != null) {
+	 * 
+	 * Long assignedUserId = user.getUserId().longValue();
+	 * 
+	 * List<TrainingContent> trainingContents = trainingContentRepository
+	 * .findByTraining_TrainingId(request.getTrainingId());
+	 * 
+	 * if (trainingContents != null && !trainingContents.isEmpty()) {
+	 * 
+	 * for (TrainingContent trainingContent : trainingContents) {
+	 * 
+	 * if (trainingContent.getContentType() == null) { continue; }
+	 * 
+	 * if (!trainingContent.getContentType().name().equalsIgnoreCase("VIDEO")) {
+	 * continue; }
+	 * 
+	 * Long videoId = trainingContent.getContentReferenceId();
+	 * 
+	 * if (videoId == null || videoId <= 0) { continue; }
+	 * 
+	 * boolean videoAlreadyExists =
+	 * userVideoRepository.existsByUserIdAndVideo_VideoId(assignedUserId, videoId);
+	 * 
+	 * if (videoAlreadyExists) { continue; }
+	 * 
+	 * Video video = videoRepository.findById(videoId).orElse(null);
+	 * 
+	 * if (video == null) { continue; }
+	 * 
+	 * UserVideo userVideo = new UserVideo();
+	 * 
+	 * userVideo.setUserId(assignedUserId); userVideo.setVideo(video);
+	 * userVideo.setTrainingAssignment(savedAssignment);
+	 * userVideo.setStatus(UserVideoStatus.ASSIGNED); userVideo.setWatchedCount(0);
+	 * userVideo.setWatchedSeconds(0); userVideo.setLastWatchedAt(null);
+	 * userVideo.setCompletedAt(null);
+	 * userVideo.setExpiryDate(request.getDueDate());
+	 * userVideo.setAssignedAt(LocalDateTime.now());
+	 * userVideo.setAssignedBy(assignedBy.getUserId().longValue());
+	 * 
+	 * userVideoRepository.save(userVideo); } } }
+	 * 
+	 * TrainingAssignmentResponse response = convertToResponse(savedAssignment);
+	 * 
+	 * return new ResponseEntity("Training assigned successfully",
+	 * HttpStatus.CREATED.value(), response);
+	 * 
+	 * } catch (DataIntegrityViolationException e) {
+	 * 
+	 * return new ResponseEntity("Training is already assigned to this user",
+	 * HttpStatus.CONFLICT.value(), null);
+	 * 
+	 * } catch (Exception e) {
+	 * 
+	 * e.printStackTrace();
+	 * 
+	 * return new ResponseEntity("Failed to create training assignment: " +
+	 * e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null); } }
+	 */
 
 	@Override
 	@Transactional("tmsTransactionManager")
 	public ResponseEntity createTrainingAssignment(TrainingAssignmentRequest request) {
-		try {
 
+		try {
 			if (request == null) {
 				return new ResponseEntity("Training assignment data is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			if (request.getTrainingId() == null || request.getTrainingId() <= 0) {
+
 				return new ResponseEntity("Valid training id is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
@@ -314,23 +500,30 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 				return new ResponseEntity("Training not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
-			// Validate test set
-			if (request.getTestSetId() == null || request.getTestSetId() <= 0) {
-				return new ResponseEntity("Valid test set id is required", HttpStatus.BAD_REQUEST.value(), null);
-			}
+			TestSet testSet = null;
 
-			TestSet testSet = testSetRepository.findById(request.getTestSetId()).orElse(null);
+			if (request.getTestSetId() != null) {
 
-			if (testSet == null) {
-				return new ResponseEntity("Test set not found", HttpStatus.NOT_FOUND.value(), null);
-			}
+				// Validate Test Set ID
+				if (request.getTestSetId() <= 0) {
 
-			// Make sure selected test set belongs to the selected training
-			if (testSet.getTraining() == null || testSet.getTraining().getTrainingId() == null
-					|| !testSet.getTraining().getTrainingId().equals(training.getTrainingId())) {
+					return new ResponseEntity("Invalid test set id", HttpStatus.BAD_REQUEST.value(), null);
+				}
 
-				return new ResponseEntity("Selected test set does not belong to this training",
-						HttpStatus.BAD_REQUEST.value(), null);
+				// Find Test Set
+				testSet = testSetRepository.findById(request.getTestSetId()).orElse(null);
+
+				if (testSet == null) {
+
+					return new ResponseEntity("Test set not found", HttpStatus.NOT_FOUND.value(), null);
+				}
+
+				if (testSet.getTraining() == null || testSet.getTraining().getTrainingId() == null
+						|| !testSet.getTraining().getTrainingId().equals(training.getTrainingId())) {
+
+					return new ResponseEntity("Selected test set does not belong to this training",
+							HttpStatus.BAD_REQUEST.value(), null);
+				}
 			}
 
 			UserMaster user = null;
@@ -340,14 +533,18 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 				Integer userIdInt;
 
 				try {
+
 					userIdInt = Math.toIntExact(request.getUserId());
+
 				} catch (ArithmeticException e) {
+
 					return new ResponseEntity("Invalid user id", HttpStatus.BAD_REQUEST.value(), null);
 				}
 
 				user = userRepository.findById(userIdInt).orElse(null);
 
 				if (user == null) {
+
 					return new ResponseEntity("User not found", HttpStatus.NOT_FOUND.value(), null);
 				}
 
@@ -355,6 +552,7 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 						.existsByTraining_TrainingIdAndUserId(request.getTrainingId(), request.getUserId());
 
 				if (alreadyExists) {
+
 					return new ResponseEntity("Training is already assigned to this user", HttpStatus.CONFLICT.value(),
 							null);
 				}
@@ -363,20 +561,25 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			Long currentUserIdLong = CurrentUser.getUserId();
 
 			if (currentUserIdLong == null || currentUserIdLong <= 0) {
+
 				return new ResponseEntity("Unable to identify current user", HttpStatus.UNAUTHORIZED.value(), null);
 			}
 
 			Integer currentUserId;
 
 			try {
+
 				currentUserId = Math.toIntExact(currentUserIdLong);
+
 			} catch (ArithmeticException e) {
+
 				return new ResponseEntity("Invalid current user id", HttpStatus.UNAUTHORIZED.value(), null);
 			}
 
 			UserMaster assignedBy = userRepository.findById(currentUserId).orElse(null);
 
 			if (assignedBy == null) {
+
 				return new ResponseEntity("Assigning user not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
@@ -385,54 +588,74 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			if (request.getBatchId() != null) {
 
 				if (request.getBatchId() <= 0) {
+
 					return new ResponseEntity("Invalid batch id", HttpStatus.BAD_REQUEST.value(), null);
 				}
 
 				batch = batchRepository.findById(request.getBatchId()).orElse(null);
 
 				if (batch == null) {
+
 					return new ResponseEntity("Batch not found", HttpStatus.NOT_FOUND.value(), null);
 				}
 			}
 
-			// Create training assignment
 			TrainingAssignment trainingAssignment = new TrainingAssignment();
 
 			trainingAssignment.setTraining(training);
 
 			if (user != null) {
+
 				trainingAssignment.setUserId(user.getUserId().longValue());
+
 			} else {
+
 				trainingAssignment.setUserId(null);
 			}
 
 			trainingAssignment.setBatch(batch);
+
 			trainingAssignment.setAssignedBy(assignedBy.getUserId().longValue());
+
 			trainingAssignment.setAssignedAt(LocalDateTime.now());
+
 			trainingAssignment.setDueDate(request.getDueDate());
+
 			trainingAssignment.setStatus(AssignmentStatus.NOT_STARTED);
+
 			trainingAssignment.setProgressPercentage(new BigDecimal("0.00"));
+
 			trainingAssignment.setIsPassed(false);
+
 			trainingAssignment.setCertificateGenerated(false);
+
 			trainingAssignment.setAttemptedQuestions(0);
+
 			trainingAssignment.setCorrectAnswers(0);
+
 			trainingAssignment.setWrongAnswers(0);
+
 			trainingAssignment.setTotalQuestions(0);
+
 			trainingAssignment.setStartedAt(null);
 
 			TrainingAssignment savedAssignment = trainingAssignmentRepository.save(trainingAssignment);
 
-			// Map selected test set with the newly created training assignment
-			TrainingAssignmentTestSet assignmentTestSet = new TrainingAssignmentTestSet();
+			if (testSet != null) {
 
-			assignmentTestSet.setTrainingAssignment(savedAssignment);
-			assignmentTestSet.setTestSet(testSet);
-			assignmentTestSet.setAssignedAt(LocalDateTime.now());
-			assignmentTestSet.setAssignedBy(assignedBy.getUserId().longValue());
+				TrainingAssignmentTestSet assignmentTestSet = new TrainingAssignmentTestSet();
 
-			trainingAssignmentTestSetRepository.save(assignmentTestSet);
+				assignmentTestSet.setTrainingAssignment(savedAssignment);
 
-			// Assign training videos to user
+				assignmentTestSet.setTestSet(testSet);
+
+				assignmentTestSet.setAssignedAt(LocalDateTime.now());
+
+				assignmentTestSet.setAssignedBy(assignedBy.getUserId().longValue());
+
+				trainingAssignmentTestSetRepository.save(assignmentTestSet);
+			}
+
 			if (user != null) {
 
 				Long assignedUserId = user.getUserId().longValue();
@@ -449,12 +672,14 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 						}
 
 						if (!trainingContent.getContentType().name().equalsIgnoreCase("VIDEO")) {
+
 							continue;
 						}
 
 						Long videoId = trainingContent.getContentReferenceId();
 
 						if (videoId == null || videoId <= 0) {
+
 							continue;
 						}
 
@@ -474,15 +699,25 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 						UserVideo userVideo = new UserVideo();
 
 						userVideo.setUserId(assignedUserId);
+
 						userVideo.setVideo(video);
+
 						userVideo.setTrainingAssignment(savedAssignment);
+
 						userVideo.setStatus(UserVideoStatus.ASSIGNED);
+
 						userVideo.setWatchedCount(0);
+
 						userVideo.setWatchedSeconds(0);
+
 						userVideo.setLastWatchedAt(null);
+
 						userVideo.setCompletedAt(null);
+
 						userVideo.setExpiryDate(request.getDueDate());
+
 						userVideo.setAssignedAt(LocalDateTime.now());
+
 						userVideo.setAssignedBy(assignedBy.getUserId().longValue());
 
 						userVideoRepository.save(userVideo);
@@ -492,7 +727,18 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 
 			TrainingAssignmentResponse response = convertToResponse(savedAssignment);
 
-			return new ResponseEntity("Training assigned successfully", HttpStatus.CREATED.value(), response);
+			String message;
+
+			if (testSet != null) {
+
+				message = "Training assigned successfully with test set";
+
+			} else {
+
+				message = "Training assigned successfully without test set";
+			}
+
+			return new ResponseEntity(message, HttpStatus.CREATED.value(), response);
 
 		} catch (DataIntegrityViolationException e) {
 
