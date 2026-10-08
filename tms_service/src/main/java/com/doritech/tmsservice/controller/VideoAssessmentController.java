@@ -52,16 +52,19 @@ public class VideoAssessmentController {
 		return videoAssessmentService.getVideoAssessmentById(videoAssessmentId);
 	}
 
+	@GetMapping("/getByTrainingAssignmentId/{trainingAssignmentId}")
+	public ResponseEntity getByTrainingAssignmentId(@PathVariable Long trainingAssignmentId) {
+		return videoAssessmentService.getByTrainingAssignmentId(trainingAssignmentId);
+	}
+
 	@GetMapping(value = "/streamVideo", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public void streamVideo(@RequestParam("videoId") Long videoAssessmentId, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		videoAssessmentService.streamVideo(videoAssessmentId, request, response);
 	}
-	@GetMapping("/getAllVideoAssessments")
-	public ResponseEntity getAllVideoAssessments(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "videoAssessmentId") String sortBy,
-			@RequestParam(defaultValue = "desc") String sortDir) {
-		return videoAssessmentService.getAllVideoAssessments(page, size, sortBy, sortDir);
+
+	@GetMapping("/getStatusByTrainingAssignmentId/{trainingAssignmentId}")
+	public ResponseEntity getStatusByTrainingAssignmentId(@PathVariable Long trainingAssignmentId) {
+		return videoAssessmentService.getStatusByTrainingAssignmentId(trainingAssignmentId);
 	}
 }
