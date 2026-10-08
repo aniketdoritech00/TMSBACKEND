@@ -31,4 +31,6 @@ public interface InTrainingUserResponseRepository extends JpaRepository<InTraini
 	void deleteByTrainingAssignment_TrainingAssignmentId(Long trainingAssignmentId);
 
 	List<InTrainingUserResponse> findByTrainingAssignment_TrainingAssignmentId(Long trainingAssignmentId);
+	
+	
 }
