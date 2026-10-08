@@ -41,4 +41,7 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 	 Optional<TestAttempt> findTopByTestSet_TestSetIdAndUserIdOrderByAttemptNumberDesc(
 	            Long testSetId, Long userId);
 
+	 Optional<TestAttempt> findTopByTrainingAssignment_TrainingAssignmentIdOrderByTestAttemptIdDesc(
+			Long trainingAssignmentId);
+
 }
