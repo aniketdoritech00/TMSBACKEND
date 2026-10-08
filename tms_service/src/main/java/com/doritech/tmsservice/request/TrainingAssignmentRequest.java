@@ -12,6 +12,16 @@ public class TrainingAssignmentRequest {
 
 	private LocalDateTime dueDate;
 
+	private Long testSetId;
+
+	public Long getTestSetId() {
+		return testSetId;
+	}
+
+	public void setTestSetId(Long testSetId) {
+		this.testSetId = testSetId;
+	}
+
 	public TrainingAssignmentRequest() {
 	}
 

@@ -31,6 +31,22 @@ public class InTrainingResultResponse {
 
 	private String result;
 
+	private Long questionId;
+
+	private String question;
+
+	private String questionType;
+
+	private String correctAnswer;
+
+	private String userAnswer;
+
+	private Boolean isCorrect;
+
+	private Boolean isSkipped;
+
+	private Integer timeTakenSeconds;
+
 	private List<InTrainingQuestionResultResponse> questions;
 
 	public Long getTrainingAssignmentId() {
@@ -144,4 +160,69 @@ public class InTrainingResultResponse {
 	public void setQuestions(List<InTrainingQuestionResultResponse> questions) {
 		this.questions = questions;
 	}
+
+	public Long getQuestionId() {
+		return questionId;
+	}
+
+	public void setQuestionId(Long questionId) {
+		this.questionId = questionId;
+	}
+
+	public String getQuestion() {
+		return question;
+	}
+
+	public void setQuestion(String question) {
+		this.question = question;
+	}
+
+	public String getQuestionType() {
+		return questionType;
+	}
+
+	public void setQuestionType(String questionType) {
+		this.questionType = questionType;
+	}
+
+	public String getCorrectAnswer() {
+		return correctAnswer;
+	}
+
+	public void setCorrectAnswer(String correctAnswer) {
+		this.correctAnswer = correctAnswer;
+	}
+
+	public String getUserAnswer() {
+		return userAnswer;
+	}
+
+	public void setUserAnswer(String userAnswer) {
+		this.userAnswer = userAnswer;
+	}
+
+	public Boolean getIsCorrect() {
+		return isCorrect;
+	}
+
+	public void setIsCorrect(Boolean isCorrect) {
+		this.isCorrect = isCorrect;
+	}
+
+	public Boolean getIsSkipped() {
+		return isSkipped;
+	}
+
+	public void setIsSkipped(Boolean isSkipped) {
+		this.isSkipped = isSkipped;
+	}
+
+	public Integer getTimeTakenSeconds() {
+		return timeTakenSeconds;
+	}
+
+	public void setTimeTakenSeconds(Integer timeTakenSeconds) {
+		this.timeTakenSeconds = timeTakenSeconds;
+	}
+
 }
