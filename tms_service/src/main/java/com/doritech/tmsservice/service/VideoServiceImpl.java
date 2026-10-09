@@ -10,7 +10,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,7 +24,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,7 +39,6 @@ import com.doritech.tmsservice.exception.DatabaseOperationException;
 import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.VideoMetadata;
 import com.doritech.tmsservice.request.VideoRequest;
-import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.VideoListResponse;
 import com.doritech.tmsservice.response.VideoResponse;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
@@ -106,84 +106,84 @@ public class VideoServiceImpl implements VideoService {
 		}
 	}
 
-	@Override
-	public ResponseEntity getAllVideo(int page, int size, String sortBy, String sortDir) {
-
-		log.info("getAllVideo :: request received with page={}, size={}, sortBy={}, sortDir={}", page, size, sortBy,
-				sortDir);
-
-		if (page < 0) {
-			log.error("getAllVideo :: page cannot be negative");
-			throw new BadRequestException("Page number can not be negative");
-		}
-
-		if (size <= 0) {
-			log.error("getAllVideo :: size must be greater than 0");
-			throw new BadRequestException("Page size must be greater than 0");
-		}
-
-		if (size > 100) {
-			log.error("getAllVideo :: size exceeds max limit={}", size);
-			throw new BadRequestException("Page size can not exceed 100");
-		}
-
-		if (sortBy == null || sortBy.trim().isEmpty()) {
-			sortBy = "videoId";
-		}
-
-		if (sortDir == null || sortDir.trim().isEmpty()) {
-			sortDir = "desc";
-		}
-
-		Sort sort;
-
-		if (sortDir.equalsIgnoreCase("desc")) {
-			sort = Sort.by(sortBy).descending();
-		} else if (sortDir.equalsIgnoreCase("asc")) {
-			sort = Sort.by(sortBy).ascending();
-		} else {
-			log.error("getAllVideo :: invalid sort direction={}", sortDir);
-			throw new BadRequestException("Invalid sort direction: " + sortDir);
-		}
-
-		Pageable pageable = PageRequest.of(page, size, sort);
-
-		Page<Video> videoPage;
-
-		try {
-
-			videoPage = videoRepository.findAll(pageable);
-
-		} catch (PropertyReferenceException e) {
-
-			log.error("getAllVideo :: invalid sort field={}", sortBy, e);
-
-			throw new BadRequestException("Invalid sort field: " + sortBy);
-
-		} catch (Exception e) {
-
-			log.error("getAllVideo :: error while fetching videos - {}", e.getMessage(), e);
-
-			throw new DatabaseOperationException("Something went wrong while fetching videos");
-		}
-
-		List<VideoListResponse> responseList = videoPage.getContent().stream().map(this::mapToListResponse)
-				.collect(Collectors.toList());
-
-		PageResponse<VideoListResponse> pageResponse = new PageResponse<>();
-
-		pageResponse.setContent(responseList);
-		pageResponse.setPageNumber(videoPage.getNumber());
-		pageResponse.setPageSize(videoPage.getSize());
-		pageResponse.setTotalElements(videoPage.getTotalElements());
-		pageResponse.setTotalPages(videoPage.getTotalPages());
-		pageResponse.setLastPage(videoPage.isLast());
-
-		log.info("getAllVideo :: {} of {} videos fetched successfully", responseList.size(),
-				videoPage.getTotalElements());
-
-		return new ResponseEntity("Video fetch successfully", HttpStatus.OK.value(), pageResponse);
-	}
+//	@Override
+//	public ResponseEntity getAllVideo(int page, int size, String sortBy, String sortDir) {
+//
+//		log.info("getAllVideo :: request received with page={}, size={}, sortBy={}, sortDir={}", page, size, sortBy,
+//				sortDir);
+//
+//		if (page < 0) {
+//			log.error("getAllVideo :: page cannot be negative");
+//			throw new BadRequestException("Page number can not be negative");
+//		}
+//
+//		if (size <= 0) {
+//			log.error("getAllVideo :: size must be greater than 0");
+//			throw new BadRequestException("Page size must be greater than 0");
+//		}
+//
+//		if (size > 100) {
+//			log.error("getAllVideo :: size exceeds max limit={}", size);
+//			throw new BadRequestException("Page size can not exceed 100");
+//		}
+//
+//		if (sortBy == null || sortBy.trim().isEmpty()) {
+//			sortBy = "videoId";
+//		}
+//
+//		if (sortDir == null || sortDir.trim().isEmpty()) {
+//			sortDir = "desc";
+//		}
+//
+//		Sort sort;
+//
+//		if (sortDir.equalsIgnoreCase("desc")) {
+//			sort = Sort.by(sortBy).descending();
+//		} else if (sortDir.equalsIgnoreCase("asc")) {
+//			sort = Sort.by(sortBy).ascending();
+//		} else {
+//			log.error("getAllVideo :: invalid sort direction={}", sortDir);
+//			throw new BadRequestException("Invalid sort direction: " + sortDir);
+//		}
+//
+//		Pageable pageable = PageRequest.of(page, size, sort);
+//
+//		Page<Video> videoPage;
+//
+//		try {
+//
+//			videoPage = videoRepository.findAll(pageable);
+//
+//		} catch (PropertyReferenceException e) {
+//
+//			log.error("getAllVideo :: invalid sort field={}", sortBy, e);
+//
+//			throw new BadRequestException("Invalid sort field: " + sortBy);
+//
+//		} catch (Exception e) {
+//
+//			log.error("getAllVideo :: error while fetching videos - {}", e.getMessage(), e);
+//
+//			throw new DatabaseOperationException("Something went wrong while fetching videos");
+//		}
+//
+//		List<VideoListResponse> responseList = videoPage.getContent().stream().map(this::mapToListResponse)
+//				.collect(Collectors.toList());
+//
+//		PageResponse<VideoListResponse> pageResponse = new PageResponse<>();
+//
+//		pageResponse.setContent(responseList);
+//		pageResponse.setPageNumber(videoPage.getNumber());
+//		pageResponse.setPageSize(videoPage.getSize());
+//		pageResponse.setTotalElements(videoPage.getTotalElements());
+//		pageResponse.setTotalPages(videoPage.getTotalPages());
+//		pageResponse.setLastPage(videoPage.isLast());
+//
+//		log.info("getAllVideo :: {} of {} videos fetched successfully", responseList.size(),
+//				videoPage.getTotalElements());
+//
+//		return new ResponseEntity("Video fetch successfully", HttpStatus.OK.value(), pageResponse);
+//	}
 
 	@Override
 	@Transactional(transactionManager = "tmsTransactionManager")
@@ -255,8 +255,6 @@ public class VideoServiceImpl implements VideoService {
 		if (videoFile == null || videoFile.isEmpty()) {
 			throw new BadRequestException("Video file is required");
 		}
-
-		
 
 		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
 			throw new BadRequestException("Video title is required");
@@ -1131,4 +1129,81 @@ public class VideoServiceImpl implements VideoService {
 			throw new DatabaseOperationException("Unable to save video details");
 		}
 	}
+
+	// ================================== GET ALL VIDEO BY FILTER PRODUCT AND
+	// SUBPRODUCT ID ================================
+
+	@Override
+	public ResponseEntity getAllVideo(int page, int size, String sortBy, String sortDir, Long categoryId,
+			Long productId, Long subProductId) {
+
+		try {
+
+			// Validate pagination
+			if (page < 0) {
+				return new ResponseEntity("Page must be greater than or equal to 0", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			if (size <= 0) {
+				return new ResponseEntity("Size must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			// Validate productId
+			if (productId != null && productId <= 0) {
+				return new ResponseEntity("Invalid product id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			// Validate subProductId
+			if (subProductId != null && subProductId <= 0) {
+				return new ResponseEntity("Invalid sub product id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			// validation of category id
+			if (categoryId != null && categoryId < 0) {
+				return new ResponseEntity("Invalid sub product id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			// Validate sort direction
+			Sort.Direction direction;
+
+			if ("desc".equalsIgnoreCase(sortDir)) {
+				direction = Sort.Direction.DESC;
+			} else if ("asc".equalsIgnoreCase(sortDir)) {
+				direction = Sort.Direction.ASC;
+			} else {
+				return new ResponseEntity("Invalid sort direction. Use asc or desc", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			/*
+			 * Create Pageable using the existing pagination + sorting parameters.
+			 */
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<Video> videoPage = videoRepository.findAllVideosWithFilter(categoryId, productId, subProductId,pageable);
+
+			List<VideoResponse> videos = videoPage.getContent().stream().map(this::mapToFullResponse)
+					.collect(Collectors.toList());
+
+			// Build PayLoad with pagination details
+			Map<String, Object> payload = new HashMap<>();
+
+			payload.put("content", videos);
+			payload.put("pageNumber", videoPage.getNumber());
+			payload.put("pageSize", videoPage.getSize());
+			payload.put("totalElements", videoPage.getTotalElements());
+			payload.put("totalPages", videoPage.getTotalPages());
+			payload.put("lastPage", videoPage.isLast());
+
+			return new ResponseEntity("Video fetch successfully", HttpStatus.OK.value(), payload);
+
+		} catch (Exception e) {
+
+			log.error("getAllVideo :: error while fetching videos", e);
+
+			return new ResponseEntity("Something went wrong while fetching videos",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
 }
