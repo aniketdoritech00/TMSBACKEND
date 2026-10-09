@@ -12,14 +12,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface VideoService {
-	
+
 	ResponseEntity uploadVideAndThumbnail(VideoRequest request, MultipartFile videoFile, MultipartFile thumbnailFile);
 
-    ResponseEntity getVideoDetailsById(Long id);
+	ResponseEntity getVideoDetailsById(Long id);
 
-    ResponseEntity getAllVideo(int page, int size, String sortBy, String sortDir);
+//  ResponseEntity getAllVideo(int page, int size, String sortBy, String sortDir);
 
-    ResponseEntity deleteVideo(Long id);
+	ResponseEntity deleteVideo(Long id);
 
 	byte[] getThumbnailByPath(String path) throws IOException;
 
@@ -30,5 +30,8 @@ public interface VideoService {
 	void streamVideo(Long videoId, HttpServletRequest request, HttpServletResponse response) throws IOException;
 
 	ResponseEntity uploadVideo(VideoRequest request, MultipartFile videoFile);
+
+	ResponseEntity getAllVideo(int page, int size, String sortBy, String sortDir, Long categoryId, Long productId,Long subProductId);
 	
+
 }

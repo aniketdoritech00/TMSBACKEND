@@ -22,5 +22,8 @@ public interface VideoSubProductService {
 	ResponseEntity uploadVideAndThumbnail(@Valid VideoRequest request, MultipartFile videoFile,
 			MultipartFile thumbnailFile, List<Long> subProductIds);
 
-	ResponseEntity updateVideo(Long videoId, VideoUpdateRequest request);
+	//ResponseEntity updateVideo(Long videoId, VideoUpdateRequest request);
+
+	ResponseEntity updateVideo(Long videoId, @Valid VideoUpdateRequest request, MultipartFile videoFile,
+			MultipartFile thumbnailFile);
 }

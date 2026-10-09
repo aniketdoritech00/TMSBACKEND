@@ -56,9 +56,17 @@ public class VideoSubProductController {
 		return videoSubProductService.uploadVideAndThumbnail(request, videoFile, thumbnailFile, subProductIds);
 	}
 
-	@PutMapping("/updateVideo/{videoId}")
+	// ============================UPDATE VIDEO ======================
+	@PutMapping(value = "/updateVideo/{videoId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity updateVideo(@PathVariable("videoId") Long videoId,
-			@Valid @RequestBody VideoUpdateRequest request) {
-		return videoSubProductService.updateVideo(videoId, request);
+
+			@RequestPart("request") @Valid VideoUpdateRequest request,
+
+			@RequestPart(value = "videoFile", required = false) MultipartFile videoFile,
+
+			@RequestPart(value = "thumbnailFile", required = false) MultipartFile thumbnailFile) {
+
+		return videoSubProductService.updateVideo(videoId, request, videoFile, thumbnailFile);
 	}
+
 }
