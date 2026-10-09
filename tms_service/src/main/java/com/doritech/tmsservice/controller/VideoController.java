@@ -38,18 +38,36 @@ public class VideoController {
 	}
 
 	@PostMapping(value = "/uploadVideoWithThumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity uploadVideAndThumbnail(@RequestPart("video") MultipartFile videoFile,
-			@RequestPart("thumbnail") MultipartFile thumbnailFile, @RequestPart("videoData") VideoRequest request) {
+	public ResponseEntity uploadVideAndThumbnail(
+			@RequestPart("video") MultipartFile videoFile,
+			@RequestPart(value = "thumbnail", required = false) MultipartFile thumbnailFile,
+			@RequestPart("videoData") VideoRequest request) {
 		return videoService.uploadVideAndThumbnail(request, videoFile, thumbnailFile);
 	}
 
+//	@GetMapping("/getAllVideo")
+//	public ResponseEntity getAllVideo(@RequestParam(value = "page", defaultValue = "0") int page,
+//			@RequestParam(value = "size", defaultValue = "10") int size,
+//			@RequestParam(value = "sortBy", defaultValue = "videoId") String sortBy,
+//			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+//		return videoService.getAllVideo(page, size, sortBy, sortDir);
+//	}
+
+	// =====================filter to get video =============================
+
 	@GetMapping("/getAllVideo")
-	public ResponseEntity getAllVideo(@RequestParam(value = "page", defaultValue = "0") int page,
+	public ResponseEntity getAllVideo(
+			@RequestParam(value = "page", defaultValue = "0") int page,
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "videoId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		return videoService.getAllVideo(page, size, sortBy, sortDir);
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
+			@RequestParam(value = "categoryId", required = false) Long categoryId,
+			@RequestParam(value = "productId", required = false) Long productId,
+			@RequestParam(value = "subProductId", required = false) Long subProductId) {
+
+		return videoService.getAllVideo(page, size, sortBy, sortDir, categoryId, productId, subProductId);
 	}
+	// ===========
 
 	@GetMapping("/getVideoDetailsById")
 	public ResponseEntity getVideoDetailsById(@RequestParam Long videoId) {
@@ -105,4 +123,5 @@ public class VideoController {
 			@RequestPart("videoData") VideoRequest request) {
 		return videoService.uploadVideo(request, videoFile);
 	}
+
 }

@@ -19,40 +19,72 @@ import com.doritech.tmsservice.service.FileStorageService;
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
 
-    private static final Logger log = LoggerFactory.getLogger(FileStorageServiceImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(FileStorageServiceImpl.class);
 
-    @Override
-    public String storeFile(MultipartFile file, String targetFolderPath) {
+	@Override
+	public String storeFile(MultipartFile file, String targetFolderPath) {
 
-        if (file == null || file.isEmpty()) {
-            log.error("storeFile :: file is null or empty");
-            throw new BadRequestException("File must not be empty");
-        }
+		if (file == null || file.isEmpty()) {
+			log.error("storeFile :: file is null or empty");
+			throw new BadRequestException("File must not be empty");
+		}
 
-        String originalFileName = file.getOriginalFilename();
-        String extension = "";
-        if (originalFileName != null && originalFileName.contains(".")) {
-            extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        }
+		String originalFileName = file.getOriginalFilename();
+		String extension = "";
+		if (originalFileName != null && originalFileName.contains(".")) {
+			extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+		}
 
-        String uniqueFileName = UUID.randomUUID().toString() + extension;
+		String uniqueFileName = UUID.randomUUID().toString() + extension;
 
-        try {
-            Path folder = Paths.get(targetFolderPath);
-            if (!Files.exists(folder)) {
-                Files.createDirectories(folder);
-            }
+		try {
+			Path folder = Paths.get(targetFolderPath);
+			if (!Files.exists(folder)) {
+				Files.createDirectories(folder);
+			}
 
-            Path targetPath = folder.resolve(uniqueFileName);
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+			Path targetPath = folder.resolve(uniqueFileName);
+			Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-            log.info("storeFile :: file stored successfully at={}", targetPath.toString());
+			log.info("storeFile :: file stored successfully at={}", targetPath.toString());
 
-            return targetPath.toString();
+			return targetPath.toString();
 
-        } catch (IOException e) {
-            log.error("storeFile :: error while storing file - {}", e.getMessage(), e);
-            throw new InternalServerException("Something went wrong while storing the file");
-        }
-    }
+		} catch (IOException e) {
+			log.error("storeFile :: error while storing file - {}", e.getMessage(), e);
+			throw new InternalServerException("Something went wrong while storing the file");
+		}
+	}
+
+	// ============================ Delete File =============================
+
+	@Override
+	public void deleteFile(String filePath) {
+
+		if (filePath == null || filePath.trim().isEmpty()) {
+			log.warn("deleteFile :: file path is null or empty");
+			return;
+		}
+
+		try {
+
+			Path path = Paths.get(filePath);
+
+			if (!Files.exists(path)) {
+				log.warn("deleteFile :: file does not exist at={}", filePath);
+				return;
+			}
+
+			Files.delete(path);
+
+			log.info("deleteFile :: file deleted successfully at={}", filePath);
+
+		} catch (IOException e) {
+
+			log.error("deleteFile :: error while deleting file at={}", filePath, e);
+
+			throw new InternalServerException("Unable to delete file");
+		}
+	}
+
 }
