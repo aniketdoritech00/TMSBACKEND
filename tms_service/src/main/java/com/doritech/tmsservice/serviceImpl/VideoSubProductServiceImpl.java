@@ -15,6 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.tmsservice.config.CurrentUser;
@@ -40,7 +41,10 @@ import com.doritech.tmsservice.tms.repository.SubProductRepository;
 import com.doritech.tmsservice.tms.repository.VideoRepository;
 import com.doritech.tmsservice.tms.repository.VideoSubProductRepository;
 
+import jakarta.validation.Valid;
+
 @Service
+@Validated
 public class VideoSubProductServiceImpl implements VideoSubProductService {
 
 	private static final Logger log = LoggerFactory.getLogger(VideoSubProductServiceImpl.class);
@@ -363,136 +367,136 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 		}
 	}
 
-	@Override
-	@Transactional("tmsTransactionManager")
-	public ResponseEntity updateVideo(Long videoId, VideoUpdateRequest request) {
-
-		if (videoId == null || videoId <= 0) {
-			return new ResponseEntity("Invalid video id", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		if (request == null) {
-			return new ResponseEntity("Video data is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
-
-			return new ResponseEntity("Video title is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		if (request.getIsSecure() == null) {
-			return new ResponseEntity("isSecure is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		if (request.getAllowDownload() == null) {
-			return new ResponseEntity("allowDownload is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		if (request.getAllowScreenRecord() == null) {
-			return new ResponseEntity("allowScreenRecord is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		if (request.getAllowScreenshot() == null) {
-			return new ResponseEntity("allowScreenshot is required", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
+//	 // ================= Update Video ==================
+//	@Transactional("tmsTransactionManager")
+//	public ResponseEntity updateVideo(Long videoId, VideoUpdateRequest request) {
+//
+//		if (videoId == null || videoId <= 0) {
+//			return new ResponseEntity("Invalid video id", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
+//		if (request == null) {
+//			return new ResponseEntity("Video data is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
+//		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
+//
+//			return new ResponseEntity("Video title is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
+//		if (request.getIsSecure() == null) {
+//			return new ResponseEntity("isSecure is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
+//		if (request.getAllowDownload() == null) {
+//			return new ResponseEntity("allowDownload is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
+//		if (request.getAllowScreenRecord() == null) {
+//			return new ResponseEntity("allowScreenRecord is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
+//		if (request.getAllowScreenshot() == null) {
+//			return new ResponseEntity("allowScreenshot is required", HttpStatus.BAD_REQUEST.value(), null);
+//		}
+//
 //		if (request.getSubProductIds() == null || request.getSubProductIds().isEmpty()) {
 //
 //			return new ResponseEntity("At least one sub product is required", HttpStatus.BAD_REQUEST.value(), null);
 //		}
-
-		for (Long subProductId : request.getSubProductIds()) {
-
-			if (subProductId == null || subProductId <= 0) {
-
-				return new ResponseEntity("Invalid sub product id: " + subProductId, HttpStatus.BAD_REQUEST.value(),
-						null);
-			}
-		}
-
-		try {
-
-			Optional<Video> videoOptional = videoRepository.findById(videoId);
-
-			if (videoOptional.isEmpty()) {
-
-				return new ResponseEntity("Video not found with id: " + videoId, HttpStatus.NOT_FOUND.value(), null);
-			}
-
-			Video video = videoOptional.get();
-
-			// --------------------------------------------------
-			// 2. Update only editable video fields
-			// --------------------------------------------------
-
-			video.setVideoTitle(request.getVideoTitle().trim());
-
-			video.setVideoDescription(request.getVideoDescription());
-
-			video.setIsSecure(request.getIsSecure());
-
-			video.setAllowDownload(request.getAllowDownload());
-
-			video.setAllowScreenRecord(request.getAllowScreenRecord());
-
-			video.setAllowScreenshot(request.getAllowScreenshot());
-
-			video.setUpdatedAt(LocalDateTime.now());
-
-			// --------------------------------------------------
-			// 3. Save video
-			// --------------------------------------------------
-
-			Video updatedVideo = videoRepository.save(video);
-
-			// --------------------------------------------------
-			// 4. Remove existing mappings
-			// --------------------------------------------------
-
-			List<VideoSubProduct> existingMappings = videoSubProductRepository.findByIdVideoId(videoId);
-
-			videoSubProductRepository.deleteAll(existingMappings);
-
-			// --------------------------------------------------
-			// 5. Create new mappings
-			// --------------------------------------------------
-
-			List<Long> subProductIds = request.getSubProductIds().stream().distinct().collect(Collectors.toList());
-
-			Long currentUserId = CurrentUser.getUserId();
-
-			for (Long subProductId : subProductIds) {
-
-				VideoSubProductId mappingId = new VideoSubProductId(videoId, subProductId);
-
-				VideoSubProduct mapping = new VideoSubProduct();
-
-				mapping.setId(mappingId);
-
-				mapping.setAssignedBy(currentUserId);
-
-				videoSubProductRepository.save(mapping);
-			}
-
-			// --------------------------------------------------
-			// 6. Prepare response
-			// --------------------------------------------------
-
-			VideoResponse response = mapToFullResponse(updatedVideo);
-
-			response.setSubProductIds(subProductIds);
-
-			return new ResponseEntity("Video updated successfully", HttpStatus.OK.value(), response);
-
-		} catch (Exception e) {
-
-			log.error("updateVideo :: error while updating video id={}", videoId, e);
-
-			return new ResponseEntity("Something went wrong while updating video",
-					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
-		}
-	}
-
+//
+//		for (Long subProductId : request.getSubProductIds()) {
+//
+//			if (subProductId == null || subProductId <= 0) {
+//
+//				return new ResponseEntity("Invalid sub product id: " + subProductId, HttpStatus.BAD_REQUEST.value(),
+//						null);
+//			}
+//		}
+//
+//		try {
+//
+//			Optional<Video> videoOptional = videoRepository.findById(videoId);
+//
+//			if (videoOptional.isEmpty()) {
+//
+//				return new ResponseEntity("Video not found with id: " + videoId, HttpStatus.NOT_FOUND.value(), null);
+//			}
+//
+//			Video video = videoOptional.get();
+//
+//			// --------------------------------------------------
+//			// 2. Update only editable video fields
+//			// --------------------------------------------------
+//
+//			video.setVideoTitle(request.getVideoTitle().trim());
+//
+//			video.setVideoDescription(request.getVideoDescription());
+//
+//			video.setIsSecure(request.getIsSecure());
+//
+//			video.setAllowDownload(request.getAllowDownload());
+//
+//			video.setAllowScreenRecord(request.getAllowScreenRecord());
+//
+//			video.setAllowScreenshot(request.getAllowScreenshot());
+//
+//			video.setUpdatedAt(LocalDateTime.now());
+//
+//			// --------------------------------------------------
+//			// 3. Save video
+//			// --------------------------------------------------
+//
+//			Video updatedVideo = videoRepository.save(video);
+//
+//			// --------------------------------------------------
+//			// 4. Remove existing mappings
+//			// --------------------------------------------------
+//
+//			List<VideoSubProduct> existingMappings = videoSubProductRepository.findByIdVideoId(videoId);
+//
+//			videoSubProductRepository.deleteAll(existingMappings);
+//
+//			// --------------------------------------------------
+//			// 5. Create new mappings
+//			// --------------------------------------------------
+//
+//			List<Long> subProductIds = request.getSubProductIds().stream().distinct().collect(Collectors.toList());
+//
+//			Long currentUserId = CurrentUser.getUserId();
+//
+//			for (Long subProductId : subProductIds) {
+//
+//				VideoSubProductId mappingId = new VideoSubProductId(videoId, subProductId);
+//
+//				VideoSubProduct mapping = new VideoSubProduct();
+//
+//				mapping.setId(mappingId);
+//
+//				mapping.setAssignedBy(currentUserId);
+//
+//				videoSubProductRepository.save(mapping);
+//			}
+//
+//			// --------------------------------------------------
+//			// 6. Prepare response
+//			// --------------------------------------------------
+//
+//			VideoResponse response = mapToFullResponse(updatedVideo);
+//
+//			response.setSubProductIds(subProductIds);
+//
+//			return new ResponseEntity("Video updated successfully", HttpStatus.OK.value(), response);
+//
+//		} catch (Exception e) {
+//
+//			log.error("updateVideo :: error while updating video id={}", videoId, e);
+//
+//			return new ResponseEntity("Something went wrong while updating video",
+//					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+//		}
+//	}
+//
 	private VideoResponse mapToFullResponse(Video entity) {
 		VideoResponse response = new VideoResponse();
 		response.setVideoId(entity.getVideoId());
@@ -515,4 +519,300 @@ public class VideoSubProductServiceImpl implements VideoSubProductService {
 		response.setUpdatedAt(entity.getUpdatedAt());
 		return response;
 	}
+
+// =============== Update Video ==================
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity updateVideo(Long videoId, @Valid VideoUpdateRequest request, MultipartFile videoFile,
+			MultipartFile thumbnailFile) {
+
+		log.info("updateVideo :: request received for videoId={}", videoId);
+
+		// ============================================================
+		// 1. VALIDATION
+		// ============================================================
+
+		if (videoId == null || videoId <= 0) {
+
+			return new ResponseEntity("Invalid video id", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request == null) {
+
+			return new ResponseEntity("Video data is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request.getVideoTitle() == null || request.getVideoTitle().trim().isEmpty()) {
+
+			return new ResponseEntity("Video title is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request.getIsSecure() == null) {
+
+			return new ResponseEntity("isSecure is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request.getAllowDownload() == null) {
+
+			return new ResponseEntity("allowDownload is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request.getAllowScreenRecord() == null) {
+
+			return new ResponseEntity("allowScreenRecord is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request.getAllowScreenshot() == null) {
+
+			return new ResponseEntity("allowScreenshot is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		if (request.getSubProductIds() == null || request.getSubProductIds().isEmpty()) {
+
+			return new ResponseEntity("At least one sub product is required", HttpStatus.BAD_REQUEST.value(), null);
+		}
+
+		for (Long subProductId : request.getSubProductIds()) {
+
+			if (subProductId == null || subProductId <= 0) {
+
+				return new ResponseEntity("Invalid sub product id: " + subProductId, HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+		}
+
+		// ============================================================
+		// 2. FIND EXISTING VIDEO
+		// ============================================================
+
+		Optional<Video> videoOptional = videoRepository.findById(videoId);
+
+		if (videoOptional.isEmpty()) {
+
+			return new ResponseEntity("Video not found with id: " + videoId, HttpStatus.NOT_FOUND.value(), null);
+		}
+
+		Video video = videoOptional.get();
+
+		// Keep old file paths
+		String oldVideoPath = video.getVideoUrl();
+		String oldThumbnailPath = video.getThumbnailUrl();
+
+		String newVideoPath = oldVideoPath;
+		String newThumbnailPath = oldThumbnailPath;
+
+		try {
+
+			// ========================================================
+			// 3. RE-UPLOAD VIDEO IF PROVIDED
+			// ========================================================
+
+			if (videoFile != null && !videoFile.isEmpty()) {
+
+				log.info("updateVideo :: new video file received for videoId={}", videoId);
+
+				newVideoPath = fileStorageService.storeFile(videoFile, fileStorageProperties.getVideoPath());
+
+				log.info("updateVideo :: new video stored at={}", newVideoPath);
+			}
+
+			// ========================================================
+			// 4. RE-UPLOAD THUMBNAIL IF PROVIDED
+			// ========================================================
+
+			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+
+				log.info("updateVideo :: new thumbnail received for videoId={}", videoId);
+
+				newThumbnailPath = fileStorageService.storeFile(thumbnailFile, fileStorageProperties.getImagePath());
+
+				log.info("updateVideo :: new thumbnail stored at={}", newThumbnailPath);
+			}
+
+			// ========================================================
+			// 5. EXTRACT METADATA ONLY IF NEW VIDEO PROVIDED
+			// ========================================================
+
+			VideoMetadata metadata = null;
+
+			if (videoFile != null && !videoFile.isEmpty()) {
+
+				metadata = videoMetadataService.extractMetadata(Paths.get(newVideoPath));
+
+				log.info("updateVideo :: metadata extracted. " + "Duration={}, Format={}, Resolution={}",
+						metadata.getDurationSeconds(), metadata.getVideoFormat(), metadata.getResolution());
+			}
+
+			// ========================================================
+			// 6. UPDATE VIDEO METADATA
+			// ========================================================
+
+			video.setVideoTitle(request.getVideoTitle().trim());
+
+			video.setVideoDescription(request.getVideoDescription());
+
+			video.setIsSecure(request.getIsSecure());
+
+			video.setAllowDownload(request.getAllowDownload());
+
+			video.setAllowScreenRecord(request.getAllowScreenRecord());
+
+			video.setAllowScreenshot(request.getAllowScreenshot());
+
+			video.setUpdatedAt(LocalDateTime.now());
+
+			// ========================================================
+			// 7. UPDATE VIDEO FILE DETAILS ONLY IF NEW VIDEO
+			// ========================================================
+
+			if (videoFile != null && !videoFile.isEmpty()) {
+
+				String videoFormat = metadata.getVideoFormat();
+
+				if (videoFormat != null && !videoFormat.trim().isEmpty()) {
+
+					videoFormat = videoFormat.split(",")[0].trim();
+
+				}
+
+				if (videoFormat == null || videoFormat.trim().isEmpty()) {
+
+					videoFormat = getVideoFormat(videoFile.getOriginalFilename());
+				}
+
+				video.setVideoUrl(newVideoPath);
+
+				video.setFileSizeBytes(videoFile.getSize());
+
+				video.setDurationSeconds(metadata.getDurationSeconds());
+
+				video.setResolution(metadata.getResolution());
+
+				video.setVideoFormat(videoFormat);
+			}
+
+			// ========================================================
+			// 8. UPDATE THUMBNAIL ONLY IF NEW THUMBNAIL
+			// ========================================================
+
+			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+
+				video.setThumbnailUrl(newThumbnailPath);
+			}
+
+			// ========================================================
+			// 9. SAVE VIDEO
+			// ========================================================
+
+			Video updatedVideo = videoRepository.save(video);
+
+			log.info("updateVideo :: video updated successfully. videoId={}", videoId);
+
+			// ========================================================
+			// 10. REMOVE OLD SUB-PRODUCT MAPPINGS
+			// ========================================================
+
+			List<VideoSubProduct> existingMappings = videoSubProductRepository.findByIdVideoId(videoId);
+
+			if (existingMappings != null && !existingMappings.isEmpty()) {
+
+				videoSubProductRepository.deleteAll(existingMappings);
+			}
+
+			// ========================================================
+			// 11. CREATE NEW SUB-PRODUCT MAPPINGS
+			// ========================================================
+
+			List<Long> subProductIds = request.getSubProductIds().stream().distinct().collect(Collectors.toList());
+
+			Long currentUserId = CurrentUser.getUserId();
+
+			List<VideoSubProduct> mappings = new ArrayList<>();
+
+			for (Long subProductId : subProductIds) {
+
+				VideoSubProductId mappingId = new VideoSubProductId(videoId, subProductId);
+
+				VideoSubProduct mapping = new VideoSubProduct();
+
+				mapping.setId(mappingId);
+				mapping.setAssignedBy(currentUserId);
+				mapping.setAssignedAt(LocalDateTime.now());
+
+				mappings.add(mapping);
+			}
+
+			if (!mappings.isEmpty()) {
+
+				videoSubProductRepository.saveAll(mappings);
+			}
+
+			// ========================================================
+			// 12. DELETE OLD VIDEO FILE
+			// ========================================================
+
+			if (videoFile != null && !videoFile.isEmpty() && oldVideoPath != null
+					&& !oldVideoPath.equals(newVideoPath)) {
+
+				deleteFileQuietly(oldVideoPath);
+
+				log.info("updateVideo :: old video deleted: {}", oldVideoPath);
+			}
+
+			// ========================================================
+			// 13. DELETE OLD THUMBNAIL
+			// ========================================================
+
+			if (thumbnailFile != null && !thumbnailFile.isEmpty() && oldThumbnailPath != null
+					&& !oldThumbnailPath.equals(newThumbnailPath)) {
+
+				deleteFileQuietly(oldThumbnailPath);
+
+				log.info("updateVideo :: old thumbnail deleted: {}", oldThumbnailPath);
+			}
+
+			// ========================================================
+			// 14. RESPONSE
+			// ========================================================
+
+			VideoResponse response = mapToFullResponse(updatedVideo);
+
+			response.setSubProductIds(subProductIds);
+
+			return new ResponseEntity("Video updated successfully", HttpStatus.OK.value(), response);
+
+		} catch (BadRequestException e) {
+
+			// Remove newly uploaded files
+			if (newVideoPath != null && !newVideoPath.equals(oldVideoPath)) {
+
+				deleteFileQuietly(newVideoPath);
+			}
+
+			if (newThumbnailPath != null && !newThumbnailPath.equals(oldThumbnailPath)) {
+
+				deleteFileQuietly(newThumbnailPath);
+			}
+
+			throw e;
+
+		} catch (Exception e) {
+
+			log.error("updateVideo :: failed for videoId={}", videoId, e);
+
+			// Remove newly uploaded files
+			if (newVideoPath != null && !newVideoPath.equals(oldVideoPath)) {
+
+				deleteFileQuietly(newVideoPath);
+			}
+
+			if (newThumbnailPath != null && !newThumbnailPath.equals(oldThumbnailPath)) {
+
+				deleteFileQuietly(newThumbnailPath);
+			}
+
+			throw new DatabaseOperationException("Unable to update video");
+		}
+	}
+
 }
