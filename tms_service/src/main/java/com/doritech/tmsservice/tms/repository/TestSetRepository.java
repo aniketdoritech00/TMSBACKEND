@@ -18,11 +18,18 @@ public interface TestSetRepository extends JpaRepository<TestSet, Long> {
 
 	boolean existsBySetNoAndTestSetIdNot(String setNo, Long testSetId);
 
-	List<TestSet> findByTraining_TrainingIdOrderByTestSetIdDesc(Long trainingId);
+	// List<TestSet> findByTraining_TrainingIdOrderByTestSetIdDesc(Long trainingId);
 
 	List<TestSet> findByIsActiveTrueOrderByTestSetIdDesc();
 
-	List<TestSet> findByTraining_TrainingIdAndIsActiveTrueOrderByTestSetIdDesc(Long trainingId);
+	//List<TestSet> findByTraining_TrainingIdAndIsActiveTrueOrderByTestSetIdDesc(Long trainingId);
+	List<TestSet> findByTraining_TrainingIdAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc(
+	        Long trainingId);
+
+	Page<TestSet> findByTraining_TrainingIdAndPublishedAtIsNotNull(
+	        Long trainingId, Pageable pageable);
 
 	Page<TestSet> findByTraining_TrainingId(Long trainingId, Pageable pageable);
+	
+	List<TestSet> findByTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc();
 }
