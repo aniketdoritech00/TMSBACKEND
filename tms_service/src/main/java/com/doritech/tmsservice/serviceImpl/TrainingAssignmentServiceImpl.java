@@ -284,6 +284,8 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 		}
 	}
 
+// =========================================================================	
+	
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getTrainingAssignmentById(Long id) {
