@@ -5,121 +5,130 @@ import java.util.List;
 
 public class InTrainingQuestionResponse {
 
-    private Long questionId;
-    private Long videoId;
-    private Integer timestampSeconds;
-    private String questionText;
-    private String questionType;
-    private List<String> options;
-    private String correctAnswer;
-    private Integer timerSeconds;
-    private Boolean isRequired;
-    private Integer displayOrder;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+	private Long questionId;
+	private Long videoId;
+	private Integer timestampSeconds;
+	private String questionText;
+	private Boolean isAttempted;
+	private String questionType;
+	private List<String> options;
+	private String correctAnswer;
+	private Integer timerSeconds;
+	private Boolean isRequired;
+	private Integer displayOrder;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
 
-    public InTrainingQuestionResponse() {
-    }
+	public Boolean getIsAttempted() {
+		return isAttempted;
+	}
 
-    public Long getQuestionId() {
-        return questionId;
-    }
+	public void setIsAttempted(Boolean isAttempted) {
+		this.isAttempted = isAttempted;
+	}
 
-    public void setQuestionId(Long questionId) {
-        this.questionId = questionId;
-    }
+	public InTrainingQuestionResponse() {
+	}
 
-    public Long getVideoId() {
-        return videoId;
-    }
+	public Long getQuestionId() {
+		return questionId;
+	}
 
-    public void setVideoId(Long videoId) {
-        this.videoId = videoId;
-    }
+	public void setQuestionId(Long questionId) {
+		this.questionId = questionId;
+	}
 
-    public Integer getTimestampSeconds() {
-        return timestampSeconds;
-    }
+	public Long getVideoId() {
+		return videoId;
+	}
 
-    public void setTimestampSeconds(Integer timestampSeconds) {
-        this.timestampSeconds = timestampSeconds;
-    }
+	public void setVideoId(Long videoId) {
+		this.videoId = videoId;
+	}
 
-    public String getQuestionText() {
-        return questionText;
-    }
+	public Integer getTimestampSeconds() {
+		return timestampSeconds;
+	}
 
-    public void setQuestionText(String questionText) {
-        this.questionText = questionText;
-    }
+	public void setTimestampSeconds(Integer timestampSeconds) {
+		this.timestampSeconds = timestampSeconds;
+	}
 
-    public String getQuestionType() {
-        return questionType;
-    }
+	public String getQuestionText() {
+		return questionText;
+	}
 
-    public void setQuestionType(String questionType) {
-        this.questionType = questionType;
-    }
+	public void setQuestionText(String questionText) {
+		this.questionText = questionText;
+	}
 
-    public List<String> getOptions() {
-        return options;
-    }
+	public String getQuestionType() {
+		return questionType;
+	}
 
-    public void setOptions(List<String> options) {
-        this.options = options;
-    }
+	public void setQuestionType(String questionType) {
+		this.questionType = questionType;
+	}
 
-    public String getCorrectAnswer() {
-        return correctAnswer;
-    }
+	public List<String> getOptions() {
+		return options;
+	}
 
-    public void setCorrectAnswer(String correctAnswer) {
-        this.correctAnswer = correctAnswer;
-    }
+	public void setOptions(List<String> options) {
+		this.options = options;
+	}
 
-    public Integer getTimerSeconds() {
-        return timerSeconds;
-    }
+	public String getCorrectAnswer() {
+		return correctAnswer;
+	}
 
-    public void setTimerSeconds(Integer timerSeconds) {
-        this.timerSeconds = timerSeconds;
-    }
+	public void setCorrectAnswer(String correctAnswer) {
+		this.correctAnswer = correctAnswer;
+	}
 
-    public Boolean getIsRequired() {
-        return isRequired;
-    }
+	public Integer getTimerSeconds() {
+		return timerSeconds;
+	}
 
-    public void setIsRequired(Boolean isRequired) {
-        this.isRequired = isRequired;
-    }
+	public void setTimerSeconds(Integer timerSeconds) {
+		this.timerSeconds = timerSeconds;
+	}
 
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
+	public Boolean getIsRequired() {
+		return isRequired;
+	}
 
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
+	public void setIsRequired(Boolean isRequired) {
+		this.isRequired = isRequired;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public Integer getDisplayOrder() {
+		return displayOrder;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public void setDisplayOrder(Integer displayOrder) {
+		this.displayOrder = displayOrder;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    @Override
-    public String toString() {
-        return "InTrainingQuestionResponse [questionId=" + questionId + ", videoId=" + videoId
-                + ", questionType=" + questionType + "]";
-    }
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	@Override
+	public String toString() {
+		return "InTrainingQuestionResponse [questionId=" + questionId + ", videoId=" + videoId + ", questionType="
+				+ questionType + "]";
+	}
 }

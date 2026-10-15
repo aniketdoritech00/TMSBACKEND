@@ -1,6 +1,5 @@
 package com.doritech.tmsservice.request;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -21,10 +20,6 @@ public class ProductCategoryRequest {
 
 	@Size(max = 2000, message = "{productCategory.description.size}")
 	private String productCategoryDescription;
-
-	@NotNull(message = "{productCategory.displayOrder.notnull}")
-	@Min(value = 0, message = "{productCategory.displayOrder.min}")
-	private Integer productCategoryDisplayOrder;
 
 	@NotNull(message = "{productCategory.isActive.notnull}")
 	private Boolean isActive;
@@ -51,14 +46,6 @@ public class ProductCategoryRequest {
 
 	public void setProductCategoryDescription(String productCategoryDescription) {
 		this.productCategoryDescription = productCategoryDescription;
-	}
-
-	public Integer getProductCategoryDisplayOrder() {
-		return productCategoryDisplayOrder;
-	}
-
-	public void setProductCategoryDisplayOrder(Integer productCategoryDisplayOrder) {
-		this.productCategoryDisplayOrder = productCategoryDisplayOrder;
 	}
 
 	public Boolean getIsActive() {

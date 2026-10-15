@@ -1,13 +1,9 @@
 package com.doritech.tmsservice.controller;
 
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,8 +19,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/products")
 public class ProductController {
 
-	private static final Logger log = LoggerFactory.getLogger(ProductController.class);
-
 	private final ProductService productService;
 
 	public ProductController(ProductService productService) {
@@ -32,14 +26,17 @@ public class ProductController {
 	}
 
 	@PostMapping("/createProduct")
-	public ResponseEntity createProduct(@Valid @RequestBody List<ProductRequest> productRequest) {
-		log.info("createProduct :: request received with size={}", productRequest.size());
+	public ResponseEntity createProduct(@Valid @RequestBody ProductRequest productRequest) {
 		return productService.createProduct(productRequest);
 	}
 
-	@GetMapping("/getProductById/{id}")
-	public ResponseEntity getProductById(@PathVariable("id") Long id) {
-		log.info("getProductById :: request received for id={}", id);
+	@PutMapping("/updateProduct")
+	public ResponseEntity updateProduct(@RequestParam Long id, @Valid @RequestBody ProductRequest productRequest) {
+		return productService.updateProduct(id, productRequest);
+	}
+
+	@GetMapping("/getProductById")
+	public ResponseEntity getProductById(@RequestParam Long id) {
 		return productService.getProductById(id);
 	}
 
@@ -48,13 +45,33 @@ public class ProductController {
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "productId") String sortBy,
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllProduct :: request received with page={}, size={}", page, size);
+
 		return productService.getAllProduct(page, size, sortBy, sortDir);
 	}
 
-	@DeleteMapping("/deleteProductDetails/{id}")
-	public ResponseEntity deleteProductDetails(@PathVariable("id") Long id) {
-		log.info("deleteProductDetails :: request received");
+	@GetMapping("/getProductsByCategoryId")
+	public ResponseEntity getProductsByCategoryId(@RequestParam Long categoryId) {
+		return productService.getProductsByCategoryId(categoryId);
+	}
+
+	@DeleteMapping("/deleteProductDetails")
+	public ResponseEntity deleteProductDetails(@RequestParam Long id) {
 		return productService.deleteProductDetails(id);
+	}
+
+	@GetMapping("/getAllProductWithoutPagination")
+	public ResponseEntity getAllProduct() {
+		return productService.getAllProduct();
+	}
+
+	@GetMapping("/getAllProductFilter")
+	public ResponseEntity getAllProductFilter(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String productName,
+			@RequestParam(required = false) String productCode, @RequestParam(required = false) Long productCategoryId,
+			@RequestParam(required = false) Boolean isActive, @RequestParam(defaultValue = "productId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir) {
+
+		return productService.getAllProductFilter(page, size, productName, productCode, productCategoryId, isActive,
+				sortBy, sortDir);
 	}
 }

@@ -19,6 +19,9 @@ public class InTrainingUserResponseResponse {
 	private Integer timeTakenSeconds;
 
 	private LocalDateTime respondedAt;
+	
+	
+	
 
 	public InTrainingUserResponseResponse() {
 	}

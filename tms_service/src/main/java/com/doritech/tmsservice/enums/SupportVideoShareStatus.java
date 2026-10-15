@@ -1,5 +1,5 @@
 package com.doritech.tmsservice.enums;
 
-enum SupportVideoShareStatus {
+public enum SupportVideoShareStatus {
 	SHARED, VIEWED, COMPLETED
 }

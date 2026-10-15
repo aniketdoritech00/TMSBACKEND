@@ -1,5 +1,5 @@
 package com.doritech.tmsservice.enums;
 
-enum VideoStatus {
+public enum VideoStatus {
 	ACTIVE, INACTIVE, ARCHIVED
 }

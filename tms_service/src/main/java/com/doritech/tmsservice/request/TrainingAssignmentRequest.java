@@ -2,57 +2,59 @@ package com.doritech.tmsservice.request;
 
 import java.time.LocalDateTime;
 
-import jakarta.validation.constraints.NotNull;
-
 public class TrainingAssignmentRequest {
 
-    @NotNull(message = "{trainingAssignment.trainingId.notnull}")
-    private Long trainingId;
+	private Long trainingId;
 
-    @NotNull(message = "{trainingAssignment.userId.notnull}")
-    private Long userId;
+	private Long userId;
 
-    private Long batchId;
+	private Long batchId;
 
-    private LocalDateTime dueDate;
+	private LocalDateTime dueDate;
 
-    public TrainingAssignmentRequest() {
-    }
+	private Long testSetId;
 
-    public Long getTrainingId() {
-        return trainingId;
-    }
+	public Long getTestSetId() {
+		return testSetId;
+	}
 
-    public void setTrainingId(Long trainingId) {
-        this.trainingId = trainingId;
-    }
+	public void setTestSetId(Long testSetId) {
+		this.testSetId = testSetId;
+	}
 
-    public Long getUserId() {
-        return userId;
-    }
+	public TrainingAssignmentRequest() {
+	}
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+	public Long getTrainingId() {
+		return trainingId;
+	}
 
-    public Long getBatchId() {
-        return batchId;
-    }
+	public void setTrainingId(Long trainingId) {
+		this.trainingId = trainingId;
+	}
 
-    public void setBatchId(Long batchId) {
-        this.batchId = batchId;
-    }
+	public Long getUserId() {
+		return userId;
+	}
 
-    public LocalDateTime getDueDate() {
-        return dueDate;
-    }
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
 
-    public void setDueDate(LocalDateTime dueDate) {
-        this.dueDate = dueDate;
-    }
+	public Long getBatchId() {
+		return batchId;
+	}
 
-    @Override
-    public String toString() {
-        return "TrainingAssignmentRequest [trainingId=" + trainingId + ", userId=" + userId + "]";
-    }
+	public void setBatchId(Long batchId) {
+		this.batchId = batchId;
+	}
+
+	public LocalDateTime getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(LocalDateTime dueDate) {
+		this.dueDate = dueDate;
+	}
+
 }

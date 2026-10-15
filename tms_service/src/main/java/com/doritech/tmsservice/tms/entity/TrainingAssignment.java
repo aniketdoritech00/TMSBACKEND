@@ -3,38 +3,47 @@ package com.doritech.tmsservice.tms.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.AssignmentStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "training_assignments", uniqueConstraints = @UniqueConstraint(columnNames = { "training_id", "user_id" }))
+@Table(name = "training_assignments", uniqueConstraints = {
+		@UniqueConstraint(name = "uk_training_assignment_training_user", columnNames = { "training_id",
+				"user_id" }) }, indexes = {
+						@Index(name = "idx_training_assignment_training", columnList = "training_id"),
+						@Index(name = "idx_training_assignment_user", columnList = "user_id"),
+						@Index(name = "idx_training_assignment_batch", columnList = "batch_id"),
+						@Index(name = "idx_training_assignment_status", columnList = "status") })
 public class TrainingAssignment {
-
-	public enum Status {
-		NOT_STARTED, IN_PROGRESS, COMPLETED, OVERDUE, EXPIRED
-	}
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "training_assignment_id")
 	private Long trainingAssignmentId;
 
-	@Column(name = "training_id", nullable = false)
-	private Long trainingId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "training_id", nullable = false)
+	private Training training;
 
-	@Column(name = "user_id", nullable = false)
+	@Column(name = "user_id")
 	private Long userId;
 
-	@Column(name = "batch_id")
-	private Long batchId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "batch_id")
+	private Batch batch;
 
 	@Column(name = "assigned_by", nullable = false)
 	private Long assignedBy;
@@ -47,7 +56,7 @@ public class TrainingAssignment {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status")
-	private Status status = Status.NOT_STARTED;
+	private AssignmentStatus status = AssignmentStatus.NOT_STARTED;
 
 	@Column(name = "progress_percentage", precision = 5, scale = 2)
 	private BigDecimal progressPercentage = BigDecimal.ZERO;
@@ -82,38 +91,6 @@ public class TrainingAssignment {
 	@Column(name = "started_at")
 	private LocalDateTime startedAt;
 
-	public TrainingAssignment() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.assignedAt = LocalDateTime.now();
-		if (this.status == null) {
-			this.status = Status.NOT_STARTED;
-		}
-		if (this.progressPercentage == null) {
-			this.progressPercentage = BigDecimal.ZERO;
-		}
-		if (this.isPassed == null) {
-			this.isPassed = false;
-		}
-		if (this.certificateGenerated == null) {
-			this.certificateGenerated = false;
-		}
-		if (this.attemptedQuestions == null) {
-			this.attemptedQuestions = 0;
-		}
-		if (this.correctAnswers == null) {
-			this.correctAnswers = 0;
-		}
-		if (this.wrongAnswers == null) {
-			this.wrongAnswers = 0;
-		}
-		if (this.totalQuestions == null) {
-			this.totalQuestions = 0;
-		}
-	}
-
 	public Long getTrainingAssignmentId() {
 		return trainingAssignmentId;
 	}
@@ -122,12 +99,12 @@ public class TrainingAssignment {
 		this.trainingAssignmentId = trainingAssignmentId;
 	}
 
-	public Long getTrainingId() {
-		return trainingId;
+	public Training getTraining() {
+		return training;
 	}
 
-	public void setTrainingId(Long trainingId) {
-		this.trainingId = trainingId;
+	public void setTraining(Training training) {
+		this.training = training;
 	}
 
 	public Long getUserId() {
@@ -138,12 +115,12 @@ public class TrainingAssignment {
 		this.userId = userId;
 	}
 
-	public Long getBatchId() {
-		return batchId;
+	public Batch getBatch() {
+		return batch;
 	}
 
-	public void setBatchId(Long batchId) {
-		this.batchId = batchId;
+	public void setBatch(Batch batch) {
+		this.batch = batch;
 	}
 
 	public Long getAssignedBy() {
@@ -170,11 +147,11 @@ public class TrainingAssignment {
 		this.dueDate = dueDate;
 	}
 
-	public Status getStatus() {
+	public AssignmentStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(Status status) {
+	public void setStatus(AssignmentStatus status) {
 		this.status = status;
 	}
 
@@ -265,4 +242,5 @@ public class TrainingAssignment {
 	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
+
 }

@@ -1,17 +1,31 @@
 package com.doritech.tmsservice.service;
 
+import java.util.List;
+
 import com.doritech.tmsservice.request.InTrainingQuestionRequest;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface InTrainingQuestionService {
 
-    ResponseEntity createInTrainingQuestion(InTrainingQuestionRequest request);
+//	ResponseEntity createInTrainingQuestion(InTrainingQuestionRequest request);
 
-    ResponseEntity getInTrainingQuestionById(Long id);
+	ResponseEntity getInTrainingQuestionById(Long id);
 
-    ResponseEntity getAllInTrainingQuestion(int page, int size, String sortBy, String sortDir);
+	ResponseEntity getAllInTrainingQuestions();
 
-    ResponseEntity getQuestionsByVideoId(Long videoId);
+	ResponseEntity getAllInTrainingQuestions(int page, int size, String sortBy, String sortDir);
 
-    ResponseEntity deleteInTrainingQuestion(Long id);
+	ResponseEntity getInTrainingQuestionsByVideoId(Long videoId);
+
+	ResponseEntity getInTrainingQuestionsByVideoId(Long videoId, int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity updateInTrainingQuestion(Long id, InTrainingQuestionRequest request);
+
+	ResponseEntity deleteInTrainingQuestion(Long id);
+
+	ResponseEntity getInTrainingQuestionsByVideoId(Long videoId, Long trainingAssignmentId);
+
+	ResponseEntity createInTrainingQuestion(List<InTrainingQuestionRequest> requests);
+	
+	ResponseEntity getInTrainingResultByVideoId(Long videoId, Long trainingAssignmentId);
 }
