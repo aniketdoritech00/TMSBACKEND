@@ -1,6 +1,7 @@
 package com.doritech.tmsservice.tms.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +19,22 @@ public interface TestSetRepository extends JpaRepository<TestSet, Long> {
 
 	boolean existsBySetNoAndTestSetIdNot(String setNo, Long testSetId);
 
-	List<TestSet> findByTraining_TrainingIdOrderByTestSetIdDesc(Long trainingId);
+	// List<TestSet> findByTraining_TrainingIdOrderByTestSetIdDesc(Long trainingId);
 
 	List<TestSet> findByIsActiveTrueOrderByTestSetIdDesc();
 
-	List<TestSet> findByTraining_TrainingIdAndIsActiveTrueOrderByTestSetIdDesc(Long trainingId);
+	// List<TestSet>
+	// findByTraining_TrainingIdAndIsActiveTrueOrderByTestSetIdDesc(Long
+	// trainingId);
+	List<TestSet> findByTraining_TrainingIdAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc(Long trainingId);
+
+	Page<TestSet> findByTraining_TrainingIdAndPublishedAtIsNotNull(Long trainingId, Pageable pageable);
 
 	Page<TestSet> findByTraining_TrainingId(Long trainingId, Pageable pageable);
+
+	List<TestSet> findByTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc();
+
+	Optional<TestSet> findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(Long testSetId);
+	
+	Optional<TestSet> findFirstByTraining_TrainingId(Long trainingId);
 }
