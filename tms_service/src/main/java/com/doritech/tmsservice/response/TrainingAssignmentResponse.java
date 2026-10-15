@@ -14,6 +14,7 @@ public class TrainingAssignmentResponse {
 	private String trainingName;
 	private String testCode;
 	private String testName;
+	private Long testSetId;
 
 	private Long userId;
 	private String userName;
@@ -262,6 +263,14 @@ public class TrainingAssignmentResponse {
 	public void setTestName(String testName) {
 		this.testName = testName;
 	}
-	
-	
+
+	public Long getTestSetId() {
+		return testSetId;
+	}
+
+	public void setTestSetId(Long testSetId) {
+		this.testSetId = testSetId;
+	}
+
+			
 }

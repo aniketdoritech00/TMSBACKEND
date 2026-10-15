@@ -1235,6 +1235,8 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 		}
 	}
 
+	// ===================Response Conversion ===========================
+	
 	private TrainingAssignmentResponse convertToResponse(TrainingAssignment assignment) {
 
 		TrainingAssignmentResponse response = new TrainingAssignmentResponse();
@@ -1248,6 +1250,7 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			response.setTrainingCode(assignment.getTraining().getTrainingCode());
 
 			response.setTrainingName(assignment.getTraining().getTrainingName());
+			
 		}
 
 		response.setUserId(assignment.getUserId());
@@ -1285,9 +1288,11 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 			if (testSet != null) {
 				response.setTestCode(testSet.getTestSetCode());
 				response.setTestName(testSet.getTestName());
+				response.setTestSetId(testSet.getTestSetId());
 			}
 		}
-
+		
+		
 		response.setAssignedAt(assignment.getAssignedAt());
 
 		response.setDueDate(assignment.getDueDate());
