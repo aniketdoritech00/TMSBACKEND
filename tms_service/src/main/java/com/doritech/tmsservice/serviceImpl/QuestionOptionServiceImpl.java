@@ -1,207 +1,433 @@
 package com.doritech.tmsservice.serviceImpl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.doritech.tmsservice.exception.BadRequestException;
-import com.doritech.tmsservice.exception.DatabaseOperationException;
-import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.QuestionOptionRequest;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.QuestionOptionResponse;
-import com.doritech.tmsservice.response.QuestionOptionSecureResponse;
-import com.doritech.tmsservice.service.QuestionOptionRepository;
 import com.doritech.tmsservice.service.QuestionOptionService;
 import com.doritech.tmsservice.tms.entity.QuestionOption;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TestQuestion;
+import com.doritech.tmsservice.tms.repository.QuestionOptionRepository;
 import com.doritech.tmsservice.tms.repository.TestQuestionRepository;
 
 @Service
 public class QuestionOptionServiceImpl implements QuestionOptionService {
 
-	private static final Logger log = LoggerFactory.getLogger(QuestionOptionServiceImpl.class);
+	private final QuestionOptionRepository questionOptionRepository;
+	private final TestQuestionRepository testQuestionRepository;
 
-	@Autowired
-	private QuestionOptionRepository questionOptionRepository;
+	public QuestionOptionServiceImpl(QuestionOptionRepository questionOptionRepository,
+			TestQuestionRepository testQuestionRepository) {
 
-	@Autowired
-	private TestQuestionRepository testQuestionRepository;
+		this.questionOptionRepository = questionOptionRepository;
 
-	@Override
-	public ResponseEntity createQuestionOptions(List<QuestionOptionRequest> requestList) {
-
-		log.info("createQuestionOptions :: request received with size={}",
-				requestList == null ? 0 : requestList.size());
-
-		if (requestList == null || requestList.isEmpty()) {
-			log.error("createQuestionOptions :: request list is empty");
-			throw new BadRequestException("Options list must not be empty");
-		}
-
-		
-		Long testQuestionId = requestList.get(0).getTestQuestionId();
-
-		boolean allSameQuestion = requestList.stream().allMatch(r -> testQuestionId.equals(r.getTestQuestionId()));
-
-		if (!allSameQuestion) {
-			log.error("createQuestionOptions :: options belong to different test questions");
-			throw new BadRequestException("All options in a single request must belong to the same test question");
-		}
-
-		if (!testQuestionRepository.existsById(testQuestionId)) {
-			log.error("createQuestionOptions :: test question not found for id={}", testQuestionId);
-			throw new ResourceNotFoundException("Test question not found with id: " + testQuestionId);
-		}
-
-		boolean hasCorrectAnswer = requestList.stream().anyMatch(r -> Boolean.TRUE.equals(r.getIsCorrect()));
-
-		if (!hasCorrectAnswer) {
-			log.error("createQuestionOptions :: no option marked as correct for testQuestionId={}", testQuestionId);
-			throw new BadRequestException("At least one option must be marked as correct");
-		}
-
-		List<QuestionOption> optionList = requestList.stream().map(request -> {
-			QuestionOption option = new QuestionOption();
-			option.setTestQuestionId(request.getTestQuestionId());
-			option.setOptionText(request.getOptionText());
-			option.setOptionLabel(request.getOptionLabel());
-			option.setIsCorrect(request.getIsCorrect());
-			option.setDisplayOrder(request.getDisplayOrder());
-			return option;
-		}).collect(Collectors.toList());
-
-		List<QuestionOption> savedList;
-		try {
-			savedList = questionOptionRepository.saveAll(optionList);
-		} catch (Exception e) {
-			log.error("createQuestionOptions :: error while saving - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while saving question options");
-		}
-
-		List<QuestionOptionResponse> responseList = savedList.stream().map(this::mapToFullResponse)
-				.collect(Collectors.toList());
-
-		log.info("createQuestionOptions :: {} options saved successfully for testQuestionId={}", responseList.size(),
-				testQuestionId);
-
-		return new ResponseEntity("Question options saved successfully", HttpStatus.CREATED.value(), responseList);
+		this.testQuestionRepository = testQuestionRepository;
 	}
 
 	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity createQuestionOption(QuestionOptionRequest request) {
+		try {
+			if (request == null) {
+				return new ResponseEntity("Question option data is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request.getTestQuestionId() == null || request.getTestQuestionId() <= 0) {
+				return new ResponseEntity("Valid test question id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request.getOptionText() == null || request.getOptionText().trim().isEmpty()) {
+				return new ResponseEntity("Option text is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<TestQuestion> optionalQuestion = testQuestionRepository.findById(request.getTestQuestionId());
+			if (optionalQuestion.isEmpty()) {
+				return new ResponseEntity("Test question not found with id: " + request.getTestQuestionId(),
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			boolean alreadyExists = questionOptionRepository.existsByTestQuestion_TestQuestionIdAndOptionText(
+					request.getTestQuestionId(), request.getOptionText().trim());
+
+			if (alreadyExists) {
+
+				return new ResponseEntity("Question option already exists", HttpStatus.CONFLICT.value(), null);
+			}
+
+			QuestionOption option = new QuestionOption();
+
+			option.setTestQuestion(optionalQuestion.get());
+
+			option.setOptionText(request.getOptionText().trim());
+
+			option.setOptionLabel(request.getOptionLabel());
+
+			option.setIsCorrect(request.getIsCorrect() != null ? request.getIsCorrect() : false);
+
+			option.setDisplayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0);
+
+			QuestionOption savedOption = questionOptionRepository.save(option);
+
+			return new ResponseEntity("Question option created successfully", HttpStatus.CREATED.value(),
+					mapToResponse(savedOption));
+
+		} catch (DataIntegrityViolationException e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Question option already exists or violates database constraints",
+					HttpStatus.CONFLICT.value(), null);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getQuestionOptionById(Long id) {
 
-		log.info("getQuestionOptionById :: request received for id={}", id);
+		try {
 
-		if (id == null) {
-			log.error("getQuestionOptionById :: id is null");
-			throw new BadRequestException("ID can not be null");
+			if (id == null || id <= 0) {
+
+				return new ResponseEntity("Invalid question option id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<QuestionOption> optionalOption = questionOptionRepository.findById(id);
+
+			if (optionalOption.isEmpty()) {
+
+				return new ResponseEntity("Question option not found with id: " + id, HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+
+			return new ResponseEntity("Question option fetched successfully", HttpStatus.OK.value(),
+					mapToResponse(optionalOption.get()));
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		QuestionOption option = questionOptionRepository.findById(id).orElseThrow(() -> {
-			log.error("getQuestionOptionById :: not found for id={}", id);
-			return new ResourceNotFoundException("Question option not found with id: " + id);
-		});
-
-		log.info("getQuestionOptionById :: fetched successfully for id={}", id);
-
-		return new ResponseEntity("Fetch Data By Id", HttpStatus.OK.value(), mapToFullResponse(option));
 	}
 
 	@Override
-	public ResponseEntity getOptionsByQuestionId(Long testQuestionId) {
-
-		log.info("getOptionsByQuestionId :: request received for testQuestionId={} (ADMIN - includes isCorrect)",
-				testQuestionId);
-
-		if (testQuestionId == null) {
-			log.error("getOptionsByQuestionId :: testQuestionId is null");
-			throw new BadRequestException("Test Question ID can not be null");
-		}
-
-		List<QuestionOption> optionList = questionOptionRepository
-				.findByTestQuestionIdOrderByDisplayOrderAsc(testQuestionId);
-
-		// ADMIN VIEW: isCorrect included - use only for review/edit screens, never for
-		// student attempt
-		List<QuestionOptionResponse> responseList = optionList.stream().map(this::mapToFullResponse)
-				.collect(Collectors.toList());
-
-		log.info("getOptionsByQuestionId :: {} options fetched for testQuestionId={}", responseList.size(),
-				testQuestionId);
-
-		return new ResponseEntity("Question option fetch successfully", HttpStatus.OK.value(), responseList);
-	}
-
-	@Override
-	public ResponseEntity getOptionsForAttempt(Long testQuestionId) {
-
-		log.info("getOptionsForAttempt :: request received for testQuestionId={} (STUDENT - isCorrect hidden)",
-				testQuestionId);
-
-		if (testQuestionId == null) {
-			log.error("getOptionsForAttempt :: testQuestionId is null");
-			throw new BadRequestException("Test Question ID can not be null");
-		}
-
-		List<QuestionOption> optionList = questionOptionRepository
-				.findByTestQuestionIdOrderByDisplayOrderAsc(testQuestionId);
-
-		List<QuestionOptionSecureResponse> responseList = optionList.stream().map(this::mapToSecureResponse)
-				.collect(Collectors.toList());
-
-		log.info("getOptionsForAttempt :: {} options fetched for testQuestionId={}", responseList.size(),
-				testQuestionId);
-
-		return new ResponseEntity("Question option fetch successfully", HttpStatus.OK.value(), responseList);
-	}
-
-	@Override
-	public ResponseEntity deleteQuestionOption(Long id) {
-
-		log.info("deleteQuestionOption :: request received for id={}", id);
-
-		if (id == null) {
-			log.error("deleteQuestionOption :: id is null");
-			throw new BadRequestException("ID can not be null");
-		}
-
-		QuestionOption option = questionOptionRepository.findById(id).orElseThrow(() -> {
-			log.error("deleteQuestionOption :: not found for id={}", id);
-			return new ResourceNotFoundException("Question option not found with id: " + id);
-		});
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getAllQuestionOptions() {
 
 		try {
-			questionOptionRepository.delete(option);
+
+			List<QuestionOption> options = questionOptionRepository
+					.findAll(Sort.by(Sort.Direction.ASC, "displayOrder"));
+
+			List<QuestionOptionResponse> response = options.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			return new ResponseEntity("Question options fetched successfully", HttpStatus.OK.value(), response);
+
 		} catch (Exception e) {
-			log.error("deleteQuestionOption :: error while deleting - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Cannot delete question option, it may be linked to other records");
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getAllQuestionOptions(int page, int size, String sortBy, String sortDir) {
+
+		try {
+
+			if (page < 0) {
+				page = 0;
+			}
+
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "questionOptionId";
+			}
+
+			Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<QuestionOption> optionPage = questionOptionRepository.findAll(pageable);
+
+			List<QuestionOptionResponse> content = optionPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			PageResponse<QuestionOptionResponse> pageResponse = new PageResponse<>(content, optionPage.getNumber(),
+					optionPage.getSize(), optionPage.getTotalElements(), optionPage.getTotalPages(),
+					optionPage.isLast());
+
+			return new ResponseEntity("Question options fetched successfully", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getQuestionOptionsByTestQuestionId(Long testQuestionId) {
+
+		try {
+
+			if (testQuestionId == null || testQuestionId <= 0) {
+
+				return new ResponseEntity("Invalid test question id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<TestQuestion> optionalQuestion = testQuestionRepository.findById(testQuestionId);
+
+			if (optionalQuestion.isEmpty()) {
+
+				return new ResponseEntity("Test question not found with id: " + testQuestionId,
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			List<QuestionOption> options = questionOptionRepository
+					.findByTestQuestion_TestQuestionIdOrderByDisplayOrderAsc(testQuestionId);
+
+			List<QuestionOptionResponse> response = options.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			return new ResponseEntity("Question options fetched successfully", HttpStatus.OK.value(), response);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getQuestionOptionsByTestQuestionId(Long testQuestionId, int page, int size, String sortBy,
+			String sortDir) {
+
+		try {
+
+			if (testQuestionId == null || testQuestionId <= 0) {
+
+				return new ResponseEntity("Invalid test question id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<TestQuestion> optionalQuestion = testQuestionRepository.findById(testQuestionId);
+
+			if (optionalQuestion.isEmpty()) {
+
+				return new ResponseEntity("Test question not found with id: " + testQuestionId,
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			if (page < 0) {
+				page = 0;
+			}
+
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "displayOrder";
+			}
+
+			Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<QuestionOption> optionPage = questionOptionRepository.findByTestQuestion_TestQuestionId(testQuestionId,
+					pageable);
+
+			List<QuestionOptionResponse> content = optionPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			PageResponse<QuestionOptionResponse> pageResponse = new PageResponse<>(content, optionPage.getNumber(),
+					optionPage.getSize(), optionPage.getTotalElements(), optionPage.getTotalPages(),
+					optionPage.isLast());
+
+			return new ResponseEntity("Question options fetched successfully", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity updateQuestionOption(Long id, QuestionOptionRequest request) {
+
+		try {
+
+			if (id == null || id <= 0) {
+
+				return new ResponseEntity("Invalid question option id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request == null) {
+
+				return new ResponseEntity("Question option data is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request.getTestQuestionId() == null || request.getTestQuestionId() <= 0) {
+
+				return new ResponseEntity("Valid test question id is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request.getOptionText() == null || request.getOptionText().trim().isEmpty()) {
+
+				return new ResponseEntity("Option text is required", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<QuestionOption> optionalOption = questionOptionRepository.findById(id);
+
+			if (optionalOption.isEmpty()) {
+
+				return new ResponseEntity("Question option not found with id: " + id, HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+
+			Optional<TestQuestion> optionalQuestion = testQuestionRepository.findById(request.getTestQuestionId());
+
+			if (optionalQuestion.isEmpty()) {
+
+				return new ResponseEntity("Test question not found with id: " + request.getTestQuestionId(),
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			boolean alreadyExists = questionOptionRepository
+					.existsByTestQuestion_TestQuestionIdAndOptionTextAndQuestionOptionIdNot(request.getTestQuestionId(),
+							request.getOptionText().trim(), id);
+
+			if (alreadyExists) {
+
+				return new ResponseEntity("Another question option with the same text already exists",
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			QuestionOption option = optionalOption.get();
+
+			option.setTestQuestion(optionalQuestion.get());
+
+			option.setOptionText(request.getOptionText().trim());
+
+			option.setOptionLabel(request.getOptionLabel());
+
+			if (request.getIsCorrect() != null) {
+				option.setIsCorrect(request.getIsCorrect());
+			}
+
+			if (request.getDisplayOrder() != null) {
+				option.setDisplayOrder(request.getDisplayOrder());
+			}
+
+			QuestionOption updatedOption = questionOptionRepository.save(option);
+
+			return new ResponseEntity("Question option updated successfully", HttpStatus.OK.value(),
+					mapToResponse(updatedOption));
+
+		} catch (DataIntegrityViolationException e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Question option already exists or violates database constraints",
+					HttpStatus.CONFLICT.value(), null);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity deleteQuestionOption(Long id) {
+
+		try {
+
+			if (id == null || id <= 0) {
+
+				return new ResponseEntity("Invalid question option id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<QuestionOption> optionalOption = questionOptionRepository.findById(id);
+
+			if (optionalOption.isEmpty()) {
+
+				return new ResponseEntity("Question option not found with id: " + id, HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+
+			questionOptionRepository.delete(optionalOption.get());
+
+			return new ResponseEntity("Question option deleted successfully", HttpStatus.OK.value(), null);
+
+		} catch (DataIntegrityViolationException e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Cannot delete question option because it is being used",
+					HttpStatus.CONFLICT.value(), null);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	private QuestionOptionResponse mapToResponse(QuestionOption option) {
+
+		QuestionOptionResponse response = new QuestionOptionResponse();
+
+		response.setQuestionOptionId(option.getQuestionOptionId());
+
+		if (option.getTestQuestion() != null) {
+
+			response.setTestQuestionId(option.getTestQuestion().getTestQuestionId());
 		}
 
-		log.info("deleteQuestionOption :: deleted successfully for id={}", id);
+		response.setOptionText(option.getOptionText());
 
-		return new ResponseEntity("Question option deleted successfully", HttpStatus.OK.value(), null);
-	}
+		response.setOptionLabel(option.getOptionLabel());
 
-	// ADMIN mapping - includes isCorrect
-	private QuestionOptionResponse mapToFullResponse(QuestionOption entity) {
-		QuestionOptionResponse response = new QuestionOptionResponse();
-		response.setQuestionOptionId(entity.getQuestionOptionId());
-		response.setTestQuestionId(entity.getTestQuestionId());
-		response.setOptionText(entity.getOptionText());
-		response.setOptionLabel(entity.getOptionLabel());
-		response.setIsCorrect(entity.getIsCorrect());
-		response.setDisplayOrder(entity.getDisplayOrder());
+		response.setIsCorrect(option.getIsCorrect());
+
+		response.setDisplayOrder(option.getDisplayOrder());
+
 		return response;
-	}
-
-	// STUDENT mapping - isCorrect excluded
-	private QuestionOptionSecureResponse mapToSecureResponse(QuestionOption entity) {
-		return new QuestionOptionSecureResponse(entity.getQuestionOptionId(), entity.getTestQuestionId(),
-				entity.getOptionText(), entity.getOptionLabel(), entity.getDisplayOrder());
 	}
 }

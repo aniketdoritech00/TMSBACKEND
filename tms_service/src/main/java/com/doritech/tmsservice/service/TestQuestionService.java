@@ -5,13 +5,19 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface TestQuestionService {
 
-    ResponseEntity createTestQuestion(TestQuestionRequest request);
+	ResponseEntity createTestQuestion(TestQuestionRequest request);
 
-    ResponseEntity getTestQuestionById(Long id);
+	ResponseEntity getTestQuestionById(Long id);
 
-    ResponseEntity getAllTestQuestion(int page, int size, String sortBy, String sortDir);
+	ResponseEntity getAllTestQuestions();
 
-    ResponseEntity getQuestionsByTestSetId(Long testSetId);
+	ResponseEntity getAllTestQuestions(int page, int size, String sortBy, String sortDir);
 
-    ResponseEntity deleteTestQuestion(Long id);
+	ResponseEntity getTestQuestionsByTestSetId(Long testSetId);
+
+	ResponseEntity getTestQuestionsByTestSetId(Long testSetId, int page, int size, String sortBy, String sortDir);
+
+	ResponseEntity updateTestQuestion(Long id, TestQuestionRequest request);
+
+	ResponseEntity deleteTestQuestion(Long id);
 }

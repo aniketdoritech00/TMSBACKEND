@@ -3,6 +3,9 @@ package com.doritech.tmsservice.response;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.TestAttemptStatus;
+import com.doritech.tmsservice.enums.TestResult;
+
 public class TestAttemptResponse {
 
 	private Long testAttemptId;
@@ -29,16 +32,15 @@ public class TestAttemptResponse {
 
 	private BigDecimal passingPercentage;
 
-	private String result;
+	private BigDecimal percentage;
 
-	private String status;
+	private TestResult result;
+
+	private TestAttemptStatus status;
 
 	private Integer violationCount;
 
 	private Integer attemptNumber;
-
-	public TestAttemptResponse() {
-	}
 
 	public Long getTestAttemptId() {
 		return testAttemptId;
@@ -136,19 +138,27 @@ public class TestAttemptResponse {
 		this.passingPercentage = passingPercentage;
 	}
 
-	public String getResult() {
+	public BigDecimal getPercentage() {
+		return percentage;
+	}
+
+	public void setPercentage(BigDecimal percentage) {
+		this.percentage = percentage;
+	}
+
+	public TestResult getResult() {
 		return result;
 	}
 
-	public void setResult(String result) {
+	public void setResult(TestResult result) {
 		this.result = result;
 	}
 
-	public String getStatus() {
+	public TestAttemptStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(TestAttemptStatus status) {
 		this.status = status;
 	}
 

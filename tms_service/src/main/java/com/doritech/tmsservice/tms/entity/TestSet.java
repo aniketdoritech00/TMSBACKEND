@@ -5,11 +5,12 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -27,14 +28,15 @@ public class TestSet {
 	@Column(name = "test_description", columnDefinition = "TEXT")
 	private String testDescription;
 
-	@Column(name = "test_code", unique = true, length = 50)
-	private String testCode;
+	@Column(name = "test_set_code", unique = true, length = 50)
+	private String testSetCode;
 
 	@Column(name = "set_no", unique = true, length = 50)
 	private String setNo;
 
-	@Column(name = "training_id")
-	private Long trainingId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "training_id")
+	private Training training;
 
 	@Column(name = "start_date_time")
 	private LocalDateTime startDateTime;
@@ -69,35 +71,6 @@ public class TestSet {
 	@Column(name = "published_at")
 	private LocalDateTime publishedAt;
 
-	public TestSet() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-		this.updatedAt = LocalDateTime.now();
-		if (this.timeLimitMinutes == null) {
-			this.timeLimitMinutes = 60;
-		}
-		if (this.passingPercentage == null) {
-			this.passingPercentage = new BigDecimal("70.00");
-		}
-		if (this.shuffleQuestions == null) {
-			this.shuffleQuestions = true;
-		}
-		if (this.shuffleOptions == null) {
-			this.shuffleOptions = true;
-		}
-		if (this.isActive == null) {
-			this.isActive = true;
-		}
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedAt = LocalDateTime.now();
-	}
-
 	public Long getTestSetId() {
 		return testSetId;
 	}
@@ -122,12 +95,12 @@ public class TestSet {
 		this.testDescription = testDescription;
 	}
 
-	public String getTestCode() {
-		return testCode;
+	public String getTestSetCode() {
+		return testSetCode;
 	}
 
-	public void setTestCode(String testCode) {
-		this.testCode = testCode;
+	public void setTestSetCode(String testSetCode) {
+		this.testSetCode = testSetCode;
 	}
 
 	public String getSetNo() {
@@ -138,12 +111,12 @@ public class TestSet {
 		this.setNo = setNo;
 	}
 
-	public Long getTrainingId() {
-		return trainingId;
+	public Training getTraining() {
+		return training;
 	}
 
-	public void setTrainingId(Long trainingId) {
-		this.trainingId = trainingId;
+	public void setTraining(Training training) {
+		this.training = training;
 	}
 
 	public LocalDateTime getStartDateTime() {
@@ -234,8 +207,4 @@ public class TestSet {
 		this.publishedAt = publishedAt;
 	}
 
-	@Override
-	public String toString() {
-		return "TestSet [testSetId=" + testSetId + ", testName=" + testName + ", testCode=" + testCode + "]";
-	}
 }

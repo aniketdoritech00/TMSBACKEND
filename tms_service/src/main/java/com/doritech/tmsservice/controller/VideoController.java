@@ -1,83 +1,127 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.doritech.tmsservice.exception.GenericException;
 import com.doritech.tmsservice.request.VideoRequest;
 import com.doritech.tmsservice.service.VideoService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.Video;
+import com.doritech.tmsservice.tms.repository.VideoRepository;
 
 @RestController
 @RequestMapping("/api/tms/videos")
 public class VideoController {
 
-	private static final Logger log = LoggerFactory.getLogger(VideoController.class);
-
 	private final VideoService videoService;
+	private final VideoRepository videoRepository;
 
-	public VideoController(VideoService videoService) {
+	public VideoController(VideoService videoService, VideoRepository videoRepository) {
 		this.videoService = videoService;
+		this.videoRepository = videoRepository;
 	}
 
-	@PostMapping(value = "/createVideo", consumes = "multipart/form-data")
-	public ResponseEntity createVideo(@RequestParam("file") MultipartFile file,
-			@RequestParam("videoTitle") String videoTitle,
-			@RequestParam(value = "videoDescription", required = false) String videoDescription,
-			@RequestParam(value = "thumbnailUrl", required = false) String thumbnailUrl,
-			@RequestParam(value = "durationSeconds", required = false) Integer durationSeconds,
-			@RequestParam(value = "videoFormat", required = false) String videoFormat,
-			@RequestParam(value = "resolution", required = false) String resolution,
-			@RequestParam(value = "isSecure", required = false) Boolean isSecure,
-			@RequestParam(value = "allowDownload", required = false) Boolean allowDownload,
-			@RequestParam(value = "allowScreenRecord", required = false) Boolean allowScreenRecord,
-			@RequestParam(value = "allowScreenshot", required = false) Boolean allowScreenshot,
-			@RequestParam("status") String status, @RequestParam("uploadedBy") Long uploadedBy) {
-
-		log.info("createVideo :: request received for title={}", videoTitle);
-
-		VideoRequest request = new VideoRequest();
-		request.setVideoTitle(videoTitle);
-		request.setVideoDescription(videoDescription);
-		request.setThumbnailUrl(thumbnailUrl);
-		request.setDurationSeconds(durationSeconds);
-		request.setVideoFormat(videoFormat);
-		request.setResolution(resolution);
-		request.setIsSecure(isSecure);
-		request.setAllowDownload(allowDownload);
-		request.setAllowScreenRecord(allowScreenRecord);
-		request.setAllowScreenshot(allowScreenshot);
-		request.setStatus(status);
-		request.setUploadedBy(uploadedBy);
-
-		return videoService.createVideo(request, file);
+	@PostMapping(value = "/uploadVideoWithThumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity uploadVideAndThumbnail(
+			@RequestPart("video") MultipartFile videoFile,
+			@RequestPart(value = "thumbnail", required = false) MultipartFile thumbnailFile,
+			@RequestPart("videoData") VideoRequest request) {
+		return videoService.uploadVideAndThumbnail(request, videoFile, thumbnailFile);
 	}
 
-	@GetMapping("/getVideoById/{id}")
-	public ResponseEntity getVideoById(@PathVariable("id") Long id) {
-		log.info("getVideoById :: request received for id={}", id);
-		return videoService.getVideoById(id);
-	}
+//	@GetMapping("/getAllVideo")
+//	public ResponseEntity getAllVideo(@RequestParam(value = "page", defaultValue = "0") int page,
+//			@RequestParam(value = "size", defaultValue = "10") int size,
+//			@RequestParam(value = "sortBy", defaultValue = "videoId") String sortBy,
+//			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+//		return videoService.getAllVideo(page, size, sortBy, sortDir);
+//	}
+
+	// =====================filter to get video =============================
 
 	@GetMapping("/getAllVideo")
-	public ResponseEntity getAllVideo(@RequestParam(value = "page", defaultValue = "0") int page,
+	public ResponseEntity getAllVideo(
+			@RequestParam(value = "page", defaultValue = "0") int page,
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "videoId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllVideo :: request received with page={}, size={}", page, size);
-		return videoService.getAllVideo(page, size, sortBy, sortDir);
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
+			@RequestParam(value = "categoryId", required = false) Long categoryId,
+			@RequestParam(value = "productId", required = false) Long productId,
+			@RequestParam(value = "subProductId", required = false) Long subProductId) {
+
+		return videoService.getAllVideo(page, size, sortBy, sortDir, categoryId, productId, subProductId);
+	}
+	// ===========
+
+	@GetMapping("/getVideoDetailsById")
+	public ResponseEntity getVideoDetailsById(@RequestParam Long videoId) {
+		return videoService.getVideoDetailsById(videoId);
+	}
+
+	@GetMapping("/getVideoThumbnailById")
+	public org.springframework.http.ResponseEntity<ByteArrayResource> getVideoThumbnailById(@RequestParam Long videoId)
+			throws GenericException {
+		try {
+
+			Video video = videoRepository.findById(videoId).orElseThrow(() -> new GenericException("Video not found"));
+
+			String path = video.getThumbnailUrl();
+
+			if (path == null || path.trim().isEmpty()) {
+				throw new GenericException("Video thumbnail not found");
+			}
+
+			byte[] imageData = videoService.getThumbnailByPath(path);
+
+			Path filePath = Paths.get(path);
+
+			String contentType = Files.probeContentType(filePath);
+
+			if (contentType == null) {
+				contentType = "application/octet-stream";
+			}
+
+			ByteArrayResource resource = new ByteArrayResource(imageData);
+
+			return org.springframework.http.ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+					.contentLength(imageData.length).body(resource);
+
+		} catch (IOException e) {
+
+			throw new GenericException("Error reading video thumbnail content type", e);
+		}
+	}
+
+	@GetMapping("/downloadVideo")
+	public org.springframework.http.ResponseEntity<Resource> downloadVideo(@RequestParam Long videoId) {
+		return videoService.downloadVideo(videoId);
 	}
 
 	@DeleteMapping("/deleteVideo/{id}")
-	public ResponseEntity deleteVideo(@PathVariable("id") Long id) {
-		log.info("deleteVideo :: request received for id={}", id);
+	public ResponseEntity deleteVideo(@PathVariable Long id) {
 		return videoService.deleteVideo(id);
 	}
+
+	@PostMapping(value = "/uploadVideo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity uploadVideo(@RequestPart("video") MultipartFile videoFile,
+			@RequestPart("videoData") VideoRequest request) {
+		return videoService.uploadVideo(request, videoFile);
+	}
+
 }

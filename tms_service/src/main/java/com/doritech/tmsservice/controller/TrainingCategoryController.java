@@ -1,11 +1,10 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,8 +20,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/training-categories")
 public class TrainingCategoryController {
 
-	private static final Logger log = LoggerFactory.getLogger(TrainingCategoryController.class);
-
 	private final TrainingCategoryService trainingCategoryService;
 
 	public TrainingCategoryController(TrainingCategoryService trainingCategoryService) {
@@ -31,14 +28,18 @@ public class TrainingCategoryController {
 
 	@PostMapping("/createTrainingCategory")
 	public ResponseEntity createTrainingCategory(@Valid @RequestBody TrainingCategoryRequest request) {
-		log.info("createTrainingCategory :: request received for name={}", request.getCategoryName());
 		return trainingCategoryService.createTrainingCategory(request);
 	}
 
 	@GetMapping("/getTrainingCategoryById/{id}")
-	public ResponseEntity getTrainingCategoryById(@PathVariable("id") Long id) {
-		log.info("getTrainingCategoryById :: request received for id={}", id);
+	public ResponseEntity getTrainingCategoryById(@PathVariable Long id) {
 		return trainingCategoryService.getTrainingCategoryById(id);
+	}
+
+	@PutMapping("/updateTrainingCategory/{categoryId}")
+	public ResponseEntity updateTrainingCategory(@PathVariable Long categoryId,
+			@Valid @RequestBody TrainingCategoryRequest request) {
+		return trainingCategoryService.updateTrainingCategory(categoryId, request);
 	}
 
 	@GetMapping("/getAllTrainingCategory")
@@ -46,13 +47,16 @@ public class TrainingCategoryController {
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			@RequestParam(value = "sortBy", defaultValue = "trainingCategoryId") String sortBy,
 			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllTrainingCategory :: request received with page={}, size={}", page, size);
 		return trainingCategoryService.getAllTrainingCategory(page, size, sortBy, sortDir);
 	}
 
 	@DeleteMapping("/deleteTrainingCategory/{id}")
 	public ResponseEntity deleteTrainingCategory(@PathVariable("id") Long id) {
-		log.info("deleteTrainingCategory :: request received for id={}", id);
 		return trainingCategoryService.deleteTrainingCategory(id);
+	}
+
+	@GetMapping("/getAllTrainingCategoryWithoutPagination")
+	public ResponseEntity getAllTrainingCategoryWithoutPagination() {
+		return trainingCategoryService.getAllTrainingCategory();
 	}
 }

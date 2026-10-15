@@ -2,7 +2,6 @@ package com.doritech.tmsservice.tms.entity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -15,48 +14,48 @@ import jakarta.persistence.Table;
 @Table(name = "document_sub_products")
 public class DocumentSubProduct {
 
-    @EmbeddedId
-    private DocumentSubProductId id;
+	@EmbeddedId
+	private DocumentSubProductId id;
 
-    @Column(name = "assigned_at")
-    private LocalDateTime assignedAt;
+	@Column(name = "assigned_at")
+	private LocalDateTime assignedAt;
 
-    @Column(name = "assigned_by")
-    private Long assignedBy;
+	@Column(name = "assigned_by")
+	private Long assignedBy;
 
-    public DocumentSubProduct() {
-    }
+	public DocumentSubProduct() {
+	}
 
-    @PrePersist
-    protected void onCreate() {
-        this.assignedAt = LocalDateTime.now();
-    }
+	@PrePersist
+	protected void onCreate() {
+		this.assignedAt = LocalDateTime.now();
+	}
 
-    public DocumentSubProductId getId() {
-        return id;
-    }
+	public DocumentSubProductId getId() {
+		return id;
+	}
 
-    public void setId(DocumentSubProductId id) {
-        this.id = id;
-    }
+	public void setId(DocumentSubProductId id) {
+		this.id = id;
+	}
 
-    public LocalDateTime getAssignedAt() {
-        return assignedAt;
-    }
+	public LocalDateTime getAssignedAt() {
+		return assignedAt;
+	}
 
-    public void setAssignedAt(LocalDateTime assignedAt) {
-        this.assignedAt = assignedAt;
-    }
+	public void setAssignedAt(LocalDateTime assignedAt) {
+		this.assignedAt = assignedAt;
+	}
 
-    public Long getAssignedBy() {
-        return assignedBy;
-    }
+	public Long getAssignedBy() {
+		return assignedBy;
+	}
 
-    public void setAssignedBy(Long assignedBy) {
-        this.assignedBy = assignedBy;
-    }
+	public void setAssignedBy(Long assignedBy) {
+		this.assignedBy = assignedBy;
+	}
 
-    @Embeddable
+	@Embeddable
     public static class DocumentSubProductId implements Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -67,41 +66,34 @@ public class DocumentSubProduct {
         @Column(name = "sub_product_id")
         private Long subProductId;
 
-        public DocumentSubProductId() {
-        }
+		public Long getDocumentId() {
+			return documentId;
+		}
 
-        public DocumentSubProductId(Long documentId, Long subProductId) {
-            this.documentId = documentId;
-            this.subProductId = subProductId;
-        }
+		public void setDocumentId(Long documentId) {
+			this.documentId = documentId;
+		}
 
-        public Long getDocumentId() {
-            return documentId;
-        }
+		public Long getSubProductId() {
+			return subProductId;
+		}
 
-        public void setDocumentId(Long documentId) {
-            this.documentId = documentId;
-        }
+		public void setSubProductId(Long subProductId) {
+			this.subProductId = subProductId;
+		}
 
-        public Long getSubProductId() {
-            return subProductId;
-        }
+		public static long getSerialversionuid() {
+			return serialVersionUID;
+		}
 
-        public void setSubProductId(Long subProductId) {
-            this.subProductId = subProductId;
-        }
+		public DocumentSubProductId(Long documentId, Long subProductId) {
+			super();
+			this.documentId = documentId;
+			this.subProductId = subProductId;
+		}
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof DocumentSubProductId)) return false;
-            DocumentSubProductId that = (DocumentSubProductId) o;
-            return Objects.equals(documentId, that.documentId) && Objects.equals(subProductId, that.subProductId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(documentId, subProductId);
-        }
-    }
+		public DocumentSubProductId() {
+			super();
+		}
+	}
 }

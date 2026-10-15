@@ -7,8 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -46,23 +44,6 @@ public class Document {
 
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
-
-	public Document() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-		this.updatedAt = LocalDateTime.now();
-		if (this.isSecure == null) {
-			this.isSecure = false;
-		}
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedAt = LocalDateTime.now();
-	}
 
 	public Long getDocumentId() {
 		return documentId;
@@ -144,8 +125,24 @@ public class Document {
 		this.updatedAt = updatedAt;
 	}
 
-	@Override
-	public String toString() {
-		return "Document [documentId=" + documentId + ", documentName=" + documentName + "]";
+	public Document(Long documentId, String documentName, String documentDescription, String documentUrl,
+			String documentType, Long fileSizeBytes, Boolean isSecure, Long uploadedBy, LocalDateTime createdAt,
+			LocalDateTime updatedAt) {
+		super();
+		this.documentId = documentId;
+		this.documentName = documentName;
+		this.documentDescription = documentDescription;
+		this.documentUrl = documentUrl;
+		this.documentType = documentType;
+		this.fileSizeBytes = fileSizeBytes;
+		this.isSecure = isSecure;
+		this.uploadedBy = uploadedBy;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
 	}
+
+	public Document() {
+		super();
+	}
+
 }

@@ -5,10 +5,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.request.UserResponseRequest;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.UserResponseResponse;
 import com.doritech.tmsservice.service.UserResponseService;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
@@ -35,27 +41,31 @@ public class UserResponseServiceImpl implements UserResponseService {
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity submitResponse(UserResponseRequest request) {
 
 		try {
 
 			if (request == null) {
-				return new ResponseEntity("Request cannot be null", 400, null);
+
+				return new ResponseEntity("Request cannot be null", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			if (request.getTestAttemptId() == null) {
-				return new ResponseEntity("Test attempt id is required", 400, null);
+			if (request.getTestAttemptId() == null || request.getTestAttemptId() <= 0) {
+
+				return new ResponseEntity("Valid test attempt id is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
-			if (request.getTestQuestionId() == null) {
-				return new ResponseEntity("Test question id is required", 400, null);
+			if (request.getTestQuestionId() == null || request.getTestQuestionId() <= 0) {
+
+				return new ResponseEntity("Valid test question id is required", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			Optional<TestAttempt> attemptOptional = testAttemptRepository.findById(request.getTestAttemptId());
 
 			if (attemptOptional.isEmpty()) {
-				return new ResponseEntity("Test attempt not found", 404, null);
+
+				return new ResponseEntity("Test attempt not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			TestAttempt attempt = attemptOptional.get();
@@ -63,7 +73,8 @@ public class UserResponseServiceImpl implements UserResponseService {
 			Optional<TestQuestion> questionOptional = testQuestionRepository.findById(request.getTestQuestionId());
 
 			if (questionOptional.isEmpty()) {
-				return new ResponseEntity("Test question not found", 404, null);
+
+				return new ResponseEntity("Test question not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			TestQuestion question = questionOptional.get();
@@ -84,6 +95,8 @@ public class UserResponseServiceImpl implements UserResponseService {
 
 				userResponse.setTestAttempt(attempt);
 				userResponse.setTestQuestion(question);
+
+				userResponse.setResponseDate(LocalDateTime.now());
 			}
 
 			userResponse.setUserAnswer(request.getUserAnswer());
@@ -95,96 +108,216 @@ public class UserResponseServiceImpl implements UserResponseService {
 			userResponse.setIsCorrect(correct);
 
 			if (userResponse.getResponseDate() == null) {
+
 				userResponse.setResponseDate(LocalDateTime.now());
 			}
 
 			UserResponse saved = userResponseRepository.save(userResponse);
 
-			return new ResponseEntity(
-					existingResponse.isPresent() ? "Response updated successfully" : "Response submitted successfully",
-					200, mapToResponse(saved));
+			String message = existingResponse.isPresent() ? "Response updated successfully"
+					: "Response submitted successfully";
+
+			return new ResponseEntity(message, HttpStatus.OK.value(), mapToResponse(saved));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while submitting response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while submitting response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getResponseById(Long userResponseId) {
 
 		try {
 
+			if (userResponseId == null || userResponseId <= 0) {
+
+				return new ResponseEntity("Invalid user response id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
 			Optional<UserResponse> optional = userResponseRepository.findById(userResponseId);
 
 			if (optional.isEmpty()) {
-				return new ResponseEntity("User response not found", 404, null);
+
+				return new ResponseEntity("User response not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
-			return new ResponseEntity("User response fetched successfully", 200, mapToResponse(optional.get()));
+			return new ResponseEntity("User response fetched successfully", HttpStatus.OK.value(),
+					mapToResponse(optional.get()));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	public ResponseEntity getResponsesByTestAttemptId(Long testAttemptId) {
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getAllResponses(int page, int size, String sortBy, String sortDir) {
 
 		try {
 
-			List<UserResponse> responses = userResponseRepository.findByTestAttempt_TestAttemptId(testAttemptId);
+			if (page < 0) {
+				page = 0;
+			}
 
-			List<UserResponseResponse> result = responses.stream().map(this::mapToResponse)
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (size > 100) {
+				size = 100;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+
+				sortBy = "userResponseId";
+			}
+
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<UserResponse> responsePage = userResponseRepository.findAll(pageable);
+
+			List<UserResponseResponse> response = responsePage.getContent().stream().map(this::mapToResponse)
 					.collect(Collectors.toList());
 
-			return new ResponseEntity("Responses fetched successfully", 200, result);
+			PageResponse<UserResponseResponse> pageResponse = new PageResponse<>(response, responsePage.getNumber(),
+					responsePage.getSize(), responsePage.getTotalElements(), responsePage.getTotalPages(),
+					responsePage.isLast());
+
+			return new ResponseEntity("User responses fetched successfully", HttpStatus.OK.value(), pageResponse);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getResponsesByTestAttemptId(Long testAttemptId, int page, int size, String sortBy,
+			String sortDir) {
+
+		try {
+
+			if (testAttemptId == null || testAttemptId <= 0) {
+
+				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (page < 0) {
+				page = 0;
+			}
+
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (size > 100) {
+				size = 100;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+
+				sortBy = "userResponseId";
+			}
+
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<UserResponse> responsePage = userResponseRepository.findByTestAttempt_TestAttemptId(testAttemptId,
+					pageable);
+
+			List<UserResponseResponse> response = responsePage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			PageResponse<UserResponseResponse> pageResponse = new PageResponse<>(response, responsePage.getNumber(),
+					responsePage.getSize(), responsePage.getTotalElements(), responsePage.getTotalPages(),
+					responsePage.isLast());
+
+			return new ResponseEntity("Responses fetched successfully", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Error while fetching responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getResponseByAttemptAndQuestion(Long testAttemptId, Long testQuestionId) {
 
 		try {
+
+			if (testAttemptId == null || testAttemptId <= 0) {
+
+				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (testQuestionId == null || testQuestionId <= 0) {
+
+				return new ResponseEntity("Invalid test question id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
 			Optional<UserResponse> optional = userResponseRepository
 					.findByTestAttempt_TestAttemptIdAndTestQuestion_TestQuestionId(testAttemptId, testQuestionId);
 
 			if (optional.isEmpty()) {
-				return new ResponseEntity("Response not found", 404, null);
+
+				return new ResponseEntity("Response not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
-			return new ResponseEntity("Response fetched successfully", 200, mapToResponse(optional.get()));
+			return new ResponseEntity("Response fetched successfully", HttpStatus.OK.value(),
+					mapToResponse(optional.get()));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity updateResponse(Long userResponseId, UserResponseRequest request) {
 
 		try {
 
+			if (userResponseId == null || userResponseId <= 0) {
+
+				return new ResponseEntity("Invalid user response id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (request == null) {
+
+				return new ResponseEntity("Request cannot be null", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
 			Optional<UserResponse> optional = userResponseRepository.findById(userResponseId);
 
 			if (optional.isEmpty()) {
-				return new ResponseEntity("User response not found", 404, null);
+
+				return new ResponseEntity("User response not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			UserResponse response = optional.get();
@@ -199,125 +332,196 @@ public class UserResponseServiceImpl implements UserResponseService {
 
 			UserResponse saved = userResponseRepository.save(response);
 
-			return new ResponseEntity("Response updated successfully", 200, mapToResponse(saved));
+			return new ResponseEntity("Response updated successfully", HttpStatus.OK.value(), mapToResponse(saved));
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while updating response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while updating response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteResponse(Long userResponseId) {
 
 		try {
 
-			if (!userResponseRepository.existsById(userResponseId)) {
+			if (userResponseId == null || userResponseId <= 0) {
 
-				return new ResponseEntity("User response not found", 404, null);
+				return new ResponseEntity("Invalid user response id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Optional<UserResponse> optional = userResponseRepository.findById(userResponseId);
+
+			if (optional.isEmpty()) {
+
+				return new ResponseEntity("User response not found", HttpStatus.NOT_FOUND.value(), null);
 			}
 
 			userResponseRepository.deleteById(userResponseId);
 
-			return new ResponseEntity("Response deleted successfully", 200, null);
+			return new ResponseEntity("Response deleted successfully", HttpStatus.OK.value(), null);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while deleting response: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while deleting response: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	@Transactional
+	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteResponsesByTestAttemptId(Long testAttemptId) {
 
 		try {
 
+			if (testAttemptId == null || testAttemptId <= 0) {
+
+				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			long count = userResponseRepository.countByTestAttempt_TestAttemptId(testAttemptId);
+
+			if (count == 0) {
+
+				return new ResponseEntity("No responses found for this test attempt", HttpStatus.NOT_FOUND.value(),
+						null);
+			}
+
 			userResponseRepository.deleteByTestAttempt_TestAttemptId(testAttemptId);
 
-			return new ResponseEntity("Responses deleted successfully", 200, null);
+			return new ResponseEntity("Responses deleted successfully", HttpStatus.OK.value(), null);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while deleting responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while deleting responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
-	public ResponseEntity getCorrectResponses(Long testAttemptId) {
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getCorrectResponses(Long testAttemptId, int page, int size, String sortBy, String sortDir) {
 
 		try {
 
-			List<UserResponse> responses = userResponseRepository
-					.findByTestAttempt_TestAttemptIdAndIsCorrect(testAttemptId, true);
+			if (testAttemptId == null || testAttemptId <= 0) {
 
-			List<UserResponseResponse> result = responses.stream().map(this::mapToResponse)
+				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (page < 0) {
+				page = 0;
+			}
+
+			if (size <= 0) {
+				size = 10;
+			}
+
+			if (size > 100) {
+				size = 100;
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+
+				sortBy = "userResponseId";
+			}
+
+			Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+			Page<UserResponse> responsePage = userResponseRepository
+					.findByTestAttempt_TestAttemptIdAndIsCorrect(testAttemptId, true, pageable);
+
+			List<UserResponseResponse> response = responsePage.getContent().stream().map(this::mapToResponse)
 					.collect(Collectors.toList());
 
-			return new ResponseEntity("Correct responses fetched successfully", 200, result);
+			PageResponse<UserResponseResponse> pageResponse = new PageResponse<>(response, responsePage.getNumber(),
+					responsePage.getSize(), responsePage.getTotalElements(), responsePage.getTotalPages(),
+					responsePage.isLast());
+
+			return new ResponseEntity("Correct responses fetched successfully", HttpStatus.OK.value(), pageResponse);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while fetching correct responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while fetching correct responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getResponseCount(Long testAttemptId) {
 
 		try {
 
+			if (testAttemptId == null || testAttemptId <= 0) {
+
+				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
 			long count = userResponseRepository.countByTestAttempt_TestAttemptId(testAttemptId);
 
-			return new ResponseEntity("Response count fetched successfully", 200, count);
+			return new ResponseEntity("Response count fetched successfully", HttpStatus.OK.value(), count);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while counting responses: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while counting responses: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getCorrectAnswerCount(Long testAttemptId) {
 
 		try {
 
+			if (testAttemptId == null || testAttemptId <= 0) {
+
+				return new ResponseEntity("Invalid test attempt id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
 			long count = userResponseRepository.countByTestAttempt_TestAttemptIdAndIsCorrect(testAttemptId, true);
 
-			return new ResponseEntity("Correct answer count fetched successfully", 200, count);
+			return new ResponseEntity("Correct answer count fetched successfully", HttpStatus.OK.value(), count);
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
 
-			return new ResponseEntity("Error while counting correct answers: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error while counting correct answers: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
 	private boolean checkAnswer(TestQuestion question, String userAnswer) {
 
-		if (userAnswer == null || userAnswer.trim().isEmpty()) {
+		if (question == null) {
 			return false;
 		}
 
-		/*
-		 * Replace this with your actual TestQuestion correct-answer field.
-		 *
-		 * Example:
-		 *
-		 * return question.getCorrectAnswer() .equalsIgnoreCase(userAnswer.trim());
-		 */
+		if (userAnswer == null || userAnswer.trim().isEmpty()) {
+
+			return false;
+		}
+
+		if (question.getCorrectAnswer() == null) {
+			return false;
+		}
 
 		return question.getCorrectAnswer().equalsIgnoreCase(userAnswer.trim());
 	}

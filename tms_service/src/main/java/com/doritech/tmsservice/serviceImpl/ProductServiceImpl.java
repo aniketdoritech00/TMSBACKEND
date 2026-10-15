@@ -5,208 +5,438 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.doritech.tmsservice.exception.BadRequestException;
-import com.doritech.tmsservice.exception.DatabaseOperationException;
-import com.doritech.tmsservice.exception.ResourceAlreadyExistsException;
-import com.doritech.tmsservice.exception.ResourceNotFoundException;
 import com.doritech.tmsservice.request.ProductRequest;
+import com.doritech.tmsservice.response.PageResponse;
 import com.doritech.tmsservice.response.ProductResponse;
+import com.doritech.tmsservice.service.ParamService;
 import com.doritech.tmsservice.service.ProductService;
 import com.doritech.tmsservice.tms.entity.Product;
+import com.doritech.tmsservice.tms.entity.ProductCategory;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.repository.ProductCategoryRepository;
 import com.doritech.tmsservice.tms.repository.ProductRepository;
+import com.doritech.tmsservice.tms.repository.SubProductRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {
 
-	private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
-
 	private final ProductRepository productRepository;
+	private final ProductCategoryRepository productCategoryRepository;
+	private final ParamService paramService;
+	private final SubProductRepository subProductRepository;
 
-	public ProductServiceImpl(ProductRepository productRepository) {
+	public ProductServiceImpl(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository,
+			ParamService paramService, SubProductRepository subProductRepository) {
+		this.subProductRepository = subProductRepository;
 		this.productRepository = productRepository;
+		this.productCategoryRepository = productCategoryRepository;
+		this.paramService = paramService;
 	}
 
 	@Override
-	public ResponseEntity createProduct(List<ProductRequest> productRequestList) {
-
-		log.info("createProduct :: request received with size={}",
-				productRequestList == null ? 0 : productRequestList.size());
-
-		if (productRequestList == null || productRequestList.isEmpty()) {
-			log.error("createProduct :: request list is empty");
-			throw new BadRequestException("List is empty");
-		}
-
-		for (ProductRequest request : productRequestList) {
-			if (request.getProductCode() != null && productRepository.existsByProductCode(request.getProductCode())) {
-				log.error("createProduct :: duplicate code={}", request.getProductCode());
-				throw new ResourceAlreadyExistsException(
-						"Product already exists with code: " + request.getProductCode());
+	public ResponseEntity createProduct(ProductRequest request) {
+		try {
+			if (request == null) {
+				return new ResponseEntity("Product request cannot be null", HttpStatus.BAD_REQUEST.value(), null);
 			}
-		}
 
-		List<Product> productList = productRequestList.stream().map(request -> {
+			if (request.getProductCategoryId() == null || request.getProductCategoryId() <= 0) {
+				return new ResponseEntity("Invalid product category id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			ProductCategory productCategory = productCategoryRepository.findById(request.getProductCategoryId())
+					.orElse(null);
+
+			if (productCategory == null) {
+				return new ResponseEntity("Product category not found with id: " + request.getProductCategoryId(),
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			if (request.getProductName() == null || request.getProductName().trim().isEmpty()) {
+				return new ResponseEntity("Product name cannot be empty", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (productRepository.existsByProductName(request.getProductName().trim())) {
+				return new ResponseEntity("Product already exists with name: " + request.getProductName(),
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			if (request.getProductCode() != null
+					&& productRepository.existsByProductCode(request.getProductCode().trim())) {
+				return new ResponseEntity("Product already exists with code: " + request.getProductCode(),
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			if (request.getDisplayOrder() != null
+					&& productRepository.existsByDisplayOrder(request.getDisplayOrder())) {
+				return new ResponseEntity("Product already exists with display order: " + request.getDisplayOrder(),
+						HttpStatus.CONFLICT.value(), null);
+			}
+
 			Product product = new Product();
-			product.setProductCategoryId(request.getProductCategoryId());
-			product.setProductName(request.getProductName());
-			product.setProductCode(request.getProductCode());
+
+			product.setProductCategory(productCategory);
+			product.setProductName(request.getProductName().trim());
+
+			if (request.getProductCode() != null) {
+				product.setProductCode(request.getProductCode().trim());
+			}
+
 			product.setProductDescription(request.getProductDescription());
-			product.setProductImageUrl(request.getProductImageUrl());
 			product.setDisplayOrder(request.getDisplayOrder());
 			product.setIsActive(request.getIsActive());
-			return product;
-		}).collect(Collectors.toList());
 
-		List<Product> savedList;
-		try {
-			savedList = productRepository.saveAll(productList);
+			Product savedProduct = productRepository.save(product);
+
+			try {
+				if (savedProduct.getProductCode() != null) {
+					paramService.updateCodeValue(savedProduct.getProductCode());
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			ProductResponse response = mapToResponse(savedProduct);
+
+			return new ResponseEntity("Product saved successfully", HttpStatus.CREATED.value(), response);
+
+		} catch (DataIntegrityViolationException e) {
+			e.printStackTrace();
+
+			return new ResponseEntity("Product cannot be saved because duplicate or linked data exists",
+					HttpStatus.CONFLICT.value(), null);
+
 		} catch (Exception e) {
-			log.error("createProduct :: error while saving - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while saving product");
+			e.printStackTrace();
+
+			return new ResponseEntity("Something went wrong while saving product",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
+	}
 
-		List<ProductResponse> responseList = savedList.stream().map(this::mapToResponse).collect(Collectors.toList());
+	@Override
+	public ResponseEntity updateProduct(Long id, ProductRequest request) {
+		try {
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid product id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-		log.info("createProduct :: {} products saved successfully", responseList.size());
+			if (request == null) {
+				return new ResponseEntity("Product request cannot be null", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-		return new ResponseEntity("Product saved successfully", HttpStatus.CREATED.value(), responseList);
+			if (request.getProductCategoryId() == null || request.getProductCategoryId() <= 0) {
+				return new ResponseEntity("Invalid product category id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			Product product = productRepository.findById(id).orElse(null);
+
+			if (product == null) {
+				return new ResponseEntity("Product not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			ProductCategory productCategory = productCategoryRepository.findById(request.getProductCategoryId())
+					.orElse(null);
+
+			if (productCategory == null) {
+				return new ResponseEntity("Product category not found with id: " + request.getProductCategoryId(),
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			if (request.getProductName() == null || request.getProductName().trim().isEmpty()) {
+				return new ResponseEntity("Product name cannot be empty", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (productRepository.existsByProductNameAndProductIdNot(request.getProductName().trim(), id)) {
+
+				return new ResponseEntity("Product already exists with name: " + request.getProductName(),
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			if (request.getProductCode() != null
+					&& productRepository.existsByProductCodeAndProductIdNot(request.getProductCode().trim(), id)) {
+
+				return new ResponseEntity("Product already exists with code: " + request.getProductCode(),
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			if (request.getDisplayOrder() != null
+					&& productRepository.existsByDisplayOrderAndProductIdNot(request.getDisplayOrder(), id)) {
+
+				return new ResponseEntity("Product already exists with display order: " + request.getDisplayOrder(),
+						HttpStatus.CONFLICT.value(), null);
+			}
+
+			product.setProductCategory(productCategory);
+			product.setProductName(request.getProductName().trim());
+
+			if (request.getProductCode() != null) {
+				product.setProductCode(request.getProductCode().trim());
+			} else {
+				product.setProductCode(null);
+			}
+
+			product.setProductDescription(request.getProductDescription());
+			product.setDisplayOrder(request.getDisplayOrder());
+			product.setIsActive(request.getIsActive());
+
+			Product updatedProduct = productRepository.save(product);
+
+			ProductResponse response = mapToResponse(updatedProduct);
+
+			return new ResponseEntity("Product updated successfully", HttpStatus.OK.value(), response);
+
+		} catch (DataIntegrityViolationException e) {
+			e.printStackTrace();
+
+			return new ResponseEntity("Product cannot be updated because duplicate or linked data exists",
+					HttpStatus.CONFLICT.value(), null);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			return new ResponseEntity("Something went wrong while updating product",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	@Override
 	public ResponseEntity getProductById(Long id) {
+		try {
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid product id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-		log.info("getProductById :: request received for id={}", id);
+			Product product = productRepository.findById(id).orElse(null);
 
-		if (id == null) {
-			log.error("getProductById :: id is null");
-			throw new BadRequestException("ID can not be null");
+			if (product == null) {
+				return new ResponseEntity("Product not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			ProductResponse response = mapToResponse(product);
+
+			return new ResponseEntity("Product fetched successfully", HttpStatus.OK.value(), response);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			return new ResponseEntity("Something went wrong while fetching product",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		Product product = productRepository.findById(id).orElseThrow(() -> {
-			log.error("getProductById :: product not found for id={}", id);
-			return new ResourceNotFoundException("Product not found with id: " + id);
-		});
-
-		ProductResponse response = mapToResponse(product);
-
-		log.info("getProductById :: fetched successfully for id={}", id);
-
-		return new ResponseEntity("Fetch Data By Id", HttpStatus.OK.value(), response);
 	}
 
 	@Override
 	public ResponseEntity getAllProduct(int page, int size, String sortBy, String sortDir) {
-
-		log.info("getAllProduct :: request received with page={}, size={}, sortBy={}, sortDir={}", page, size, sortBy,
-				sortDir);
-
-		if (page < 0) {
-			log.error("getAllProduct :: page cannot be negative");
-			throw new BadRequestException("Page number can not be negative");
-		}
-
-		if (size <= 0) {
-			log.error("getAllProduct :: size must be greater than 0");
-			throw new BadRequestException("Page size must be greater than 0");
-		}
-
-		if (size > 100) {
-			log.error("getAllProduct :: size exceeds max limit={}", size);
-			throw new BadRequestException("Page size can not exceed 100");
-		}
-
-		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-		Pageable pageable = PageRequest.of(page, size, sort);
-
-		Page<Product> productPage;
 		try {
-			productPage = productRepository.findAll(pageable);
-		} catch (PropertyReferenceException e) {
-			log.error("getAllProduct :: invalid sort field={}", sortBy);
-			throw new BadRequestException("Invalid sort field: " + sortBy);
+			if (page < 0) {
+				return new ResponseEntity("Page number cannot be negative", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size <= 0) {
+				return new ResponseEntity("Page size must be greater than 0", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (size > 400) {
+				return new ResponseEntity("Page size cannot exceed 100", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (sortBy == null || sortBy.trim().isEmpty()) {
+				sortBy = "productId";
+			}
+
+			if (sortDir == null || sortDir.trim().isEmpty()) {
+				sortDir = "asc";
+			}
+
+			List<String> allowedSortFields = List.of("productId", "productCategory", "productName", "productCode",
+					"displayOrder", "isActive", "createdAt", "updatedAt");
+
+			if (!allowedSortFields.contains(sortBy)) {
+				return new ResponseEntity("Invalid sort field: " + sortBy, HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			if (!sortDir.equalsIgnoreCase("asc") && !sortDir.equalsIgnoreCase("desc")) {
+
+				return new ResponseEntity("Invalid sort direction. Use asc or desc", HttpStatus.BAD_REQUEST.value(),
+						null);
+			}
+
+			Sort sort;
+
+			if (sortDir.equalsIgnoreCase("desc")) {
+				sort = Sort.by(sortBy).descending();
+			} else {
+				sort = Sort.by(sortBy).ascending();
+			}
+
+			Pageable pageable = PageRequest.of(page, size, sort);
+
+			Page<Product> productPage = productRepository.findAll(pageable);
+
+			List<ProductResponse> responseList = productPage.getContent().stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			Map<String, Object> pageData = new LinkedHashMap<>();
+
+			pageData.put("content", responseList);
+			pageData.put("pageNumber", productPage.getNumber());
+			pageData.put("pageSize", productPage.getSize());
+			pageData.put("totalElements", productPage.getTotalElements());
+			pageData.put("totalPages", productPage.getTotalPages());
+			pageData.put("isLast", productPage.isLast());
+
+			return new ResponseEntity("Products fetched successfully", HttpStatus.OK.value(), pageData);
+
 		} catch (Exception e) {
-			log.error("getAllProduct :: error while fetching - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Something went wrong while fetching products");
+			e.printStackTrace();
+
+			return new ResponseEntity("Something went wrong while fetching products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
+	}
 
-		List<ProductResponse> responseList = productPage.getContent().stream().map(this::mapToResponse)
-				.collect(Collectors.toList());
+	@Override
+	public ResponseEntity getAllProductFilter(int page, int size, String productName, String productCode,
+			Long productCategoryId, Boolean isActive, String sortBy, String sortDir) {
 
-		Map<String, Object> pageData = new LinkedHashMap<>();
-		pageData.put("content", responseList);
-		pageData.put("pageNumber", productPage.getNumber());
-		pageData.put("pageSize", productPage.getSize());
-		pageData.put("totalElements", productPage.getTotalElements());
-		pageData.put("totalPages", productPage.getTotalPages());
-		pageData.put("isLast", productPage.isLast());
+		try {
 
-		log.info("getAllProduct :: {} of {} products fetched successfully", responseList.size(),
-				productPage.getTotalElements());
+			Sort sort;
 
-		return new ResponseEntity("Product fetch successfully", HttpStatus.OK.value(), pageData);
+			if (sortDir.equalsIgnoreCase("desc")) {
+
+				sort = Sort.by(sortBy).descending();
+
+			} else {
+
+				sort = Sort.by(sortBy).ascending();
+			}
+
+			Pageable pageable = PageRequest.of(page, size, sort);
+
+			Page<Product> productPage = productRepository.findProductFilter(productName, productCode, productCategoryId,
+					isActive, pageable);
+
+			List<Product> content = productPage.getContent();
+
+			PageResponse<Product> pageResponse = new PageResponse<>(content, productPage.getNumber(),
+					productPage.getSize(), productPage.getTotalElements(), productPage.getTotalPages(),
+					productPage.isLast());
+
+			return new ResponseEntity("Products fetched successfully!", HttpStatus.OK.value(), pageResponse);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	@Override
 	public ResponseEntity getProductsByCategoryId(Long categoryId) {
+		try {
+			if (categoryId == null || categoryId <= 0) {
+				return new ResponseEntity("Invalid category id", HttpStatus.BAD_REQUEST.value(), null);
+			}
 
-		log.info("getProductsByCategoryId :: request received for categoryId={}", categoryId);
+			ProductCategory productCategory = productCategoryRepository.findById(categoryId).orElse(null);
 
-		if (categoryId == null) {
-			log.error("getProductsByCategoryId :: categoryId is null");
-			throw new BadRequestException("Category ID can not be null");
+			if (productCategory == null) {
+				return new ResponseEntity("Product category not found with id: " + categoryId,
+						HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			List<Product> productList = productRepository.findByProductCategory_ProductCategoryId(categoryId);
+
+			List<ProductResponse> responseList = productList.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			return new ResponseEntity("Products fetched successfully", HttpStatus.OK.value(), responseList);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Something went wrong while fetching products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
-
-		List<Product> productList = productRepository.findByProductCategoryId(categoryId);
-
-		List<ProductResponse> responseList = productList.stream().map(this::mapToResponse).collect(Collectors.toList());
-
-		log.info("getProductsByCategoryId :: {} products fetched for categoryId={}", responseList.size(), categoryId);
-
-		return new ResponseEntity("Product fetch successfully", HttpStatus.OK.value(), responseList);
 	}
 
 	@Override
 	public ResponseEntity deleteProductDetails(Long id) {
-
-		log.info("deleteProduct :: request received for id={}", id);
-
-		if (id == null) {
-			log.error("deleteProduct :: id is null");
-			throw new BadRequestException("ID can not be null");
-		}
-
-		Product product = productRepository.findById(id).orElseThrow(() -> {
-			log.error("deleteProduct :: product not found for id={}", id);
-			return new ResourceNotFoundException("Product not found with id: " + id);
-		});
-
 		try {
-			productRepository.delete(product);
+			if (id == null || id <= 0) {
+				return new ResponseEntity("Invalid product id", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			Product product = productRepository.findById(id).orElse(null);
+			if (product == null) {
+				return new ResponseEntity("Product not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+			boolean subProductExists = subProductRepository.existsByProduct_ProductId(id);
+			if (subProductExists) {
+				return new ResponseEntity(
+						"Product cannot be deleted because it is already linked with one or more sub-products",
+						HttpStatus.CONFLICT.value(), null);
+			}
+			String productCode = product.getProductCode();
+			try {
+				productRepository.delete(product);
+				productRepository.flush();
+			} catch (DataIntegrityViolationException e) {
+				e.printStackTrace();
+				return new ResponseEntity("Product cannot be deleted because it is linked to other records",
+						HttpStatus.CONFLICT.value(), null);
+			}
+			if (productCode != null && !productCode.trim().isEmpty()) {
+				try {
+					paramService.updateCodeValueOnDelete(productCode);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return new ResponseEntity("Product deleted successfully", HttpStatus.OK.value(), null);
 		} catch (Exception e) {
-			log.error("deleteProduct :: error while deleting - {}", e.getMessage(), e);
-			throw new DatabaseOperationException("Cannot delete product, it may be linked to other records");
+			e.printStackTrace();
+			return new ResponseEntity("Something went wrong while deleting product",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
+	}
 
-		log.info("deleteProduct :: deleted successfully for id={}", id);
+	@Override
+	public ResponseEntity getAllProduct() {
+		try {
+			List<Product> productList = productRepository.findByIsActiveTrue();
 
-		return new ResponseEntity("Product deleted successfully", HttpStatus.OK.value(), null);
+			if (productList == null || productList.isEmpty()) {
+				return new ResponseEntity("No products found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			List<ProductResponse> responseList = productList.stream().map(this::mapToResponse)
+					.collect(Collectors.toList());
+
+			return new ResponseEntity("Products fetched successfully", HttpStatus.OK.value(), responseList);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Something went wrong while fetching products",
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	private ProductResponse mapToResponse(Product entity) {
-		return new ProductResponse(entity.getProductId(), entity.getProductCategoryId(), entity.getProductName(),
-				entity.getProductCode(), entity.getProductDescription(), entity.getProductImageUrl(),
-				entity.getDisplayOrder(), entity.getIsActive(), entity.getCreatedAt(), entity.getUpdatedAt());
+		Long categoryId = null;
+		if (entity.getProductCategory() != null) {
+			categoryId = entity.getProductCategory().getProductCategoryId();
+		}
+		return new ProductResponse(entity.getProductId(), categoryId, entity.getProductName(), entity.getProductCode(),
+				entity.getProductDescription(), entity.getDisplayOrder(), entity.getIsActive(), entity.getCreatedAt(),
+				entity.getUpdatedAt());
 	}
-
 }

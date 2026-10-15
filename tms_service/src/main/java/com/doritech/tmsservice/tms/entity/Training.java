@@ -3,6 +3,9 @@ package com.doritech.tmsservice.tms.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.doritech.tmsservice.enums.TrainingStatus;
+import com.doritech.tmsservice.enums.TrainingType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,21 +13,15 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "trainings")
+@Table(name = "trainings", indexes = { @Index(name = "idx_training_code", columnList = "training_code"),
+		@Index(name = "idx_training_category", columnList = "training_category_id"),
+		@Index(name = "idx_training_trainer", columnList = "trainer_id"),
+		@Index(name = "idx_training_status", columnList = "status") })
 public class Training {
-
-	public enum TrainingType {
-		REGULAR, MANDATORY, REFRESHER
-	}
-
-	public enum Status {
-		DRAFT, PUBLISHED, ARCHIVED
-	}
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -70,7 +67,7 @@ public class Training {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status")
-	private Status status = Status.DRAFT;
+	private TrainingStatus status = TrainingStatus.DRAFT;
 
 	@Column(name = "created_by")
 	private Long createdBy;
@@ -81,43 +78,11 @@ public class Training {
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
+	@Column(name = "updated_by")
+	private Long updatedBy;
+
 	@Column(name = "published_at")
 	private LocalDateTime publishedAt;
-
-	public Training() {
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-		this.updatedAt = LocalDateTime.now();
-		if (this.trainingType == null) {
-			this.trainingType = TrainingType.REGULAR;
-		}
-		if (this.status == null) {
-			this.status = Status.DRAFT;
-		}
-		if (this.trainingDurationDays == null) {
-			this.trainingDurationDays = 1;
-		}
-		if (this.passingPercentage == null) {
-			this.passingPercentage = new BigDecimal("70.00");
-		}
-		if (this.isMandatory == null) {
-			this.isMandatory = false;
-		}
-		if (this.hasAssessment == null) {
-			this.hasAssessment = true;
-		}
-		if (this.hasVideoAssessment == null) {
-			this.hasVideoAssessment = false;
-		}
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedAt = LocalDateTime.now();
-	}
 
 	public Long getTrainingId() {
 		return trainingId;
@@ -223,11 +188,11 @@ public class Training {
 		this.hasVideoAssessment = hasVideoAssessment;
 	}
 
-	public Status getStatus() {
+	public TrainingStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(Status status) {
+	public void setStatus(TrainingStatus status) {
 		this.status = status;
 	}
 
@@ -255,6 +220,14 @@ public class Training {
 		this.updatedAt = updatedAt;
 	}
 
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
 	public LocalDateTime getPublishedAt() {
 		return publishedAt;
 	}
@@ -263,9 +236,4 @@ public class Training {
 		this.publishedAt = publishedAt;
 	}
 
-	@Override
-	public String toString() {
-		return "Training [trainingId=" + trainingId + ", trainingCode=" + trainingCode + ", trainingName="
-				+ trainingName + ", status=" + status + "]";
-	}
 }

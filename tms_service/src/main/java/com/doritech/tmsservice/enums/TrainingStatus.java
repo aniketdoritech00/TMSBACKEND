@@ -1,5 +1,5 @@
 package com.doritech.tmsservice.enums;
 
-enum TrainingStatus {
+public enum TrainingStatus {
 	DRAFT, PUBLISHED, ARCHIVED
 }

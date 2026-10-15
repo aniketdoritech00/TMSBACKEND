@@ -2,18 +2,22 @@ package com.doritech.tmsservice.tms.entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "sub_products", uniqueConstraints = @UniqueConstraint(columnNames = { "product_id", "sub_product_name" }))
+@Table(name = "sub_products")
 public class SubProduct {
 
 	@Id
@@ -21,8 +25,10 @@ public class SubProduct {
 	@Column(name = "sub_product_id")
 	private Long subProductId;
 
-	@Column(name = "product_id", nullable = false)
-	private Long productId;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "product_id", nullable = false)
+	@JsonIgnore
+	private Product product;
 
 	@Column(name = "sub_product_name", nullable = false, length = 255)
 	private String subProductName;
@@ -50,11 +56,14 @@ public class SubProduct {
 
 	@PrePersist
 	protected void onCreate() {
+
 		this.createdAt = LocalDateTime.now();
 		this.updatedAt = LocalDateTime.now();
+
 		if (this.displayOrder == null) {
 			this.displayOrder = 0;
 		}
+
 		if (this.isActive == null) {
 			this.isActive = true;
 		}
@@ -73,12 +82,12 @@ public class SubProduct {
 		this.subProductId = subProductId;
 	}
 
-	public Long getProductId() {
-		return productId;
+	public Product getProduct() {
+		return product;
 	}
 
-	public void setProductId(Long productId) {
-		this.productId = productId;
+	public void setProduct(Product product) {
+		this.product = product;
 	}
 
 	public String getSubProductName() {
@@ -139,9 +148,10 @@ public class SubProduct {
 
 	@Override
 	public String toString() {
-		return "SubProduct [subProductId=" + subProductId + ", productId=" + productId + ", subProductName="
-				+ subProductName + ", subProductCode=" + subProductCode + ", subProductDescription="
-				+ subProductDescription + ", displayOrder=" + displayOrder + ", isActive=" + isActive + ", createdAt="
-				+ createdAt + ", updatedAt=" + updatedAt + "]";
+		return "SubProduct [subProductId=" + subProductId + ", product="
+				+ (product != null ? product.getProductId() : null) + ", subProductName=" + subProductName
+				+ ", subProductCode=" + subProductCode + ", subProductDescription=" + subProductDescription
+				+ ", displayOrder=" + displayOrder + ", isActive=" + isActive + ", createdAt=" + createdAt
+				+ ", updatedAt=" + updatedAt + "]";
 	}
 }

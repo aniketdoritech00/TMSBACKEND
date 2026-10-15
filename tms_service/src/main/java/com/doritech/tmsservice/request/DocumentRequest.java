@@ -22,9 +22,6 @@ public class DocumentRequest {
 	@Pattern(regexp = "^(https?://).+$", message = "{document.url.pattern}")
 	private String documentUrl;
 
-	@Size(max = 50, message = "{document.type.size}")
-	private String documentType;
-
 	@Min(value = 0, message = "{document.fileSizeBytes.min}")
 	private Long fileSizeBytes;
 
@@ -60,14 +57,6 @@ public class DocumentRequest {
 		this.documentUrl = documentUrl;
 	}
 
-	public String getDocumentType() {
-		return documentType;
-	}
-
-	public void setDocumentType(String documentType) {
-		this.documentType = documentType;
-	}
-
 	public Long getFileSizeBytes() {
 		return fileSizeBytes;
 	}
@@ -92,9 +81,4 @@ public class DocumentRequest {
 		this.uploadedBy = uploadedBy;
 	}
 
-	@Override
-	public String toString() {
-		return "DocumentRequest [documentName=" + documentName + ", documentType=" + documentType + ", isSecure="
-				+ isSecure + ", uploadedBy=" + uploadedBy + "]";
-	}
 }

@@ -2,114 +2,140 @@ package com.doritech.tmsservice.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class TestQuestionResponse {
 
-    private Long testQuestionId;
-    private Long testSetId;
-    private Integer questionGroupId;
-    private String questionText;
-    private String questionType;
-    private String correctAnswer;
-    private Integer timeLimitSeconds;
-    private BigDecimal marks;
-    private Integer displayOrder;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+	private Long testQuestionId;
 
-    public TestQuestionResponse() {
-    }
+	private Long testSetId;
 
-    public Long getTestQuestionId() {
-        return testQuestionId;
-    }
+	private String testName;
 
-    public void setTestQuestionId(Long testQuestionId) {
-        this.testQuestionId = testQuestionId;
-    }
+	private Integer questionGroupId;
 
-    public Long getTestSetId() {
-        return testSetId;
-    }
+	private String questionText;
 
-    public void setTestSetId(Long testSetId) {
-        this.testSetId = testSetId;
-    }
+	private String questionType;
 
-    public Integer getQuestionGroupId() {
-        return questionGroupId;
-    }
+	private String correctAnswer;
 
-    public void setQuestionGroupId(Integer questionGroupId) {
-        this.questionGroupId = questionGroupId;
-    }
+	private Integer timeLimitSeconds;
 
-    public String getQuestionText() {
-        return questionText;
-    }
+	private BigDecimal marks;
 
-    public void setQuestionText(String questionText) {
-        this.questionText = questionText;
-    }
+	private Integer displayOrder;
 
-    public String getQuestionType() {
-        return questionType;
-    }
+	private LocalDateTime createdAt;
 
-    public void setQuestionType(String questionType) {
-        this.questionType = questionType;
-    }
+	private LocalDateTime updatedAt;
 
-    public String getCorrectAnswer() {
-        return correctAnswer;
-    }
+	private List<QuestionOptionResponse> options;
 
-    public void setCorrectAnswer(String correctAnswer) {
-        this.correctAnswer = correctAnswer;
-    }
+	public TestQuestionResponse() {
+	}
 
-    public Integer getTimeLimitSeconds() {
-        return timeLimitSeconds;
-    }
+	public Long getTestQuestionId() {
+		return testQuestionId;
+	}
 
-    public void setTimeLimitSeconds(Integer timeLimitSeconds) {
-        this.timeLimitSeconds = timeLimitSeconds;
-    }
+	public void setTestQuestionId(Long testQuestionId) {
+		this.testQuestionId = testQuestionId;
+	}
 
-    public BigDecimal getMarks() {
-        return marks;
-    }
+	public Long getTestSetId() {
+		return testSetId;
+	}
 
-    public void setMarks(BigDecimal marks) {
-        this.marks = marks;
-    }
+	public void setTestSetId(Long testSetId) {
+		this.testSetId = testSetId;
+	}
 
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
+	public String getTestName() {
+		return testName;
+	}
 
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
+	public void setTestName(String testName) {
+		this.testName = testName;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public Integer getQuestionGroupId() {
+		return questionGroupId;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public void setQuestionGroupId(Integer questionGroupId) {
+		this.questionGroupId = questionGroupId;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public String getQuestionText() {
+		return questionText;
+	}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+	public void setQuestionText(String questionText) {
+		this.questionText = questionText;
+	}
 
-    @Override
-    public String toString() {
-        return "TestQuestionResponse [testQuestionId=" + testQuestionId + ", testSetId=" + testSetId + "]";
-    }
+	public String getQuestionType() {
+		return questionType;
+	}
+
+	public void setQuestionType(String questionType) {
+		this.questionType = questionType;
+	}
+
+	public String getCorrectAnswer() {
+		return correctAnswer;
+	}
+
+	public void setCorrectAnswer(String correctAnswer) {
+		this.correctAnswer = correctAnswer;
+	}
+
+	public Integer getTimeLimitSeconds() {
+		return timeLimitSeconds;
+	}
+
+	public void setTimeLimitSeconds(Integer timeLimitSeconds) {
+		this.timeLimitSeconds = timeLimitSeconds;
+	}
+
+	public BigDecimal getMarks() {
+		return marks;
+	}
+
+	public void setMarks(BigDecimal marks) {
+		this.marks = marks;
+	}
+
+	public Integer getDisplayOrder() {
+		return displayOrder;
+	}
+
+	public void setDisplayOrder(Integer displayOrder) {
+		this.displayOrder = displayOrder;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	public List<QuestionOptionResponse> getOptions() {
+		return options;
+	}
+
+	public void setOptions(List<QuestionOptionResponse> options) {
+		this.options = options;
+	}
 }

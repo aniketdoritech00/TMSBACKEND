@@ -1,7 +1,5 @@
 package com.doritech.tmsservice.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,8 +20,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tms/user-videos")
 public class UserVideoController {
 
-	private static final Logger log = LoggerFactory.getLogger(UserVideoController.class);
-
 	private final UserVideoService userVideoService;
 
 	public UserVideoController(UserVideoService userVideoService) {
@@ -32,41 +28,75 @@ public class UserVideoController {
 
 	@PostMapping("/createUserVideo")
 	public ResponseEntity createUserVideo(@Valid @RequestBody UserVideoRequest request) {
-		log.info("createUserVideo :: request received for userId={}, videoId={}", request.getUserId(),
-				request.getVideoId());
 		return userVideoService.createUserVideo(request);
 	}
 
 	@GetMapping("/getUserVideoById/{id}")
-	public ResponseEntity getUserVideoById(@PathVariable("id") Long id) {
-		log.info("getUserVideoById :: request received for id={}", id);
+	public ResponseEntity getUserVideoById(@PathVariable Long id) {
 		return userVideoService.getUserVideoById(id);
 	}
 
-	@GetMapping("/getAllUserVideo")
-	public ResponseEntity getAllUserVideo(@RequestParam(value = "page", defaultValue = "0") int page,
-			@RequestParam(value = "size", defaultValue = "10") int size,
-			@RequestParam(value = "sortBy", defaultValue = "userVideoId") String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-		log.info("getAllUserVideo :: request received with page={}, size={}", page, size);
-		return userVideoService.getAllUserVideo(page, size, sortBy, sortDir);
+	@GetMapping("/getAllUserVideos/all")
+	public ResponseEntity getAllUserVideos() {
+		return userVideoService.getAllUserVideos();
 	}
 
-	@GetMapping("/getVideosByUserId/{userId}")
-	public ResponseEntity getVideosByUserId(@PathVariable("userId") Long userId) {
-		log.info("getVideosByUserId :: request received for userId={}", userId);
-		return userVideoService.getVideosByUserId(userId);
+	@GetMapping("/getUserVideosByUserId/{userId}")
+	public ResponseEntity getUserVideosByUserId(@PathVariable Long userId) {
+		return userVideoService.getUserVideosByUserId(userId);
+
 	}
 
-	@PutMapping("/markVideoWatched/{id}")
-	public ResponseEntity markVideoWatched(@PathVariable("id") Long id) {
-		log.info("markVideoWatched :: request received for id={}", id);
-		return userVideoService.markVideoWatched(id);
+	@GetMapping("/getUserVideosByTrainingAssignmentId/{trainingAssignmentId}")
+	public ResponseEntity getUserVideosByTrainingAssignmentId(@PathVariable Long trainingAssignmentId) {
+		return userVideoService.getUserVideosByTrainingAssignmentId(trainingAssignmentId);
+
+	}
+
+	@PutMapping("/updateWatchStatus/{id}")
+	public ResponseEntity updateWatchStatus(@PathVariable Long id) {
+		return userVideoService.updateWatchStatus(id);
+	}
+
+	@PutMapping("/updateWatchProgress/{id}")
+	public ResponseEntity updateWatchProgress(@PathVariable Long id, @RequestParam Integer watchedSeconds) {
+		return userVideoService.updateWatchProgress(id, watchedSeconds);
+
+	}
+
+	@GetMapping("/getVideoCompletionStatus/{id}")
+	public ResponseEntity getVideoCompletionStatus(@PathVariable Long id) {
+		return userVideoService.getVideoCompletionStatus(id);
+
 	}
 
 	@DeleteMapping("/deleteUserVideo/{id}")
-	public ResponseEntity deleteUserVideo(@PathVariable("id") Long id) {
-		log.info("deleteUserVideo :: request received for id={}", id);
+	public ResponseEntity deleteUserVideo(@PathVariable Long id) {
+
 		return userVideoService.deleteUserVideo(id);
+	}
+
+	@GetMapping("/getAllUserVideos/page")
+	public ResponseEntity getAllUserVideos(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "userVideoId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return userVideoService.getAllUserVideos(page, size, sortBy, sortDir);
+
+	}
+
+	@GetMapping("/getUserVideosByUserId/{userId}/page")
+	public ResponseEntity getUserVideosByUserId(@PathVariable Long userId, @RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "userVideoId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return userVideoService.getUserVideosByUserId(userId, page, size, sortBy, sortDir);
+
+	}
+
+	@GetMapping("/getUserVideosByTrainingAssignmentId/{trainingAssignmentId}/page")
+	public ResponseEntity getUserVideosByTrainingAssignmentId(@PathVariable Long trainingAssignmentId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "userVideoId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return userVideoService.getUserVideosByTrainingAssignmentId(trainingAssignmentId, page, size, sortBy, sortDir);
 	}
 }

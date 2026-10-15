@@ -6,53 +6,60 @@ import jakarta.validation.constraints.NotNull;
 
 public class UserVideoRequest {
 
-    @NotNull(message = "{userVideo.userId.notnull}")
-    private Long userId;
+	@NotNull(message = "{userVideo.userId.notnull}")
+	private Long userId;
 
-    @NotNull(message = "{userVideo.videoId.notnull}")
-    private Long videoId;
+	@NotNull(message = "{userVideo.videoId.notnull}")
+	private Long videoId;
 
-    private Long trainingAssignmentId;
+	private Long trainingAssignmentId;
 
-    private LocalDateTime expiryDate;
+	private LocalDateTime expiryDate;
 
-    public UserVideoRequest() {
-    }
+	private Integer watchedSeconds;
 
-    public Long getUserId() {
-        return userId;
-    }
+	public UserVideoRequest() {
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+	}
 
-    public Long getVideoId() {
-        return videoId;
-    }
+	public Long getUserId() {
+		return userId;
+	}
 
-    public void setVideoId(Long videoId) {
-        this.videoId = videoId;
-    }
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
 
-    public Long getTrainingAssignmentId() {
-        return trainingAssignmentId;
-    }
+	public Long getVideoId() {
+		return videoId;
+	}
 
-    public void setTrainingAssignmentId(Long trainingAssignmentId) {
-        this.trainingAssignmentId = trainingAssignmentId;
-    }
+	public void setVideoId(Long videoId) {
+		this.videoId = videoId;
+	}
 
-    public LocalDateTime getExpiryDate() {
-        return expiryDate;
-    }
+	public Long getTrainingAssignmentId() {
+		return trainingAssignmentId;
+	}
 
-    public void setExpiryDate(LocalDateTime expiryDate) {
-        this.expiryDate = expiryDate;
-    }
+	public void setTrainingAssignmentId(Long trainingAssignmentId) {
+		this.trainingAssignmentId = trainingAssignmentId;
+	}
 
-    @Override
-    public String toString() {
-        return "UserVideoRequest [userId=" + userId + ", videoId=" + videoId + "]";
-    }
+	public LocalDateTime getExpiryDate() {
+		return expiryDate;
+	}
+
+	public void setExpiryDate(LocalDateTime expiryDate) {
+		this.expiryDate = expiryDate;
+	}
+
+	public Integer getWatchedSeconds() {
+		return watchedSeconds;
+	}
+
+	public void setWatchedSeconds(Integer watchedSeconds) {
+		this.watchedSeconds = watchedSeconds;
+	}
+
 }
