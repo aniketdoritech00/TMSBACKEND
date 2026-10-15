@@ -23,4 +23,6 @@ public interface TestSetService {
 
 	ResponseEntity publishTestSet(Long id);
 
+	ResponseEntity getPublishedDirectTests();
+
 }

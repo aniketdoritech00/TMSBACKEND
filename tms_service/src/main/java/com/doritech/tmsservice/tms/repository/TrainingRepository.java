@@ -1,6 +1,7 @@
 package com.doritech.tmsservice.tms.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +37,5 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
 			""")
 	Page<Training> findTrainingByFilter(@Param("trainingCategoryId") Long trainingCategoryId,
 			@Param("trainingName") String trainingName, @Param("status") TrainingStatus status, Pageable pageable);
+
 }

@@ -753,6 +753,8 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 		}
 	}
 
+// =========================================================================	
+
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getTrainingAssignmentById(Long id) {
@@ -1273,6 +1275,16 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 
 			if (assignedUser != null) {
 				response.setUserName(userRepository.findEmployeeNameByUserId(assignment.getUserId().intValue()));
+			}
+		}
+
+		if (assignment.getTraining() != null) {
+			TestSet testSet = testSetRepository.findFirstByTraining_TrainingId(assignment.getTraining().getTrainingId())
+					.orElse(null);
+
+			if (testSet != null) {
+				response.setTestCode(testSet.getTestSetCode());
+				response.setTestName(testSet.getTestName());
 			}
 		}
 
