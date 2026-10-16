@@ -36,12 +36,15 @@ public class TestSetServiceImpl implements TestSetService {
 	private final ParamService paramService;
 	private final TestAttemptRepository testAttemptRepository;
 
+	
+
 	public TestSetServiceImpl(TestSetRepository testSetRepository, TrainingRepository trainingRepository,
 			ParamService paramService, TestAttemptRepository testAttemptRepository) {
 		this.testSetRepository = testSetRepository;
 		this.trainingRepository = trainingRepository;
 		this.paramService = paramService;
 		this.testAttemptRepository = testAttemptRepository;
+		
 	}
 
 	@Override
@@ -166,6 +169,8 @@ public class TestSetServiceImpl implements TestSetService {
 		}
 	}
 
+	// =========================================================GET BY ID
+	// ========================
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getTestSetById(Long id) {
@@ -194,6 +199,8 @@ public class TestSetServiceImpl implements TestSetService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+
+	// ===========================================
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
@@ -308,7 +315,8 @@ public class TestSetServiceImpl implements TestSetService {
 						null);
 			}
 
-			List<TestSet> testSets = testSetRepository.findByTraining_TrainingIdOrderByTestSetIdDesc(trainingId);
+			List<TestSet> testSets = testSetRepository
+					.findByTraining_TrainingIdAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc(trainingId);
 
 			List<TestSetResponse> response = testSets.stream().map(this::mapToResponse).collect(Collectors.toList());
 
@@ -321,6 +329,9 @@ public class TestSetServiceImpl implements TestSetService {
 			return new ResponseEntity("Internal server error!", HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+
+	// ====================================GET BY Id / Pageble
+	// ======================
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
@@ -508,6 +519,7 @@ public class TestSetServiceImpl implements TestSetService {
 		}
 	}
 
+	// ===================== Publish Test with optional=======================
 	@Override
 	@Transactional("tmsTransactionManager")
 	public ResponseEntity publishTestSet(Long id) {
@@ -536,10 +548,10 @@ public class TestSetServiceImpl implements TestSetService {
 						null);
 			}
 
-			if (testSet.getTraining() == null) {
-				return new ResponseEntity("Training is required before publishing", HttpStatus.BAD_REQUEST.value(),
-						null);
-			}
+//			if (testSet.getTraining() == null) {
+//				return new ResponseEntity("Training is required before publishing", HttpStatus.BAD_REQUEST.value(),
+//						null);
+//			}
 
 			if (testSet.getStartDateTime() != null && testSet.getEndDateTime() != null
 					&& testSet.getEndDateTime().isBefore(testSet.getStartDateTime())) {
@@ -567,6 +579,7 @@ public class TestSetServiceImpl implements TestSetService {
 		}
 	}
 
+	// ======= Delete Test Set============================
 	@Override
 	@Transactional("tmsTransactionManager")
 	public ResponseEntity deleteTestSet(Long id) {
@@ -679,5 +692,23 @@ public class TestSetServiceImpl implements TestSetService {
 
 		return response;
 	}
-	
+
+	// ============== GET DirectPublishedTest =====================
+	@Override
+	public ResponseEntity getPublishedDirectTests() {
+
+		ResponseEntity response = new ResponseEntity();
+
+		List<TestSet> testSets = testSetRepository
+				.findByTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc();
+
+		List<Object> payload = testSets.stream().map(testSet -> (Object) mapToResponse(testSet))
+				.collect(Collectors.toList());
+
+		response.setMessage("Published Direct Tests fetched successfully");
+		response.setPayload(payload);
+		response.setStatusCode(HttpStatus.OK.value());
+		return response;
+	}
+
 }
