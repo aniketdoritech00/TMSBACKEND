@@ -6,4 +6,6 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 public interface DirectTestAssignmentService {
 
 	ResponseEntity createDirectTestAssignment(DirectTestAssignmentRequest request);
+
+	ResponseEntity getMyDirectTestSets();
 }
