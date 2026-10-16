@@ -12,6 +12,9 @@ public class TrainingAssignmentResponse {
 	private Long trainingId;
 	private String trainingCode;
 	private String trainingName;
+	private String testCode;
+	private String testName;
+	private Long testSetId;
 
 	private Long userId;
 	private String userName;
@@ -244,4 +247,30 @@ public class TrainingAssignmentResponse {
 	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
+
+	public String getTestCode() {
+		return testCode;
+	}
+
+	public void setTestCode(String testCode) {
+		this.testCode = testCode;
+	}
+
+	public String getTestName() {
+		return testName;
+	}
+
+	public void setTestName(String testName) {
+		this.testName = testName;
+	}
+
+	public Long getTestSetId() {
+		return testSetId;
+	}
+
+	public void setTestSetId(Long testSetId) {
+		this.testSetId = testSetId;
+	}
+
+			
 }

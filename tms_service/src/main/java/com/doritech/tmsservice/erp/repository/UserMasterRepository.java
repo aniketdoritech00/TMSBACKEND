@@ -25,4 +25,8 @@ public interface UserMasterRepository extends JpaRepository<UserMaster, Integer>
 			WHERE um.user_id = :userId
 			""", nativeQuery = true)
 	String findEmployeeNameByUserId(@Param("userId") Integer userId);
+
+	@Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END "
+			+ "FROM erp_db.user_master WHERE user_id = :userId", nativeQuery = true)
+	int checkUserExists(@Param("userId") Integer userId);
 }

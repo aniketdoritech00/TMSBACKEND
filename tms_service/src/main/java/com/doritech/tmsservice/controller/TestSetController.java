@@ -24,11 +24,19 @@ public class TestSetController {
 		this.testSetService = testSetService;
 	}
 
-	@PostMapping("/createTestSet")
-	public ResponseEntity createTestSet(@RequestBody TestSetRequest request) {
+	// ==================== CREATE TEST==============================
+	@PostMapping({ "/createTestSet", "/createTestSet/{trainingId}" })
+	public ResponseEntity createTestSet(@PathVariable(name = "trainingId", required = false) Long trainingId,
+			@RequestBody TestSetRequest request) {
+
+		if (trainingId != null) {
+			request.setTrainingId(trainingId);
+		}
+
 		return testSetService.createTestSet(request);
 	}
 
+	// ==============================GET BY ID========================
 	@GetMapping("/getTestSetById/{id}")
 	public ResponseEntity getTestSetById(@PathVariable Long id) {
 		return testSetService.getTestSetById(id);
@@ -50,12 +58,11 @@ public class TestSetController {
 	public ResponseEntity updateTestSet(@PathVariable Long id, @RequestBody TestSetRequest request) {
 		return testSetService.updateTestSet(id, request);
 	}
-	
+
 	@PutMapping("/publishTestSet/{id}")
 	public ResponseEntity publishTestSet(@PathVariable Long id) {
-	    return testSetService.publishTestSet(id);
+		return testSetService.publishTestSet(id);
 	}
-
 
 	@DeleteMapping("/deleteTestSet/{id}")
 	public ResponseEntity deleteTestSet(@PathVariable Long id) {
@@ -78,6 +85,12 @@ public class TestSetController {
 			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
 		return testSetService.getTestSetsByTrainingId(trainingId, page, size, sortBy, sortDir);
 	}
-	
+
+	// ====================== GET ALL PULISHED DIRECT TEST SET==================
+	@GetMapping("/getPublishedDirectTests")
+	public ResponseEntity getPublishedDirectTests() {
+		return testSetService.getPublishedDirectTests();
+	}
+
 	
 }
