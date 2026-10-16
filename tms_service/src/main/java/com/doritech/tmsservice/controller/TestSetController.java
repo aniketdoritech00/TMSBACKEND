@@ -59,13 +59,11 @@ public class TestSetController {
 		return testSetService.updateTestSet(id, request);
 	}
 
-	
 	@PutMapping("/publishTestSet/{id}")
 	public ResponseEntity publishTestSet(@PathVariable Long id) {
 		return testSetService.publishTestSet(id);
 	}
 
-	
 	@DeleteMapping("/deleteTestSet/{id}")
 	public ResponseEntity deleteTestSet(@PathVariable Long id) {
 		return testSetService.deleteTestSet(id);
@@ -87,11 +85,12 @@ public class TestSetController {
 			@RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
 		return testSetService.getTestSetsByTrainingId(trainingId, page, size, sortBy, sortDir);
 	}
-	
-	// ====================== GET ALL PULISHED DIRECT TEST SETS ========================
+
+	// ====================== GET ALL PULISHED DIRECT TEST SET==================
 	@GetMapping("/getPublishedDirectTests")
 	public ResponseEntity getPublishedDirectTests() {
 		return testSetService.getPublishedDirectTests();
 	}
 
+	
 }
