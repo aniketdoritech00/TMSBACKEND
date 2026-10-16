@@ -36,12 +36,15 @@ public class TestSetServiceImpl implements TestSetService {
 	private final ParamService paramService;
 	private final TestAttemptRepository testAttemptRepository;
 
+	
+
 	public TestSetServiceImpl(TestSetRepository testSetRepository, TrainingRepository trainingRepository,
 			ParamService paramService, TestAttemptRepository testAttemptRepository) {
 		this.testSetRepository = testSetRepository;
 		this.trainingRepository = trainingRepository;
 		this.paramService = paramService;
 		this.testAttemptRepository = testAttemptRepository;
+		
 	}
 
 	@Override
@@ -699,9 +702,7 @@ public class TestSetServiceImpl implements TestSetService {
 		List<TestSet> testSets = testSetRepository
 				.findByTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNullOrderByTestSetIdDesc();
 
-		List<Object> payload = testSets
-				.stream()
-				.map(testSet -> (Object) mapToResponse(testSet))
+		List<Object> payload = testSets.stream().map(testSet -> (Object) mapToResponse(testSet))
 				.collect(Collectors.toList());
 
 		response.setMessage("Published Direct Tests fetched successfully");

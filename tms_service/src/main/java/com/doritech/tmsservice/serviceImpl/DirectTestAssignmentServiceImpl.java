@@ -3,6 +3,7 @@ package com.doritech.tmsservice.serviceImpl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -41,7 +42,8 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 	@Transactional("tmsTransactionManager")
 	public ResponseEntity createDirectTestAssignment(DirectTestAssignmentRequest request) {
 
-		// 1. Validate request
+		Long currentUserId = CurrentUser.getUserId();
+
 		if (request == null) {
 			return new ResponseEntity("Direct Test assignment data is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
@@ -57,28 +59,11 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 			return new ResponseEntity("Valid user id is required", HttpStatus.BAD_REQUEST.value(), null);
 		}
 
-		// 2. Find an active, published Direct Test
 		TestSet testSet = testSetRepository
 				.findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(testSetId).orElse(null);
 
 		if (testSet == null) {
 			return new ResponseEntity("Published active Direct Test not found", HttpStatus.NOT_FOUND.value(), null);
-		}
-
-		// 3. Convert requested user ID to the UserMaster ID type
-		Integer targetUserId;
-
-		try {
-			targetUserId = Math.toIntExact(requestedUserId);
-		} catch (ArithmeticException ex) {
-			return new ResponseEntity("Invalid user id", HttpStatus.BAD_REQUEST.value(), null);
-		}
-
-		// 4. Validate the user receiving the test
-		UserMaster user = userRepository.findById(targetUserId).orElse(null);
-
-		if (user == null) {
-			return new ResponseEntity("User not found", HttpStatus.NOT_FOUND.value(), null);
 		}
 
 		// 5. Prevent duplicate assignment
@@ -89,37 +74,20 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 					null);
 		}
 
-		// 6. Identify the currently logged-in assigning user
-		Long currentUserIdLong = CurrentUser.getUserId();
-
-		if (currentUserIdLong == null || currentUserIdLong <= 0) {
+		if (currentUserId == null || currentUserId <= 0) {
 			return new ResponseEntity("Unable to identify current user", HttpStatus.UNAUTHORIZED.value(), null);
 		}
 
-		Integer currentUserId;
-
-		try {
-			currentUserId = Math.toIntExact(currentUserIdLong);
-		} catch (ArithmeticException ex) {
-			return new ResponseEntity("Invalid current user id", HttpStatus.UNAUTHORIZED.value(), null);
-		}
-
-		UserMaster assignedBy = userRepository.findById(currentUserId).orElse(null);
+		UserMaster assignedBy = userRepository.findById(currentUserId.intValue()).orElse(null);
 
 		if (assignedBy == null) {
 			return new ResponseEntity("Assigning user not found", HttpStatus.NOT_FOUND.value(), null);
 		}
-		
-		Long currentUserIdLong1 = CurrentUser.getUserId();
-
-		System.out.println("Current logged-in user ID: " + currentUserIdLong1);
-
-		// 7. Create and save the Direct Test assignment
 		try {
 			DirectTestAssignment assignment = new DirectTestAssignment();
 
 			assignment.setTestSet(testSet);
-			assignment.setUserId(user.getUserId().longValue());
+			assignment.setUserId(request.getUserId());
 			assignment.setAssignedBy(assignedBy.getUserId().longValue());
 			assignment.setAssignedAt(LocalDateTime.now());
 			assignment.setDueDate(request.getDueDate());
@@ -127,10 +95,6 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 			assignment.setStatus(AssignmentStatus.NOT_STARTED);
 			assignment.setProgressPercentage(new BigDecimal("0.00"));
 			assignment.setIsPassed(false);
-
-			// Uncomment these lines after adding the field and
-			// getter/setter to DirectTestAssignment, if required.
-			// assignment.setCertificateGenerated(false);
 
 			assignment.setAttemptedQuestions(0);
 			assignment.setCorrectAnswers(0);
@@ -151,6 +115,8 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 	}
 
 	// 8. Convert the saved entity into the API response DTO
+	// =========================
+
 	private DirectTestAssignmentResponse convertToResponse(DirectTestAssignment assignment) {
 
 		DirectTestAssignmentResponse response = new DirectTestAssignmentResponse();
@@ -187,11 +153,6 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 		response.setCompletionDate(assignment.getCompletionDate());
 		response.setFinalScore(assignment.getFinalScore());
 		response.setIsPassed(assignment.getIsPassed());
-
-		// Uncomment after adding certificateGenerated to the entity.
-		// response.setCertificateGenerated(
-		// assignment.isCertificateGenerated());
-
 		response.setAttemptedQuestions(assignment.getAttemptedQuestions());
 		response.setCorrectAnswers(assignment.getCorrectAnswers());
 		response.setWrongAnswers(assignment.getWrongAnswers());
@@ -201,4 +162,36 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 
 		return response;
 	}
+
+	 // ================= Direct Test Assignment==============
+	@Override
+	@Transactional(value = "tmsTransactionManager", readOnly = true)
+	public ResponseEntity getMyDirectTestSets() {
+
+		Long currentUserId = CurrentUser.getUserId();
+
+		try {
+			// Validate the logged-in user
+			if (currentUserId == null || currentUserId <= 0) {
+				return new ResponseEntity("Unable to identify current user", HttpStatus.UNAUTHORIZED.value(), null);
+			}
+
+			// Fetch direct test assignments for the current user
+			List<DirectTestAssignment> assignments = assignmentRepository.findByUserId(currentUserId);
+
+			// Convert entities into response DTOs
+			List<DirectTestAssignmentResponse> payload = assignments.stream().map(this::convertToResponse)
+					.collect(java.util.stream.Collectors.toList());
+
+			// Return successful response
+			return new ResponseEntity("Direct test sets fetched successfully", HttpStatus.OK.value(), payload);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			return new ResponseEntity("Failed to fetch direct test sets", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+					null);
+		}
+	}
+
 }

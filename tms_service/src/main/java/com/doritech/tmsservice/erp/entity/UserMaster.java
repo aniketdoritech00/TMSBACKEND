@@ -141,4 +141,12 @@ public class UserMaster {
 		this.modifiedBy = modifiedBy;
 	}
 
+	@Override
+	public String toString() {
+		return "UserMaster [userId=" + userId + ", userType=" + userType + ", sourceId=" + sourceId + ", loginId="
+				+ loginId + ", password=" + password + ", isActive=" + isActive + ", lastLogin=" + lastLogin
+				+ ", createdOn=" + createdOn + ", modifiedOn=" + modifiedOn + ", createdBy=" + createdBy
+				+ ", modifiedBy=" + modifiedBy + "]";
+	}
+
 }

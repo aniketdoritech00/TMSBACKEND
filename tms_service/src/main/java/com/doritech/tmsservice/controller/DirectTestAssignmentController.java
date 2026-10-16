@@ -1,5 +1,6 @@
 package com.doritech.tmsservice.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +20,17 @@ public class DirectTestAssignmentController {
 		this.directTestAssignmentService = directTestAssignmentService;
 	}
 
+	// ================= Create Assignment =======================
 	@PostMapping("/createDirectTestAssignment")
 	public ResponseEntity createDirectTestAssignment(@RequestBody DirectTestAssignmentRequest request) {
 		return directTestAssignmentService.createDirectTestAssignment(request);
 	}
+	
+	// ==================== GET All Direct_Test_Sets ===================
+		@GetMapping("/my-direct-test-sets")
+		public ResponseEntity getMyDirectTestSets() {
+			return directTestAssignmentService.getMyDirectTestSets();
+		}
+ 
+	
 }
