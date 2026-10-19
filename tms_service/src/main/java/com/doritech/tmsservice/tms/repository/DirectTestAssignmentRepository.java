@@ -11,4 +11,6 @@ public interface DirectTestAssignmentRepository extends JpaRepository<DirectTest
 	boolean existsByTestSet_TestSetIdAndUserId(Long testSetId, Long userId);
 
 	List<DirectTestAssignment> findByUserId(Long currentUserId);
+	
+	List<DirectTestAssignment> findByBatch_BatchIdIn(List<Long> batchIds);
 }

@@ -78,6 +78,18 @@ public class DirectTestAssignment {
 	@Column(name = "started_at")
 	private LocalDateTime startedAt;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "batch_id")
+	private Batch batch;
+
+	public Batch getBatch() {
+		return batch;
+	}
+
+	public void setBatch(Batch batch) {
+		this.batch = batch;
+	}
+
 	public Long getDirectTestAssignmentId() {
 		return directTestAssignmentId;
 	}
