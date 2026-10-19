@@ -7,6 +7,7 @@ public class DirectTestAssignmentRequest {
 
 	private Long testSetId;
 	private Long userId;
+	private Long batchId;
 	private LocalDateTime dueDate;
 
 	public DirectTestAssignmentRequest() {
@@ -35,4 +36,13 @@ public class DirectTestAssignmentRequest {
 	public void setDueDate(LocalDateTime dueDate) {
 		this.dueDate = dueDate;
 	}
+
+	public Long getBatchId() {
+		return batchId;
+	}
+
+	public void setBatchId(Long batchId) {
+		this.batchId = batchId;
+	}
+
 }
