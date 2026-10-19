@@ -25,12 +25,11 @@ public class DirectTestAssignmentController {
 	public ResponseEntity createDirectTestAssignment(@RequestBody DirectTestAssignmentRequest request) {
 		return directTestAssignmentService.createDirectTestAssignment(request);
 	}
-	
+
 	// ==================== GET All Direct_Test_Sets ===================
-		@GetMapping("/my-direct-test-sets")
-		public ResponseEntity getMyDirectTestSets() {
-			return directTestAssignmentService.getMyDirectTestSets();
-		}
- 
-	
+	@GetMapping("/my-direct-test-sets")
+	public ResponseEntity getMyDirectTestSets() {
+		return directTestAssignmentService.getMyDirectTestSets();
+	}
+
 }
