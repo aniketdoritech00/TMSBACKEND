@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.doritech.tmsservice.enums.AssignmentStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,7 +33,7 @@ public class DirectTestAssignment {
 	@JoinColumn(name = "test_set_id", nullable = false)
 	private TestSet testSet;
 
-	@Column(name = "user_id", nullable = false)
+	@Column(name = "user_id", nullable = true)
 	private Long userId;
 
 	@Column(name = "assigned_by", nullable = false)
@@ -76,7 +77,20 @@ public class DirectTestAssignment {
 	private String remarks;
 
 	@Column(name = "started_at")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	private LocalDateTime startedAt;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "batch_id")
+	private Batch batch;
+
+	public Batch getBatch() {
+		return batch;
+	}
+
+	public void setBatch(Batch batch) {
+		this.batch = batch;
+	}
 
 	public Long getDirectTestAssignmentId() {
 		return directTestAssignmentId;
@@ -213,4 +227,16 @@ public class DirectTestAssignment {
 	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
+
+	@Override
+	public String toString() {
+		return "DirectTestAssignment [directTestAssignmentId=" + directTestAssignmentId + ", testSet=" + testSet
+				+ ", userId=" + userId + ", assignedBy=" + assignedBy + ", assignedAt=" + assignedAt + ", dueDate="
+				+ dueDate + ", status=" + status + ", progressPercentage=" + progressPercentage + ", completionDate="
+				+ completionDate + ", finalScore=" + finalScore + ", isPassed=" + isPassed + ", attemptedQuestions="
+				+ attemptedQuestions + ", correctAnswers=" + correctAnswers + ", wrongAnswers=" + wrongAnswers
+				+ ", totalQuestions=" + totalQuestions + ", remarks=" + remarks + ", startedAt=" + startedAt
+				+ ", batch=" + batch + "]";
+	}
+
 }
