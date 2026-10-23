@@ -45,4 +45,12 @@ public class DirectTestAssignmentRequest {
 		this.batchId = batchId;
 	}
 
+	@Override
+	public String toString() {
+		return "DirectTestAssignmentRequest [testSetId=" + testSetId + ", userId=" + userId + ", batchId=" + batchId
+				+ ", dueDate=" + dueDate + "]";
+	}
+	
+	
+
 }
