@@ -1,5 +1,6 @@
 package com.doritech.tmsservice.tms.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,8 @@ public interface UserBatchRepository extends JpaRepository<UserBatch, Long> {
 
 	boolean existsByBatch_BatchId(Long batchId);
 
+	List<UserBatch> findAllByBatch_BatchId(Long batchId);
+	
+	List<UserBatch> findAllByUserId(Long userId);
+	
 }

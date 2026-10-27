@@ -8,4 +8,12 @@ public interface DirectTestAssignmentService {
 	ResponseEntity createDirectTestAssignment(DirectTestAssignmentRequest request);
 
 	ResponseEntity getMyDirectTestSets();
+
+	ResponseEntity getDirectTestSetsById(Long id);
+
+	ResponseEntity deleteById(Long id);
+
+	ResponseEntity updateDirectTestAssignment(Long id, DirectTestAssignmentRequest request);
+
+	ResponseEntity getAllDirectTestSet(int page, int size);
 }
