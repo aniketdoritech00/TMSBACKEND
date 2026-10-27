@@ -39,21 +39,14 @@ public class BatchController {
 			@RequestParam(defaultValue = "10") int size) {
 		return batchService.getAllBatch(page, size);
 	}
-    @GetMapping("/getAllBatchFilter")
-    public ResponseEntity getAllBatch(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String batchCode,
-            @RequestParam(required = false) String batchName) {
 
-        return batchService.getAllBatch(
-                page,
-                size,
-                batchCode,
-                batchName
-        );
-    }
+	@GetMapping("/getAllBatchFilter")
+	public ResponseEntity getAllBatch(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String batchCode,
+			@RequestParam(required = false) String batchName) {
 
+		return batchService.getAllBatch(page, size, batchCode, batchName);
+	}
 
 	@GetMapping("/getBatchbyId/{batchId}")
 	public ResponseEntity getBatchbyId(@PathVariable Long batchId) {
@@ -64,11 +57,11 @@ public class BatchController {
 	public ResponseEntity deleteBatchbyId(@PathVariable Long batchId) {
 		return batchService.deleteBatchbyId(batchId);
 	}
+
 	@GetMapping("/getallBatch")
 	public ResponseEntity getallbatches() {
-		return  batchService.getAllBatches();
-		
+		return batchService.getAllBatches();
+
 	}
-	
 
 }
