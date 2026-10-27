@@ -13,6 +13,8 @@ public class DirectTestAssignmentResponse {
 	private String testName;
 	private Long userId;
 	private String userName;
+	private Long batchId;
+	private String batchName;
 	private Long assignedBy;
 	private String assignedByName;
 	private LocalDateTime assignedAt;
@@ -197,4 +199,21 @@ public class DirectTestAssignmentResponse {
 	public void setStartedAt(LocalDateTime v) {
 		startedAt = v;
 	}
+
+	public Long getBatchId() {
+		return batchId;
+	}
+
+	public void setBatchId(Long batchId) {
+		this.batchId = batchId;
+	}
+
+	public String getBatchName() {
+		return batchName;
+	}
+
+	public void setBatchName(String batchName) {
+		this.batchName = batchName;
+	}
+
 }
