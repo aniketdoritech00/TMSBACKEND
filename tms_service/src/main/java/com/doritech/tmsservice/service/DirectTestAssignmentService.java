@@ -1,6 +1,8 @@
 package com.doritech.tmsservice.service;
 
 import com.doritech.tmsservice.request.DirectTestAssignmentRequest;
+import com.doritech.tmsservice.response.DirectTestAssignmentResponse;
+import com.doritech.tmsservice.tms.entity.DirectTestAssignment;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
 
 public interface DirectTestAssignmentService {
@@ -16,4 +18,6 @@ public interface DirectTestAssignmentService {
 	ResponseEntity updateDirectTestAssignment(Long id, DirectTestAssignmentRequest request);
 
 	ResponseEntity getAllDirectTestSet(int page, int size);
+
+	DirectTestAssignmentResponse convertToResponse(DirectTestAssignment assignment);
 }

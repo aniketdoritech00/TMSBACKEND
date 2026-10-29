@@ -26,4 +26,6 @@ public interface UserResponseService {
 	ResponseEntity getResponseCount(Long testAttemptId);
 
 	ResponseEntity getCorrectAnswerCount(Long testAttemptId);
+
+	ResponseEntity finishTest(Long testAttemptId);
 }

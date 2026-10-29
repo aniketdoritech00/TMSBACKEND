@@ -3,11 +3,10 @@ package com.doritech.tmsservice.serviceImpl;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.tmsservice.config.CurrentUser;
 import com.doritech.tmsservice.enums.AssignmentStatus;
+import com.doritech.tmsservice.enums.TestAttemptStatus;
+import com.doritech.tmsservice.enums.TestResult;
 import com.doritech.tmsservice.erp.entity.UserMaster;
 import com.doritech.tmsservice.erp.repository.UserMasterRepository;
 import com.doritech.tmsservice.request.DirectTestAssignmentRequest;
@@ -29,9 +30,11 @@ import com.doritech.tmsservice.service.DirectTestAssignmentService;
 import com.doritech.tmsservice.tms.entity.Batch;
 import com.doritech.tmsservice.tms.entity.DirectTestAssignment;
 import com.doritech.tmsservice.tms.entity.ResponseEntity;
+import com.doritech.tmsservice.tms.entity.TestAttempt;
 import com.doritech.tmsservice.tms.entity.TestSet;
 import com.doritech.tmsservice.tms.entity.UserBatch;
 import com.doritech.tmsservice.tms.repository.DirectTestAssignmentRepository;
+import com.doritech.tmsservice.tms.repository.TestAttemptRepository;
 import com.doritech.tmsservice.tms.repository.TestSetRepository;
 import com.doritech.tmsservice.tms.repository.UserBatchRepository;
 
@@ -39,14 +42,16 @@ import com.doritech.tmsservice.tms.repository.UserBatchRepository;
 public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentService {
 
 	private final DirectTestAssignmentRepository assignmentRepository;
+	private final TestAttemptRepository testAttemptRepository;
 	private final TestSetRepository testSetRepository;
 	private final UserMasterRepository userRepository;
 	private final UserBatchRepository userBatchRepository;
 
 	public DirectTestAssignmentServiceImpl(DirectTestAssignmentRepository assignmentRepository,
 			TestSetRepository testSetRepository, UserMasterRepository userRepository,
-			UserBatchRepository userBatchRepository) {
+			UserBatchRepository userBatchRepository, TestAttemptRepository testAttemptRepository) {
 
+		this.testAttemptRepository = testAttemptRepository;
 		this.assignmentRepository = assignmentRepository;
 		this.testSetRepository = testSetRepository;
 		this.userRepository = userRepository;
@@ -61,278 +66,210 @@ public class DirectTestAssignmentServiceImpl implements DirectTestAssignmentServ
 
 		assignment.setTestSet(testSet);
 		assignment.setUserId(userId);
-		assignment.setAssignedBy(assignedBy.getUserId().longValue());
+		assignment.setAssignedBy((long) assignedBy.getUserId());
 		assignment.setAssignedAt(LocalDateTime.now());
-		assignment.setDueDate(null); // Set below from the request in the calling method
+		// Initial assignment state
 		assignment.setStatus(AssignmentStatus.NOT_STARTED);
-		assignment.setProgressPercentage(new BigDecimal("0.00"));
-		assignment.setIsPassed(false);
-		assignment.setAttemptedQuestions(0);
-		assignment.setCorrectAnswers(0);
-		assignment.setWrongAnswers(0);
-		assignment.setTotalQuestions(0);
-		assignment.setStartedAt(null);
+		assignment.setProgressPercentage(BigDecimal.ZERO);
+		// Initial score
+		assignment.setFinalScore(BigDecimal.ZERO);
+
+		// Due date and timestamps
+
+		assignment.setDueDate(null); // Set from request in calling method
 
 		return assignment;
 	}
 
 	// ================= CREATE DIRECT TEST ASSIGNMENT =================
 
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity createDirectTestAssignment(DirectTestAssignmentRequest request) {
 
-@Override
-@Transactional("tmsTransactionManager")
-public ResponseEntity createDirectTestAssignment(
-        DirectTestAssignmentRequest request) {
+		try {
+			// 1. Validate request
+			if (request == null) {
+				return errorResponse("Direct Test assignment data is required", HttpStatus.BAD_REQUEST);
+			}
 
-    try {
-        // 1. Validate request
-        if (request == null) {
-            return errorResponse(
-                    "Direct Test assignment data is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			Long testSetId = request.getTestSetId();
+			Long requestedUserId = request.getUserId();
+			Long batchId = request.getBatchId();
 
-        Long testSetId = request.getTestSetId();
-        Long requestedUserId = request.getUserId();
-        Long batchId = request.getBatchId();
+			if (testSetId == null || testSetId <= 0) {
+				return errorResponse("Valid test set id is required", HttpStatus.BAD_REQUEST);
+			}
 
-        if (testSetId == null || testSetId <= 0) {
-            return errorResponse(
-                    "Valid test set id is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			if (requestedUserId == null && batchId == null) {
+				return errorResponse("Provide either userId or batchId", HttpStatus.BAD_REQUEST);
+			}
 
-        if (requestedUserId == null && batchId == null) {
-            return errorResponse(
-                    "Provide either userId or batchId",
-                    HttpStatus.BAD_REQUEST);
-        }
+			if (requestedUserId != null && requestedUserId <= 0) {
+				return errorResponse("Valid user id is required", HttpStatus.BAD_REQUEST);
+			}
 
-        if (requestedUserId != null && requestedUserId <= 0) {
-            return errorResponse(
-                    "Valid user id is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			if (batchId != null && batchId <= 0) {
+				return errorResponse("Valid batch id is required", HttpStatus.BAD_REQUEST);
+			}
 
-        if (batchId != null && batchId <= 0) {
-            return errorResponse(
-                    "Valid batch id is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			// 2. Find an active, published Direct Test Set
+			TestSet testSet = testSetRepository
+					.findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(testSetId).orElse(null);
 
-        // 2. Find an active, published Direct Test Set
-        TestSet testSet = testSetRepository
-                .findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(
-                        testSetId)
-                .orElse(null);
+			if (testSet == null) {
+				return errorResponse("Published active Direct Test not found", HttpStatus.NOT_FOUND);
+			}
 
-        if (testSet == null) {
-            return errorResponse(
-                    "Published active Direct Test not found",
-                    HttpStatus.NOT_FOUND);
-        }
+			// 3. Identify the logged-in assigning user
+			Long currentUserId = CurrentUser.getUserId();
 
-        // 3. Identify the logged-in assigning user
-        Long currentUserId = CurrentUser.getUserId();
+			if (currentUserId == null || currentUserId <= 0) {
+				return errorResponse("Unable to identify current user", HttpStatus.UNAUTHORIZED);
+			}
 
-        if (currentUserId == null || currentUserId <= 0) {
-            return errorResponse(
-                    "Unable to identify current user",
-                    HttpStatus.UNAUTHORIZED);
-        }
+			Integer currentUserIdInt;
 
-        Integer currentUserIdInt;
+			try {
+				currentUserIdInt = Math.toIntExact(currentUserId);
+			} catch (ArithmeticException ex) {
+				return errorResponse("Invalid assigning user ID", HttpStatus.BAD_REQUEST);
+			}
 
-        try {
-            currentUserIdInt = Math.toIntExact(currentUserId);
-        } catch (ArithmeticException ex) {
-            return errorResponse(
-                    "Invalid assigning user ID",
-                    HttpStatus.BAD_REQUEST);
-        }
+			UserMaster assignedBy = userRepository.findById(currentUserIdInt).orElse(null);
 
-        UserMaster assignedBy = userRepository
-                .findById(currentUserIdInt)
-                .orElse(null);
+			if (assignedBy == null) {
+				return errorResponse("Assigning user not found", HttpStatus.NOT_FOUND);
+			}
 
-        if (assignedBy == null) {
-            return errorResponse(
-                    "Assigning user not found",
-                    HttpStatus.NOT_FOUND);
-        }
+			// =====================================================
+			// 4. BATCH ASSIGNMENT: CREATE ONLY ONE DATABASE ROW
+			// =====================================================
 
-        // =====================================================
-        // 4. BATCH ASSIGNMENT: CREATE ONLY ONE DATABASE ROW
-        // =====================================================
+			if (batchId != null) {
 
-        if (batchId != null) {
+				// Find the employees associated with the batch.
+				List<UserBatch> batchMembers = userBatchRepository.findAllByBatch_BatchId(batchId);
 
-            // Find the employees associated with the batch.
-            List<UserBatch> batchMembers =
-                    userBatchRepository.findAllByBatch_BatchId(batchId);
+				if (batchMembers == null || batchMembers.isEmpty()) {
+					return errorResponse("No employees found for the requested batch", HttpStatus.NOT_FOUND);
+				}
 
-            if (batchMembers == null || batchMembers.isEmpty()) {
-                return errorResponse(
-                        "No employees found for the requested batch",
-                        HttpStatus.NOT_FOUND);
-            }
+				Batch batch = batchMembers.get(0).getBatch();
 
-            Batch batch = batchMembers.get(0).getBatch();
+				if (batch == null) {
+					return errorResponse("Batch details not found", HttpStatus.NOT_FOUND);
+				}
 
-            if (batch == null) {
-                return errorResponse(
-                        "Batch details not found",
-                        HttpStatus.NOT_FOUND);
-            }
+				// Collect valid, distinct employee IDs.
+				List<Long> targetUserIds = batchMembers.stream().map(UserBatch::getUserId)
+						.filter(java.util.Objects::nonNull).distinct().collect(java.util.stream.Collectors.toList());
 
-            // Collect valid, distinct employee IDs.
-            List<Long> targetUserIds = batchMembers.stream()
-                    .map(UserBatch::getUserId)
-                    .filter(java.util.Objects::nonNull)
-                    .distinct()
-                    .collect(java.util.stream.Collectors.toList());
+				if (targetUserIds.isEmpty()) {
+					return errorResponse("No valid employees found for this batch", HttpStatus.NOT_FOUND);
+				}
 
-            if (targetUserIds.isEmpty()) {
-                return errorResponse(
-                        "No valid employees found for this batch",
-                        HttpStatus.NOT_FOUND);
-            }
+				// If userId was also supplied, validate it.
+				// It does not create a separate individual assignment.
+				if (requestedUserId != null) {
 
-            // If userId was also supplied, validate it.
-            // It does not create a separate individual assignment.
-            if (requestedUserId != null) {
+					Integer requestedUserIdInt;
 
-                Integer requestedUserIdInt;
+					try {
+						requestedUserIdInt = Math.toIntExact(requestedUserId);
+					} catch (ArithmeticException ex) {
+						return errorResponse("Invalid user id", HttpStatus.BAD_REQUEST);
+					}
 
-                try {
-                    requestedUserIdInt =
-                            Math.toIntExact(requestedUserId);
-                } catch (ArithmeticException ex) {
-                    return errorResponse(
-                            "Invalid user id",
-                            HttpStatus.BAD_REQUEST);
-                }
+					if (!userRepository.existsById(requestedUserIdInt)) {
+						return errorResponse("User not found", HttpStatus.NOT_FOUND);
+					}
 
-                if (!userRepository.existsById(requestedUserIdInt)) {
-                    return errorResponse(
-                            "User not found",
-                            HttpStatus.NOT_FOUND);
-                }
+					if (!targetUserIds.contains(requestedUserId)) {
+						return errorResponse("Selected user is not associated with this batch", HttpStatus.BAD_REQUEST);
+					}
+				}
 
-                if (!targetUserIds.contains(requestedUserId)) {
-                    return errorResponse(
-                            "Selected user is not associated with this batch",
-                            HttpStatus.BAD_REQUEST);
-                }
-            }
+				// Do not create a second batch assignment for the same test.
+				boolean batchAlreadyAssigned = assignmentRepository.existsByTestSet_TestSetIdAndBatch_BatchId(testSetId,
+						batchId);
 
-            // Do not create a second batch assignment for the same test.
-            boolean batchAlreadyAssigned =
-                    assignmentRepository
-                            .existsByTestSet_TestSetIdAndBatch_BatchId(
-                                    testSetId, batchId);
+				if (batchAlreadyAssigned) {
+					return errorResponse("This Direct Test is already assigned to this batch", HttpStatus.CONFLICT);
+				}
 
-            if (batchAlreadyAssigned) {
-                return errorResponse(
-                        "This Direct Test is already assigned to this batch",
-                        HttpStatus.CONFLICT);
-            }
+				// Create ONE assignment entity for the entire batch.
+				DirectTestAssignment assignment = buildAssignment(testSet, null, assignedBy);
 
-            // Create ONE assignment entity for the entire batch.
-            DirectTestAssignment assignment =
-                    buildAssignment(testSet, null, assignedBy);
+				assignment.setTestSet(testSet);
+				assignment.setUserId(null);
+				assignment.setBatch(batch);
+				assignment.setDueDate(request.getDueDate());
 
-            assignment.setTestSet(testSet);
-            assignment.setUserId(null);
-            assignment.setBatch(batch);
-            assignment.setDueDate(request.getDueDate());
+				// Save exactly one row.
+				DirectTestAssignment savedAssignment = assignmentRepository.saveAndFlush(assignment);
 
-            // Save exactly one row.
-            DirectTestAssignment savedAssignment =
-                    assignmentRepository.saveAndFlush(assignment);
+				// Return a one-element response list to preserve your
+				// existing response structure.
+				List<DirectTestAssignmentResponse> payload = java.util.Collections
+						.singletonList(convertToResponse(savedAssignment));
 
-            // Return a one-element response list to preserve your
-            // existing response structure.
-            List<DirectTestAssignmentResponse> payload =
-                    java.util.Collections.singletonList(
-                            convertToResponse(savedAssignment));
+				return new ResponseEntity("Direct Test assigned to batch successfully", HttpStatus.CREATED.value(),
+						payload);
+			}
 
-            return new ResponseEntity(
-                    "Direct Test assigned to batch successfully",
-                    HttpStatus.CREATED.value(),
-                    payload);
-        }
+			// =====================================================
+			// 5. INDIVIDUAL ASSIGNMENT: CREATE ONE USER ROW
+			// =====================================================
 
-        // =====================================================
-        // 5. INDIVIDUAL ASSIGNMENT: CREATE ONE USER ROW
-        // =====================================================
+			Integer requestedUserIdInt;
 
-        Integer requestedUserIdInt;
+			try {
+				requestedUserIdInt = Math.toIntExact(requestedUserId);
+			} catch (ArithmeticException ex) {
+				return errorResponse("Invalid user id", HttpStatus.BAD_REQUEST);
+			}
 
-        try {
-            requestedUserIdInt =
-                    Math.toIntExact(requestedUserId);
-        } catch (ArithmeticException ex) {
-            return errorResponse(
-                    "Invalid user id",
-                    HttpStatus.BAD_REQUEST);
-        }
+			if (!userRepository.existsById(requestedUserIdInt)) {
+				return errorResponse("User not found", HttpStatus.NOT_FOUND);
+			}
 
-        if (!userRepository.existsById(requestedUserIdInt)) {
-            return errorResponse(
-                    "User not found",
-                    HttpStatus.NOT_FOUND);
-        }
+			boolean alreadyAssigned = assignmentRepository.existsByTestSet_TestSetIdAndUserId(testSetId,
+					requestedUserId);
 
-        boolean alreadyAssigned =
-                assignmentRepository
-                        .existsByTestSet_TestSetIdAndUserId(
-                                testSetId, requestedUserId);
+			if (alreadyAssigned) {
+				return errorResponse("This Direct Test is already assigned to the selected user", HttpStatus.CONFLICT);
+			}
 
-        if (alreadyAssigned) {
-            return errorResponse(
-                    "This Direct Test is already assigned to the selected user",
-                    HttpStatus.CONFLICT);
-        }
+			DirectTestAssignment assignment = buildAssignment(testSet, requestedUserId, assignedBy);
 
-        DirectTestAssignment assignment =
-                buildAssignment(testSet, requestedUserId, assignedBy);
+			assignment.setTestSet(testSet);
+			assignment.setUserId(requestedUserId);
+			assignment.setBatch(null);
+			assignment.setDueDate(request.getDueDate());
 
-        assignment.setTestSet(testSet);
-        assignment.setUserId(requestedUserId);
-        assignment.setBatch(null);
-        assignment.setDueDate(request.getDueDate());
+			DirectTestAssignment savedAssignment = assignmentRepository.saveAndFlush(assignment);
 
-        DirectTestAssignment savedAssignment =
-                assignmentRepository.saveAndFlush(assignment);
+			DirectTestAssignmentResponse payload = convertToResponse(savedAssignment);
 
-        DirectTestAssignmentResponse payload =
-                convertToResponse(savedAssignment);
+			return new ResponseEntity("Direct Test assigned to user successfully", HttpStatus.CREATED.value(), payload);
 
-        return new ResponseEntity(
-                "Direct Test assigned to user successfully",
-                HttpStatus.CREATED.value(),
-                payload);
+		} catch (DataIntegrityViolationException ex) {
 
-    } catch (DataIntegrityViolationException ex) {
+			return errorResponse("Direct Test assignment conflicts with an existing database record",
+					HttpStatus.CONFLICT);
 
-        return errorResponse(
-                "Direct Test assignment conflicts with an existing database record",
-                HttpStatus.CONFLICT);
+		} catch (Exception ex) {
 
-    } catch (Exception ex) {
+			ex.printStackTrace();
 
-        ex.printStackTrace();
-
-        return errorResponse(
-                "Failed to create Direct Test assignment",
-                HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-}
+			return errorResponse("Failed to create Direct Test assignment", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	// ================= CONVERT ENTITY TO RESPONSE =================
 
-	private DirectTestAssignmentResponse convertToResponse(DirectTestAssignment assignment) {
+	public DirectTestAssignmentResponse convertToResponse(DirectTestAssignment assignment) {
 
 		DirectTestAssignmentResponse response = new DirectTestAssignmentResponse();
 
@@ -343,6 +280,20 @@ public ResponseEntity createDirectTestAssignment(
 		response.setTestName(assignment.getTestSet().getTestName());
 
 		response.setAssignedBy(assignment.getAssignedBy());
+
+		response.setStatus(assignment.getStatus());
+		response.setProgressPercentage(assignment.getProgressPercentage());
+		response.setCompletionDate(assignment.getCompletionDate());
+		response.setFinalScore(assignment.getFinalScore());
+		response.setIsPassed(assignment.getIsPassed());
+
+		response.setAttemptedQuestions(assignment.getAttemptedQuestions());
+		response.setCorrectAnswers(assignment.getCorrectAnswers());
+		response.setWrongAnswers(assignment.getWrongAnswers());
+		response.setTotalQuestions(assignment.getTotalQuestions());
+
+		response.setStartedAt(assignment.getStartedAt());
+		response.setRemarks(assignment.getRemarks());
 
 		// ================= ASSIGNED BY USER DETAILS =================
 
@@ -417,6 +368,63 @@ public ResponseEntity createDirectTestAssignment(
 
 	// ================= GET MY DIRECT TEST SETS BY CURRENT USER =================
 
+//	@Override
+//	@Transactional(value = "tmsTransactionManager", readOnly = true)
+//	public ResponseEntity getMyDirectTestSets() {
+//
+//		Long currentUserId = CurrentUser.getUserId();
+//
+//		try {
+//			if (currentUserId == null || currentUserId <= 0) {
+//				return errorResponse("Unable to identify current user", HttpStatus.UNAUTHORIZED);
+//			}
+//
+//			int currentUserIdInt = Math.toIntExact(currentUserId);
+//			String currentUserName = userRepository.findEmployeeNameByUserId(currentUserIdInt);
+//
+//			// 1. Assignments that belong to this user (individual + batch rows created for
+//			// this user)
+//			List<DirectTestAssignment> assignments = new ArrayList<>(assignmentRepository.findByUserId(currentUserId));
+//
+//			// Test sets the user already has
+//			Set<Long> coveredTestSetIds = assignments.stream().map(a -> a.getTestSet().getTestSetId())
+//					.collect(Collectors.toCollection(HashSet::new));
+//
+//			// 2. Batches the user belongs to (checked from user_batch)
+//			List<Long> batchIds = userBatchRepository.findAllByUserId(currentUserId).stream()
+//					.filter(ub -> ub.getBatch() != null).map(ub -> ub.getBatch().getBatchId()).distinct()
+//					.collect(Collectors.toList());
+//
+//			List<DirectTestAssignmentResponse> responseList = assignments.stream().map(this::convertToResponse)
+//					.collect(Collectors.toList());
+//
+//			// 3. Add batch assignments only for test sets the user doesn't already have
+//			// (one per test set)
+//			if (!batchIds.isEmpty()) {
+//				for (DirectTestAssignment batchAssignment : assignmentRepository.findByBatch_BatchIdIn(batchIds)) {
+//					Long testSetId = batchAssignment.getTestSet().getTestSetId();
+//					if (coveredTestSetIds.add(testSetId)) { // false if already present
+//						assignments.add(batchAssignment);
+//					}
+//				}
+//			}
+//
+//			// 4. Convert, and show the current user's id and name in every row
+//			List<DirectTestAssignmentResponse> payload = assignments.stream().map(this::convertToResponse).peek(r -> {
+//				r.setUserId(currentUserId);
+//				r.setUserName(currentUserName);
+//			}).collect(Collectors.toList());
+//
+//			return new ResponseEntity(
+//					"Direct Current test assignments fetched successfully with current id" + currentUserId,
+//					HttpStatus.OK.value(), payload);
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			return errorResponse("Failed to fetch direct test sets with current id", HttpStatus.INTERNAL_SERVER_ERROR);
+//		}
+//	}
+
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getMyDirectTestSets() {
@@ -424,53 +432,117 @@ public ResponseEntity createDirectTestAssignment(
 		Long currentUserId = CurrentUser.getUserId();
 
 		try {
+			// 1. Validate current user
 			if (currentUserId == null || currentUserId <= 0) {
 				return errorResponse("Unable to identify current user", HttpStatus.UNAUTHORIZED);
 			}
 
 			int currentUserIdInt = Math.toIntExact(currentUserId);
+
 			String currentUserName = userRepository.findEmployeeNameByUserId(currentUserIdInt);
 
-			// 1. Assignments that belong to this user (individual + batch rows created for
-			// this user)
-			List<DirectTestAssignment> assignments = new ArrayList<>(assignmentRepository.findByUserId(currentUserId));
+			// 2. Fetch individual assignments
+			List<DirectTestAssignment> individualAssignments = assignmentRepository.findByUserId(currentUserId);
 
-			// Test sets the user already has
-			Set<Long> coveredTestSetIds = assignments.stream().map(a -> a.getTestSet().getTestSetId())
-					.collect(Collectors.toCollection(HashSet::new));
-
-			// 2. Batches the user belongs to (checked from user_batch)
+			// 3. Find batches belonging to the current user
 			List<Long> batchIds = userBatchRepository.findAllByUserId(currentUserId).stream()
-					.filter(ub -> ub.getBatch() != null).map(ub -> ub.getBatch().getBatchId()).distinct()
-					.collect(Collectors.toList());
+					.filter(ub -> ub.getBatch() != null).map(ub -> ub.getBatch().getBatchId()).filter(Objects::nonNull)
+					.distinct().collect(Collectors.toList());
 
-			// 3. Add batch assignments only for test sets the user doesn't already have
-			// (one per test set)
+			// 4. Combine individual and batch assignments without duplicate test sets
+			LinkedHashMap<Long, DirectTestAssignment> assignmentsByTestSet = new LinkedHashMap<>();
+
+			for (DirectTestAssignment assignment : individualAssignments) {
+				if (assignment.getTestSet() != null) {
+					assignmentsByTestSet.putIfAbsent(assignment.getTestSet().getTestSetId(), assignment);
+				}
+			}
+
 			if (!batchIds.isEmpty()) {
-				for (DirectTestAssignment batchAssignment : assignmentRepository.findByBatch_BatchIdIn(batchIds)) {
-					Long testSetId = batchAssignment.getTestSet().getTestSetId();
-					if (coveredTestSetIds.add(testSetId)) { // false if already present
-						assignments.add(batchAssignment);
+				List<DirectTestAssignment> batchAssignments = assignmentRepository.findByBatch_BatchIdIn(batchIds);
+
+				for (DirectTestAssignment assignment : batchAssignments) {
+					if (assignment.getTestSet() != null) {
+						assignmentsByTestSet.putIfAbsent(assignment.getTestSet().getTestSetId(), assignment);
 					}
 				}
 			}
 
-			// 4. Convert, and show the current user's id and name in every row
-			List<DirectTestAssignmentResponse> payload = assignments.stream().map(this::convertToResponse).peek(r -> {
-				r.setUserId(currentUserId);
-				r.setUserName(currentUserName);
-			}).collect(Collectors.toList());
+			// 5. Build response and map the current user's latest attempt
+			List<DirectTestAssignmentResponse> payload = new ArrayList<>();
+
+			for (DirectTestAssignment assignment : assignmentsByTestSet.values()) {
+
+				DirectTestAssignmentResponse response = convertToResponse(assignment);
+
+				// Show the logged-in user for this current-user endpoint
+				response.setUserId(currentUserId);
+				response.setUserName(currentUserName);
+
+				Long testSetId = assignment.getTestSet().getTestSetId();
+
+				Optional<TestAttempt> latestAttempt = testAttemptRepository
+						.findTopByTestSet_TestSetIdAndUserIdOrderByAttemptNumberDesc(testSetId, currentUserId);
+
+				if (latestAttempt.isPresent()) {
+
+					TestAttempt attempt = latestAttempt.get();
+
+					// Map results from this user's attempt, not from the shared
+					// batch assignment record.
+					response.setFinalScore(attempt.getTotalScore());
+
+					response.setIsPassed(attempt.getResult() != null && attempt.getResult() == TestResult.PASS);
+
+					response.setTotalQuestions(attempt.getTotalQuestions());
+					response.setCorrectAnswers(attempt.getCorrectAnswers());
+					response.setWrongAnswers(attempt.getWrongAnswers());
+
+					int correctAnswers = attempt.getCorrectAnswers() != null ? attempt.getCorrectAnswers() : 0;
+
+					int wrongAnswers = attempt.getWrongAnswers() != null ? attempt.getWrongAnswers() : 0;
+
+					response.setAttemptedQuestions(correctAnswers + wrongAnswers);
+
+					response.setStartedAt(attempt.getStartTime());
+
+					// Only mark the assignment completed when this attempt
+					// is actually completed.
+					if (attempt.getStatus() == TestAttemptStatus.COMPLETED) {
+
+						response.setStatus(AssignmentStatus.COMPLETED);
+						response.setProgressPercentage(new BigDecimal("100.00"));
+						response.setCompletionDate(attempt.getEndTime());
+
+						if (attempt.getResult() == TestResult.PASS) {
+							response.setRemarks("Test completed successfully");
+						} else if (attempt.getResult() == TestResult.FAIL) {
+							response.setRemarks("Test completed; passing score not achieved");
+						}
+
+					} else {
+						// Do not incorrectly mark an in-progress or abandoned
+						// attempt as completed.
+						// Keep the assignment status from convertToResponse().
+					}
+				}
+
+				payload.add(response);
+			}
 
 			return new ResponseEntity(
-					"Direct Current test assignments fetched successfully with current id" + currentUserId,
+					"Direct Current test assignments fetched successfully with current id " + currentUserId,
 					HttpStatus.OK.value(), payload);
+
+		} catch (ArithmeticException e) {
+			return errorResponse("Invalid current user ID", HttpStatus.BAD_REQUEST);
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			return errorResponse("Failed to fetch direct test sets with current id", HttpStatus.INTERNAL_SERVER_ERROR);
+
+			return errorResponse("Failed to fetch direct test sets for current user", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-
 	// ======================== GET ALL DIRECT TEST SET ========================
 
 	@Override
@@ -478,22 +550,89 @@ public ResponseEntity createDirectTestAssignment(
 	public ResponseEntity getAllDirectTestSet(int page, int size) {
 
 		try {
+			// 1. Validate pagination
+			if (page < 0 || size <= 0) {
+				return errorResponse("Page must be >= 0 and size must be > 0", HttpStatus.BAD_REQUEST);
+			}
+
+			// 2. Fetch paginated assignments
 			Pageable pageable = PageRequest.of(page, size);
 
 			Page<DirectTestAssignment> assignmentPage = assignmentRepository.findAll(pageable);
 
-			// 2. Remove duplicates and convert to response DTO
+			// 3. Convert assignments to response DTOs and map latest attempt results
 			List<DirectTestAssignmentResponse> payload = assignmentPage.getContent().stream()
 					.collect(Collectors.toMap(DirectTestAssignment::getDirectTestAssignmentId, assignment -> assignment,
 							(existing, duplicate) -> existing, LinkedHashMap::new))
-					.values().stream().map(this::convertToResponse).collect(Collectors.toList());
+					.values().stream().map(assignment -> {
 
-			// 3. Create pagination response
+						DirectTestAssignmentResponse response = convertToResponse(assignment);
+
+						// Find the latest attempt for this assignment's user
+						// and test set. Batch assignments may have a null userId.
+						if (assignment.getUserId() != null && assignment.getTestSet() != null) {
+
+							Long userId = assignment.getUserId();
+							Long testSetId = assignment.getTestSet().getTestSetId();
+
+							Optional<TestAttempt> latestAttempt = testAttemptRepository
+									.findTopByTestSet_TestSetIdAndUserIdOrderByAttemptNumberDesc(testSetId, userId);
+
+							if (latestAttempt.isPresent()) {
+
+								TestAttempt attempt = latestAttempt.get();
+
+								// Map saved attempt results
+								response.setFinalScore(attempt.getTotalScore());
+
+								response.setIsPassed(
+										attempt.getResult() != null && attempt.getResult() == TestResult.PASS);
+
+								response.setTotalQuestions(attempt.getTotalQuestions());
+
+								response.setCorrectAnswers(attempt.getCorrectAnswers());
+
+								response.setWrongAnswers(attempt.getWrongAnswers());
+
+								int correct = attempt.getCorrectAnswers() != null ? attempt.getCorrectAnswers() : 0;
+
+								int wrong = attempt.getWrongAnswers() != null ? attempt.getWrongAnswers() : 0;
+
+								response.setAttemptedQuestions(correct + wrong);
+
+								response.setStartedAt(attempt.getStartTime());
+
+								// Update completion details only when
+								// the attempt is actually completed.
+								if (attempt.getStatus() == TestAttemptStatus.COMPLETED) {
+
+									response.setStatus(AssignmentStatus.COMPLETED);
+
+									response.setProgressPercentage(new BigDecimal("100.00"));
+
+									response.setCompletionDate(attempt.getEndTime());
+
+									if (attempt.getResult() == TestResult.PASS) {
+
+										response.setRemarks("Test completed successfully");
+
+									} else if (attempt.getResult() == TestResult.FAIL) {
+
+										response.setRemarks("Test completed; passing score not achieved");
+									}
+								}
+							}
+						}
+
+						return response;
+					}).collect(Collectors.toList());
+
+			// 4. Create pagination response
 			PageResponse<DirectTestAssignmentResponse> pageResponse = new PageResponse<>(payload,
 					assignmentPage.getNumber(), assignmentPage.getSize(), assignmentPage.getTotalElements(),
 					assignmentPage.getTotalPages(), assignmentPage.isLast());
 
-			// 4. Return success response
+			// 5. Return response
 			return new ResponseEntity("Direct test assignments fetched successfully", HttpStatus.OK.value(),
 					pageResponse);
 
@@ -517,25 +656,102 @@ public ResponseEntity createDirectTestAssignment(
 
 	// ================= GET DIRECT TEST SET BY ID =================
 
+//	@Override
+//	@Transactional(value = "tmsTransactionManager", readOnly = true)
+//	public ResponseEntity getDirectTestSetsById(Long id) {
+//
+//		try {
+//			if (id == null || id <= 0) {
+//				return errorResponse("Invalid direct test assignment ID", HttpStatus.BAD_REQUEST);
+//			}
+//
+//			// Fetch assignment by primary key
+//			Optional<DirectTestAssignment> optionalAssignment = assignmentRepository.findById(id);
+//
+//			if (optionalAssignment.isEmpty()) {
+//				return errorResponse("Direct test assignment not found with ID: " + id, HttpStatus.NOT_FOUND);
+//			}
+//
+//			// Convert entity into response DTO
+//			DirectTestAssignmentResponse payload = convertToResponse(optionalAssignment.get());
+//
+//			return new ResponseEntity("Direct test assignment fetched successfully", HttpStatus.OK.value(), payload);
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//
+//			return errorResponse("Failed to fetch direct test assignment", HttpStatus.INTERNAL_SERVER_ERROR);
+//		}
+//	}
+
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)
 	public ResponseEntity getDirectTestSetsById(Long id) {
 
 		try {
+			// 1. Validate assignment ID
 			if (id == null || id <= 0) {
 				return errorResponse("Invalid direct test assignment ID", HttpStatus.BAD_REQUEST);
 			}
 
-			// Fetch assignment by primary key
+			// 2. Fetch assignment
 			Optional<DirectTestAssignment> optionalAssignment = assignmentRepository.findById(id);
 
 			if (optionalAssignment.isEmpty()) {
 				return errorResponse("Direct test assignment not found with ID: " + id, HttpStatus.NOT_FOUND);
 			}
 
-			// Convert entity into response DTO
-			DirectTestAssignmentResponse payload = convertToResponse(optionalAssignment.get());
+			DirectTestAssignment assignment = optionalAssignment.get();
 
+			// 3. Convert assignment entity to response DTO
+			DirectTestAssignmentResponse payload = convertToResponse(assignment);
+
+			// 4. Fetch the latest attempt for an individual assignment
+			if (assignment.getUserId() != null && assignment.getTestSet() != null) {
+
+				Long userId = assignment.getUserId();
+				Long testSetId = assignment.getTestSet().getTestSetId();
+
+				Optional<TestAttempt> latestAttempt = testAttemptRepository
+						.findTopByTestSet_TestSetIdAndUserIdOrderByAttemptNumberDesc(testSetId, userId);
+
+				if (latestAttempt.isPresent()) {
+
+					TestAttempt attempt = latestAttempt.get();
+
+					// Actual score and result from TestAttempt
+					payload.setFinalScore(attempt.getTotalScore());
+
+					payload.setIsPassed(attempt.getResult() != null && attempt.getResult() == TestResult.PASS);
+
+					payload.setTotalQuestions(attempt.getTotalQuestions());
+					payload.setCorrectAnswers(attempt.getCorrectAnswers());
+					payload.setWrongAnswers(attempt.getWrongAnswers());
+					payload.setStartedAt(attempt.getStartTime());
+
+					int correct = attempt.getCorrectAnswers() != null ? attempt.getCorrectAnswers() : 0;
+
+					int wrong = attempt.getWrongAnswers() != null ? attempt.getWrongAnswers() : 0;
+
+					payload.setAttemptedQuestions(correct + wrong);
+
+					// Update completion details only for completed attempts
+					if (attempt.getStatus() == TestAttemptStatus.COMPLETED) {
+
+						payload.setStatus(AssignmentStatus.COMPLETED);
+						payload.setProgressPercentage(new BigDecimal("100.00"));
+						payload.setCompletionDate(attempt.getEndTime());
+
+						if (attempt.getResult() == TestResult.PASS) {
+							payload.setRemarks("Test completed successfully");
+						} else if (attempt.getResult() == TestResult.FAIL) {
+							payload.setRemarks("Test completed; passing score not achieved");
+						}
+					}
+				}
+			}
+
+			// 5. Return response
 			return new ResponseEntity("Direct test assignment fetched successfully", HttpStatus.OK.value(), payload);
 
 		} catch (Exception e) {
@@ -569,457 +785,162 @@ public ResponseEntity createDirectTestAssignment(
 
 	// ================= UPDATE DIRECT TEST SET ASSIGNMENT ===============
 
-//	@Override
-//	@Transactional("tmsTransactionManager")
-//	public ResponseEntity updateDirectTestAssignment(Long id, DirectTestAssignmentRequest request) {
-//
-//		try {
-//			// 1. Validate request before accessing it
-//			if (id == null || id <= 0) {
-//				return errorResponse("Valid Direct Test Assignment ID is required", HttpStatus.BAD_REQUEST);
-//			}
-//
-//			if (request == null) {
-//				return errorResponse("Data is required to update the Direct Test assignment", HttpStatus.BAD_REQUEST);
-//			}
-//
-//			// 2. Fetch the exact assignment requested in the URL
-//			Optional<DirectTestAssignment> optionalAssignment = assignmentRepository.findById(id);
-//
-//			if (optionalAssignment.isEmpty()) {
-//				return errorResponse("Direct Test assignment not found with ID: " + id, HttpStatus.NOT_FOUND);
-//			}
-//
-//			DirectTestAssignment assignment = optionalAssignment.get();
-//
-//			System.out.println("Requested assignment ID: " + assignment.getDirectTestAssignmentId());
-//
-//			// 3. Resolve the test set
-//			TestSet testSet = assignment.getTestSet();
-//
-//			if (request.getTestSetId() != null) {
-//
-//				Long requestedTestSetId = request.getTestSetId();
-//
-//				if (requestedTestSetId <= 0) {
-//					return errorResponse("Valid test set ID is required", HttpStatus.BAD_REQUEST);
-//				}
-//
-//				testSet = testSetRepository
-//						.findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(requestedTestSetId)
-//						.orElse(null);
-//
-//				if (testSet == null) {
-//					return errorResponse("Published active Direct Test not found", HttpStatus.NOT_FOUND);
-//				}
-//			}
-//
-//			if (testSet == null) {
-//				return errorResponse("Test set is not associated with this assignment", HttpStatus.NOT_FOUND);
-//			}
-//
-//			Long finalTestSetId = testSet.getTestSetId();
-//
-//			// =====================================================
-//			// 4. BATCH UPDATE
-//			// =====================================================
-//
-//			if (request.getBatchId() != null) {
-//
-//				Long requestedBatchId = request.getBatchId();
-//
-//				if (requestedBatchId <= 0) {
-//					return errorResponse("Valid batch ID is required", HttpStatus.BAD_REQUEST);
-//				}
-//
-//				// 5. Fetch members of the requested batch
-//				List<UserBatch> batchMembers = userBatchRepository.findAllByBatch_BatchId(requestedBatchId);
-//
-//				if (batchMembers == null || batchMembers.isEmpty()) {
-//					return errorResponse("No employees found for the requested batch", HttpStatus.NOT_FOUND);
-//				}
-//
-//				Batch batch = batchMembers.get(0).getBatch();
-//
-//				if (batch == null) {
-//					return errorResponse("Batch details not found", HttpStatus.NOT_FOUND);
-//				}
-//
-//				// 6. Extract distinct employee IDs
-//				List<Long> targetUserIds = batchMembers.stream().map(UserBatch::getUserId)
-//						.filter(java.util.Objects::nonNull).distinct().collect(java.util.stream.Collectors.toList());
-//
-//				if (targetUserIds.isEmpty()) {
-//					return errorResponse("No valid employees found for this batch", HttpStatus.NOT_FOUND);
-//				}
-//
-//				// Optional userId must belong to the selected batch.
-//				// The batch branch still processes all batch members.
-//				if (request.getUserId() != null) {
-//
-//					if (request.getUserId() <= 0) {
-//						return errorResponse("Valid user ID is required", HttpStatus.BAD_REQUEST);
-//					}
-//
-//					if (!targetUserIds.contains(request.getUserId())) {
-//						return errorResponse("Selected user is not associated with this batch", HttpStatus.BAD_REQUEST);
-//					}
-//				}
-//
-//				// 7. Validate the assigning user
-//				Integer assignedById;
-//
-//				try {
-//					assignedById = Math.toIntExact(assignment.getAssignedBy());
-//				} catch (ArithmeticException | NullPointerException ex) {
-//					return errorResponse("Invalid assigning user ID", HttpStatus.BAD_REQUEST);
-//				}
-//
-//				UserMaster assignedBy = userRepository.findById(assignedById).orElse(null);
-//
-//				if (assignedBy == null) {
-//					return errorResponse("Assigning user not found", HttpStatus.NOT_FOUND);
-//				}
-//
-//				// 8. Load existing assignments.
-//				// The requested assignment is explicitly prioritized below.
-//				List<DirectTestAssignment> allAssignments = assignmentRepository.findAll();
-//
-//				List<DirectTestAssignment> assignmentsToSave = new java.util.ArrayList<>();
-//
-//				java.util.Set<Long> processedUserIds = new java.util.HashSet<>();
-//
-//				boolean selectedAssignmentUsed = false;
-//
-//				// Process the employee already associated with the requested
-//				// assignment first, if that employee belongs to this batch.
-//				List<Long> orderedUserIds = new java.util.ArrayList<>(targetUserIds);
-//
-//				Long selectedUserId = assignment.getUserId();
-//
-//				if (selectedUserId != null && orderedUserIds.contains(selectedUserId)) {
-//
-//					orderedUserIds.remove(selectedUserId);
-//					orderedUserIds.add(0, selectedUserId);
-//				}
-//
-//				// 9. Prepare each employee's assignment
-//				for (Long memberUserId : orderedUserIds) {
-//
-//					Integer memberId;
-//
-//					try {
-//						memberId = Math.toIntExact(memberUserId);
-//					} catch (ArithmeticException ex) {
-//						return errorResponse("Invalid user ID in batch", HttpStatus.BAD_REQUEST);
-//					}
-//
-//					if (!userRepository.existsById(memberId)) {
-//						continue;
-//					}
-//
-//					// First, find an assignment for this test and employee.
-//					DirectTestAssignment existingAssignment = allAssignments.stream()
-//							.filter(existing -> existing.getTestSet() != null
-//									&& existing.getTestSet().getTestSetId().equals(finalTestSetId)
-//									&& memberUserId.equals(existing.getUserId()))
-//							.findFirst().orElse(null);
-//
-//					DirectTestAssignment memberAssignment;
-//
-//					// IMPORTANT:
-//					// If this is the employee currently associated with the
-//					// URL assignment, preserve that exact assignment ID.
-//					if (memberUserId.equals(selectedUserId)) {
-//
-//						// Do not overwrite another record when the requested
-//						// test/user combination already belongs to another ID.
-//						if (existingAssignment != null && !existingAssignment.getDirectTestAssignmentId().equals(id)) {
-//
-//							return errorResponse("Another assignment already exists for this "
-//									+ "test set and employee. Resolve the "
-//									+ "duplicate before updating assignment ID: " + id, HttpStatus.CONFLICT);
-//						}
-//
-//						memberAssignment = assignment;
-//						selectedAssignmentUsed = true;
-//
-//					} else if (existingAssignment != null) {
-//
-//						// Update the employee's existing assignment.
-//						memberAssignment = existingAssignment;
-//
-//					} else if (!selectedAssignmentUsed) {
-//
-//						// Reuse the URL assignment only when its current user
-//						// is not in the batch and it has not been used yet.
-//						memberAssignment = assignment;
-//						selectedAssignmentUsed = true;
-//
-//					} else {
-//
-//						// Create an assignment for another employee.
-//						memberAssignment = buildAssignment(testSet, memberUserId, assignedBy);
-//					}
-//
-//					// 10. Update assignment fields
-//					memberAssignment.setTestSet(testSet);
-//					memberAssignment.setUserId(memberUserId);
-//					memberAssignment.setBatch(batch);
-//
-//					if (request.getDueDate() != null) {
-//						memberAssignment.setDueDate(request.getDueDate());
-//					}
-//
-//					assignmentsToSave.add(memberAssignment);
-//					processedUserIds.add(memberUserId);
-//				}
-//
-//				if (assignmentsToSave.isEmpty()) {
-//					return errorResponse("No valid employees found for this batch", HttpStatus.NOT_FOUND);
-//				}
-//
-//				// 11. If the requested assignment was not reused, do not
-//				// silently return a response containing only other IDs.
-//				if (!selectedAssignmentUsed) {
-//					return errorResponse("The requested assignment could not be included " + "in this batch update",
-//							HttpStatus.CONFLICT);
-//				}
-//
-//				// 12. Save all batch assignments
-//				List<DirectTestAssignment> savedAssignments = assignmentRepository.saveAllAndFlush(assignmentsToSave);
-//
-//				// 13. Return the saved records
-//				List<DirectTestAssignmentResponse> payload = savedAssignments.stream().map(this::convertToResponse)
-//						.collect(java.util.stream.Collectors.toList());
-//
-//				return new ResponseEntity("Direct Test batch assignments updated successfully", HttpStatus.OK.value(),
-//						payload);
-//			}
-//
-//			// =====================================================
-//			// 14. INDIVIDUAL ASSIGNMENT UPDATE
-//			// =====================================================
-//
-//			Long userId = request.getUserId() != null ? request.getUserId() : assignment.getUserId();
-//
-//			if (userId == null || userId <= 0) {
-//				return errorResponse("Valid user ID is required", HttpStatus.BAD_REQUEST);
-//			}
-//
-//			Integer userIdInt;
-//
-//			try {
-//				userIdInt = Math.toIntExact(userId);
-//			} catch (ArithmeticException ex) {
-//				return errorResponse("Invalid user ID", HttpStatus.BAD_REQUEST);
-//			}
-//
-//			if (!userRepository.existsById(userIdInt)) {
-//				return errorResponse("User not found", HttpStatus.NOT_FOUND);
-//			}
-//
-//			// 15. Prevent duplicate test-set assignments
-//			boolean duplicateExists = assignmentRepository
-//					.existsByTestSet_TestSetIdAndUserIdAndDirectTestAssignmentIdNot(finalTestSetId, userId, id);
-//
-//			if (duplicateExists) {
-//				return errorResponse("This test is already assigned to the selected user", HttpStatus.CONFLICT);
-//			}
-//
-//			assignment.setTestSet(testSet);
-//			assignment.setUserId(userId);
-//			assignment.setBatch(null);
-//
-//			if (request.getDueDate() != null) {
-//				assignment.setDueDate(request.getDueDate());
-//			}
-//
-//			// 16. Save the exact requested assignment
-//			DirectTestAssignment updatedAssignment = assignmentRepository.saveAndFlush(assignment);
-//
-//			DirectTestAssignmentResponse payload = convertToResponse(updatedAssignment);
-//
-//			return new ResponseEntity("Direct Test assignment updated successfully", HttpStatus.OK.value(), payload);
-//
-//		} catch (DataIntegrityViolationException ex) {
-//
-//			return errorResponse("Direct Test assignment conflicts with an existing database record",
-//					HttpStatus.CONFLICT);
-//
-//		} catch (Exception ex) {
-//
-//			ex.printStackTrace();
-//
-//			return errorResponse("Failed to update Direct Test assignment", HttpStatus.INTERNAL_SERVER_ERROR);
-//		}
-//	}
+	@Override
+	@Transactional("tmsTransactionManager")
+	public ResponseEntity updateDirectTestAssignment(Long id, DirectTestAssignmentRequest request) {
 
+		try {
+			// 1. Validate request
+			if (id == null || id <= 0) {
+				return errorResponse("Valid direct test assignment ID is required", HttpStatus.BAD_REQUEST);
+			}
 
-@Override
-@Transactional("tmsTransactionManager")
-public ResponseEntity updateDirectTestAssignment(
-        Long id,
-        DirectTestAssignmentRequest request) {
+			if (request == null || request.getTestSetId() == null || request.getTestSetId() <= 0) {
+				return errorResponse("Valid test set ID is required", HttpStatus.BAD_REQUEST);
+			}
 
-    try {
-        // 1. Validate request
-        if (id == null || id <= 0) {
-            return errorResponse(
-                    "Valid direct test assignment ID is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			if (request.getBatchId() == null && request.getUserId() == null) {
+				return errorResponse("Either userId or batchId is required", HttpStatus.BAD_REQUEST);
+			}
 
-        if (request == null || request.getTestSetId() == null
-                || request.getTestSetId() <= 0) {
-            return errorResponse(
-                    "Valid test set ID is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			// 2. Find the existing assignment
+			DirectTestAssignment assignment = assignmentRepository.findById(id).orElse(null);
 
-        if (request.getBatchId() == null && request.getUserId() == null) {
-            return errorResponse(
-                    "Either userId or batchId is required",
-                    HttpStatus.BAD_REQUEST);
-        }
+			if (assignment == null) {
+				return errorResponse("Direct test assignment not found with ID: " + id, HttpStatus.NOT_FOUND);
+			}
 
-        // 2. Find the existing assignment
-        DirectTestAssignment assignment =
-                assignmentRepository.findById(id).orElse(null);
+			// 3. Validate published, active Direct Test Set
+			TestSet testSet = testSetRepository
+					.findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(request.getTestSetId())
+					.orElse(null);
 
-        if (assignment == null) {
-            return errorResponse(
-                    "Direct test assignment not found with ID: " + id,
-                    HttpStatus.NOT_FOUND);
-        }
+			if (testSet == null) {
+				return errorResponse("Published active Direct Test not found", HttpStatus.NOT_FOUND);
+			}
 
-        // 3. Validate published, active Direct Test Set
-        TestSet testSet = testSetRepository
-                .findByTestSetIdAndTrainingIsNullAndIsActiveTrueAndPublishedAtIsNotNull(
-                        request.getTestSetId())
-                .orElse(null);
+			// 4. Update as a batch assignment
+			if (request.getBatchId() != null) {
 
-        if (testSet == null) {
-            return errorResponse(
-                    "Published active Direct Test not found",
-                    HttpStatus.NOT_FOUND);
-        }
+				Long batchId = request.getBatchId();
 
-        // 4. Update as a batch assignment
-        if (request.getBatchId() != null) {
+				if (batchId <= 0) {
+					return errorResponse("Valid batch ID is required", HttpStatus.BAD_REQUEST);
+				}
 
-            Long batchId = request.getBatchId();
+				// Find batch using its members
+				List<UserBatch> batchMembers = userBatchRepository.findAllByBatch_BatchId(batchId);
 
-            if (batchId <= 0) {
-                return errorResponse(
-                        "Valid batch ID is required",
-                        HttpStatus.BAD_REQUEST);
-            }
+				if (batchMembers == null || batchMembers.isEmpty()) {
+					return errorResponse("No employees found for the requested batch", HttpStatus.NOT_FOUND);
+				}
 
-            // Find batch using its members
-            List<UserBatch> batchMembers =
-                    userBatchRepository.findAllByBatch_BatchId(batchId);
+				Batch batch = batchMembers.get(0).getBatch();
 
-            if (batchMembers == null || batchMembers.isEmpty()) {
-                return errorResponse(
-                        "No employees found for the requested batch",
-                        HttpStatus.NOT_FOUND);
-            }
+				if (batch == null) {
+					return errorResponse("Batch not found with ID: " + batchId, HttpStatus.NOT_FOUND);
+				}
 
-            Batch batch = batchMembers.get(0).getBatch();
+				// Optional: if userId is also supplied, ensure that user
+				// belongs to the requested batch.
+				if (request.getUserId() != null) {
+					boolean userBelongsToBatch = batchMembers.stream().anyMatch(
+							ub -> ub.getUserId() != null && ub.getUserId().longValue() == request.getUserId());
 
-            if (batch == null) {
-                return errorResponse(
-                        "Batch not found with ID: " + batchId,
-                        HttpStatus.NOT_FOUND);
-            }
+					if (!userBelongsToBatch) {
+						return errorResponse("The requested user does not belong to this batch",
+								HttpStatus.BAD_REQUEST);
+					}
+				}
 
-            // Optional: if userId is also supplied, ensure that user
-            // belongs to the requested batch.
-            if (request.getUserId() != null) {
-                boolean userBelongsToBatch = batchMembers.stream()
-                        .anyMatch(ub ->
-                                ub.getUserId() != null
-                                && ub.getUserId().longValue()
-                                        == request.getUserId());
+				// Prevent duplicate assignment of the same test to the batch.
+				boolean duplicateBatchAssignment = assignmentRepository
+						.existsByTestSet_TestSetIdAndBatch_BatchIdAndDirectTestAssignmentIdNot(request.getTestSetId(),
+								batchId, id);
 
-                if (!userBelongsToBatch) {
-                    return errorResponse(
-                            "The requested user does not belong to this batch",
-                            HttpStatus.BAD_REQUEST);
-                }
-            }
+				if (duplicateBatchAssignment) {
+					return errorResponse("This Direct Test is already assigned to the batch", HttpStatus.CONFLICT);
+				}
 
-            // Prevent duplicate assignment of the same test to the batch.
-            boolean duplicateBatchAssignment =
-                    assignmentRepository
-                            .existsByTestSet_TestSetIdAndBatch_BatchIdAndDirectTestAssignmentIdNot(
-                                    request.getTestSetId(),
-                                    batchId,
-                                    id);
+				// Update the same row. Do not create one row per employee.
+				assignment.setTestSet(testSet);
+				assignment.setBatch(batch);
+				assignment.setUserId(null);
+				assignment.setDueDate(request.getDueDate());
 
-            if (duplicateBatchAssignment) {
-                return errorResponse(
-                        "This Direct Test is already assigned to the batch",
-                        HttpStatus.CONFLICT);
-            }
+			} else {
+				// 5. Update as an individual assignment
+				Long userId = request.getUserId();
 
-            // Update the same row. Do not create one row per employee.
-            assignment.setTestSet(testSet);
-            assignment.setBatch(batch);
-            assignment.setUserId(null);
-            assignment.setDueDate(request.getDueDate());
+				if (userId <= 0) {
+					return errorResponse("Valid user ID is required", HttpStatus.BAD_REQUEST);
+				}
 
-        } else {
-            // 5. Update as an individual assignment
-            Long userId = request.getUserId();
+				boolean duplicateUserAssignment = assignmentRepository
+						.existsByTestSet_TestSetIdAndUserIdAndDirectTestAssignmentIdNot(request.getTestSetId(), userId,
+								id);
 
-            if (userId <= 0) {
-                return errorResponse(
-                        "Valid user ID is required",
-                        HttpStatus.BAD_REQUEST);
-            }
+				if (duplicateUserAssignment) {
+					return errorResponse("This Direct Test is already assigned to the user", HttpStatus.CONFLICT);
+				}
 
-            boolean duplicateUserAssignment =
-                    assignmentRepository
-                            .existsByTestSet_TestSetIdAndUserIdAndDirectTestAssignmentIdNot(
-                                    request.getTestSetId(),
-                                    userId,
-                                    id);
+				assignment.setTestSet(testSet);
+				assignment.setUserId(userId);
+				assignment.setBatch(null);
+				assignment.setDueDate(request.getDueDate());
+			}
 
-            if (duplicateUserAssignment) {
-                return errorResponse(
-                        "This Direct Test is already assigned to the user",
-                        HttpStatus.CONFLICT);
-            }
+			// 6. Save the existing record
+			DirectTestAssignment updated = assignmentRepository.saveAndFlush(assignment);
 
-            assignment.setTestSet(testSet);
-            assignment.setUserId(userId);
-            assignment.setBatch(null);
-            assignment.setDueDate(request.getDueDate());
-        }
+			// 7. Return the updated record
+			return new ResponseEntity("Direct Test assignment updated successfully", HttpStatus.OK.value(),
+					convertToResponse(updated));
 
-        // 6. Save the existing record
-        DirectTestAssignment updated =
-                assignmentRepository.saveAndFlush(assignment);
+		} catch (org.springframework.dao.DataIntegrityViolationException e) {
+			return errorResponse("Duplicate assignment or database constraint violation", HttpStatus.CONFLICT);
 
-        // 7. Return the updated record
-        return new ResponseEntity(
-                "Direct Test assignment updated successfully",
-                HttpStatus.OK.value(),
-                convertToResponse(updated));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return errorResponse("Failed to update Direct Test assignment: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
-    } catch (org.springframework.dao.DataIntegrityViolationException e) {
-        return errorResponse(
-                "Duplicate assignment or database constraint violation",
-                HttpStatus.CONFLICT);
+	// ================ Attempt Result of Test Case
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        return errorResponse(
-                "Failed to update Direct Test assignment: " + e.getMessage(),
-                HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-}
+	private void applyAttemptResult(DirectTestAssignmentResponse response, TestAttempt attempt) {
+
+		if (attempt == null) {
+			return;
+		}
+
+		// Use the current user's saved attempt data.
+		response.setFinalScore(attempt.getTotalScore());
+
+		response.setIsPassed(attempt.getResult() == TestResult.PASS);
+
+		response.setTotalQuestions(attempt.getTotalQuestions());
+
+		response.setCorrectAnswers(attempt.getCorrectAnswers());
+
+		response.setWrongAnswers(attempt.getWrongAnswers());
+
+		int correct = attempt.getCorrectAnswers() == null ? 0 : attempt.getCorrectAnswers();
+
+		int wrong = attempt.getWrongAnswers() == null ? 0 : attempt.getWrongAnswers();
+
+		response.setAttemptedQuestions(correct + wrong);
+
+		response.setStartedAt(attempt.getStartTime());
+
+		if (attempt.getStatus() == TestAttemptStatus.COMPLETED) {
+			response.setStatus(AssignmentStatus.COMPLETED);
+			response.setProgressPercentage(new BigDecimal("100.00"));
+			response.setCompletionDate(attempt.getEndTime());
+			response.setRemarks(attempt.getResult() == TestResult.PASS ? "Test completed successfully"
+					: "Test completed; passing score not achieved");
+		}
+	}
 
 }

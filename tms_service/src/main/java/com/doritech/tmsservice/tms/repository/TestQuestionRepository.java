@@ -18,4 +18,6 @@ public interface TestQuestionRepository extends JpaRepository<TestQuestion, Long
 			Long testQuestionId);
 
 	Page<TestQuestion> findByTestSet_TestSetId(Long testSetId, Pageable pageable);
+	
+	long countByTestSet_TestSetId(Long testSetId);
 }
