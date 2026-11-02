@@ -5,6 +5,7 @@ D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\config\
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\config\TmsDatabaseConfig.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\config\UserPrincipal.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\BatchController.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\CertificateController.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\DirectTestAssignmentController.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\DocumentController.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\controller\DocumentSubProductController.java
@@ -168,7 +169,9 @@ D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\respons
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\VideoResponse.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\response\VideoSubProductResponse.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\BatchService.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\CertificateService.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\DirectTestAssignmentService.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\DirectTestCertificateService.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\DocumentService.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\DocumentSubProductService.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\FileStorageService.java
@@ -204,7 +207,9 @@ D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\VideoServiceImpl.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service\VideoSubProductService.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\BatchServiceImpl.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\CertificatePdfServiceImpl.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\DirectTestAssignmentServiceImpl.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\DirectTestCertificateServiceImpl.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\DocumentServiceImpl.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\DocumentSubProductServiceImpl.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\FileStorageServiceImpl.java
@@ -237,6 +242,7 @@ D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\service
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\VideoMetadataAsyncService.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\serviceImpl\VideoSubProductServiceImpl.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\Batch.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\Certificate.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\DirectTestAssignment.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\Document.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\DocumentSubProduct.java
@@ -269,6 +275,7 @@ D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\ent
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\VideoAssessmentQuestion.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\entity\VideoSubProduct.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\BatchRepository.java
+D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\CertificateRepository.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\DirectTestAssignmentRepository.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\DocumentRepository.java
 D:\Doritech\TMSBACKEND\tms_service\src\main\java\com\doritech\tmsservice\tms\repository\DocumentSubProductRepository.java

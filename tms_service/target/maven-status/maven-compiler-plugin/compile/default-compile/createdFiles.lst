@@ -66,6 +66,7 @@ com\doritech\tmsservice\response\VideoAccessControlResponse.class
 com\doritech\tmsservice\enums\QuestionType.class
 com\doritech\tmsservice\tms\entity\Video.class
 com\doritech\tmsservice\response\DirectTestAssignmentResponse.class
+com\doritech\tmsservice\tms\entity\Certificate.class
 com\doritech\tmsservice\request\TrainingCategoryRequest.class
 com\doritech\tmsservice\tms\repository\DocumentSubProductRepository.class
 com\doritech\tmsservice\tms\repository\UserResponseRepository.class
@@ -204,9 +205,11 @@ com\doritech\tmsservice\response\TestQuestionOptionResponse.class
 com\doritech\tmsservice\config\UserPrincipal.class
 com\doritech\tmsservice\response\TestQuestionListResponse.class
 com\doritech\tmsservice\response\DocumentListResponse.class
+com\doritech\tmsservice\serviceImpl\CertificatePdfServiceImpl.class
 com\doritech\tmsservice\controller\InTrainingQuestionController.class
 com\doritech\tmsservice\tms\entity\UserResponse.class
 com\doritech\tmsservice\tms\repository\TrainingRepository.class
+com\doritech\tmsservice\service\CertificateService.class
 com\doritech\tmsservice\exception\ApplicationException.class
 com\doritech\tmsservice\tms\repository\VideoSubProductRepository.class
 com\doritech\tmsservice\tms\repository\TrainingCategoryRepository.class
@@ -214,6 +217,7 @@ com\doritech\tmsservice\response\ApiResponse.class
 com\doritech\tmsservice\serviceImpl\ProductCategoryServiceImpl.class
 com\doritech\tmsservice\serviceImpl\TrainingResultServiceImpl.class
 com\doritech\tmsservice\service\VideoServiceImpl.class
+com\doritech\tmsservice\controller\CertificateController.class
 com\doritech\tmsservice\request\InTrainingQuestionRequest.class
 com\doritech\tmsservice\controller\TrainingController.class
 com\doritech\tmsservice\tms\entity\TestAttempt.class
@@ -247,6 +251,7 @@ com\doritech\tmsservice\enums\AssignmentStatus.class
 com\doritech\tmsservice\tms\entity\DocumentSubProduct.class
 com\doritech\tmsservice\response\TrainingAssignmentResponse.class
 com\doritech\tmsservice\service\TestQuestionService.class
+com\doritech\tmsservice\serviceImpl\DirectTestCertificateServiceImpl.class
 com\doritech\tmsservice\tms\repository\SecurityLogRepository.class
 com\doritech\tmsservice\service\UserResponseService.class
 com\doritech\tmsservice\controller\TrainingAssignmentTestSetController.class
@@ -271,6 +276,7 @@ com\doritech\tmsservice\service\VideoAssessmentQuestionService.class
 com\doritech\tmsservice\request\UserResponseRequest.class
 com\doritech\tmsservice\controller\DocumentController.class
 com\doritech\tmsservice\response\TrainingResultResponse.class
+com\doritech\tmsservice\tms\repository\CertificateRepository.class
 com\doritech\tmsservice\tms\repository\DirectTestAssignmentRepository.class
 com\doritech\tmsservice\response\InTrainingQuestionListResponse.class
 com\doritech\tmsservice\service\ProductService.class
@@ -296,6 +302,7 @@ com\doritech\tmsservice\tms\repository\TrainingAssignmentRepository.class
 com\doritech\tmsservice\controller\SupportVideoShareController.class
 com\doritech\tmsservice\request\DirectTestAssignmentRequest.class
 com\doritech\tmsservice\tms\entity\VideoAccessControl.class
+com\doritech\tmsservice\service\DirectTestCertificateService.class
 com\doritech\tmsservice\tms\repository\VideoAssessmentQuestionRepository.class
 com\doritech\tmsservice\enums\SecurityViolationType.class
 com\doritech\tmsservice\response\InTrainingQuestionSecureResponse.class
