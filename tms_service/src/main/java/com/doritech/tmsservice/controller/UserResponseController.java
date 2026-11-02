@@ -18,127 +18,79 @@ import com.doritech.tmsservice.tms.entity.ResponseEntity;
 @RequestMapping("/api/tms/user-response")
 public class UserResponseController {
 
-    private final UserResponseService userResponseService;
+	private final UserResponseService userResponseService;
 
-    public UserResponseController(
-            UserResponseService userResponseService) {
+	public UserResponseController(UserResponseService userResponseService) {
+		this.userResponseService = userResponseService;
+	}
 
-        this.userResponseService = userResponseService;
-    }
+	@PostMapping("/submitResponse")
+	public ResponseEntity submitResponse(@RequestBody UserResponseRequest request) {
+		return userResponseService.submitResponse(request);
+	}
 
-    @PostMapping("/submitResponse")
-    public ResponseEntity submitResponse(
-            @RequestBody UserResponseRequest request) {
+	@GetMapping("/getResponseById/{userResponseId}")
+	public ResponseEntity getResponseById(@PathVariable Long userResponseId) {
+		return userResponseService.getResponseById(userResponseId);
+	}
 
-        return userResponseService.submitResponse(
-                request);
-    }
+	@GetMapping("/getAllResponses")
+	public ResponseEntity getAllResponses(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "userResponseId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return userResponseService.getAllResponses(page, size, sortBy, sortDir);
+	}
 
-    @GetMapping("/getResponseById/{userResponseId}")
-    public ResponseEntity getResponseById(
-            @PathVariable Long userResponseId) {
+	@GetMapping("/getResponsesByTestAttemptId/{testAttemptId}")
+	public ResponseEntity getResponsesByTestAttemptId(@PathVariable Long testAttemptId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "userResponseId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return userResponseService.getResponsesByTestAttemptId(testAttemptId, page, size, sortBy, sortDir);
+	}
 
-        return userResponseService.getResponseById(
-                userResponseId);
-    }
+	@GetMapping("/getResponseByAttemptAndQuestion")
+	public ResponseEntity getResponseByAttemptAndQuestion(@RequestParam Long testAttemptId,
+			@RequestParam Long testQuestionId) {
+		return userResponseService.getResponseByAttemptAndQuestion(testAttemptId, testQuestionId);
+	}
 
-    @GetMapping("/getAllResponses")
-    public ResponseEntity getAllResponses(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "userResponseId") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
+	@PutMapping("/updateResponse/{userResponseId}")
+	public ResponseEntity updateResponse(@PathVariable Long userResponseId, @RequestBody UserResponseRequest request) {
+		return userResponseService.updateResponse(userResponseId, request);
+	}
 
-        return userResponseService.getAllResponses(
-                page,
-                size,
-                sortBy,
-                sortDir);
-    }
+	@DeleteMapping("/deleteResponse/{userResponseId}")
+	public ResponseEntity deleteResponse(@PathVariable Long userResponseId) {
+		return userResponseService.deleteResponse(userResponseId);
+	}
 
-    @GetMapping("/getResponsesByTestAttemptId/{testAttemptId}")
-    public ResponseEntity getResponsesByTestAttemptId(
-            @PathVariable Long testAttemptId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "userResponseId") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
+	@DeleteMapping("/deleteResponsesByTestAttemptId/{testAttemptId}")
+	public ResponseEntity deleteResponsesByTestAttemptId(@PathVariable Long testAttemptId) {
+		return userResponseService.deleteResponsesByTestAttemptId(testAttemptId);
+	}
 
-        return userResponseService.getResponsesByTestAttemptId(
-                testAttemptId,
-                page,
-                size,
-                sortBy,
-                sortDir);
-    }
+	@GetMapping("/getCorrectResponses/{testAttemptId}")
+	public ResponseEntity getCorrectResponses(@PathVariable Long testAttemptId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "userResponseId") String sortBy,
+			@RequestParam(defaultValue = "desc") String sortDir) {
+		return userResponseService.getCorrectResponses(testAttemptId, page, size, sortBy, sortDir);
+	}
 
-    @GetMapping("/getResponseByAttemptAndQuestion")
-    public ResponseEntity getResponseByAttemptAndQuestion(
-            @RequestParam Long testAttemptId,
-            @RequestParam Long testQuestionId) {
+	@GetMapping("/getResponseCount/{testAttemptId}")
+	public ResponseEntity getResponseCount(@PathVariable Long testAttemptId) {
+		return userResponseService.getResponseCount(testAttemptId);
+	}
 
-        return userResponseService
-                .getResponseByAttemptAndQuestion(
-                        testAttemptId,
-                        testQuestionId);
-    }
+	@GetMapping("/getCorrectAnswerCount/{testAttemptId}")
+	public ResponseEntity getCorrectAnswerCount(@PathVariable Long testAttemptId) {
+		return userResponseService.getCorrectAnswerCount(testAttemptId);
+	}
 
-    @PutMapping("/updateResponse/{userResponseId}")
-    public ResponseEntity updateResponse(
-            @PathVariable Long userResponseId,
-            @RequestBody UserResponseRequest request) {
-
-        return userResponseService.updateResponse(
-                userResponseId,
-                request);
-    }
-
-    @DeleteMapping("/deleteResponse/{userResponseId}")
-    public ResponseEntity deleteResponse(
-            @PathVariable Long userResponseId) {
-
-        return userResponseService.deleteResponse(
-                userResponseId);
-    }
-
-    @DeleteMapping("/deleteResponsesByTestAttemptId/{testAttemptId}")
-    public ResponseEntity deleteResponsesByTestAttemptId(
-            @PathVariable Long testAttemptId) {
-
-        return userResponseService
-                .deleteResponsesByTestAttemptId(
-                        testAttemptId);
-    }
-
-    @GetMapping("/getCorrectResponses/{testAttemptId}")
-    public ResponseEntity getCorrectResponses(
-            @PathVariable Long testAttemptId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "userResponseId") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-
-        return userResponseService.getCorrectResponses(
-                testAttemptId,
-                page,
-                size,
-                sortBy,
-                sortDir);
-    }
-
-    @GetMapping("/getResponseCount/{testAttemptId}")
-    public ResponseEntity getResponseCount(
-            @PathVariable Long testAttemptId) {
-
-        return userResponseService.getResponseCount(
-                testAttemptId);
-    }
-
-    @GetMapping("/getCorrectAnswerCount/{testAttemptId}")
-    public ResponseEntity getCorrectAnswerCount(
-            @PathVariable Long testAttemptId) {
-
-        return userResponseService.getCorrectAnswerCount(
-                testAttemptId);
-    }
+	// ============================ final Score after completing the test
+	@PostMapping("/finishTest/{testAttemptId}")
+	public ResponseEntity finalTest(@PathVariable Long testAttemptId) {
+		return userResponseService.finishTest(testAttemptId);
+	}
 }
