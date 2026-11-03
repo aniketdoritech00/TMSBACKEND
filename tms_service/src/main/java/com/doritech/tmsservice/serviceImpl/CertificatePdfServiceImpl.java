@@ -26,9 +26,9 @@ public class CertificatePdfServiceImpl implements CertificateService {
 	private static final double REF_WIDTH = 2000.0;
 
 	// ---------- Coordinates (pixels on the 2000 x 1414 template) ----------
-	private static final int CENTER_X = 990; // visual center of the design
-
-	private static final int NAME_Y = 565; // participant name baseline
+	private static final int CENTER_X = 990;
+	
+	private static final int NAME_Y = 565; 
 	private static final int NAME_MAX_W = 1100;
 	private static final int NAME_FONT = 60;
 
@@ -42,8 +42,7 @@ public class CertificatePdfServiceImpl implements CertificateService {
 	private static final int CERT_NO_X = 35;
 	private static final int CERT_NO_Y = 1225;
 
-	// Set to true only if you have NOT cleaned the "Name:" / "Company Name." text
-	// out of the PNG.
+	// Set to true only if you have NOT cleaned the "Name:" / "Company Name." text  out of the PNG.
 	private static final boolean COVER_PLACEHOLDERS = false;
 
 	@Override
@@ -127,7 +126,7 @@ public class CertificatePdfServiceImpl implements CertificateService {
 	// It will slightly cut the faint watermark logo, so cleaning the PNG is the
 	// better fix.
 	private void coverPlaceholders(Graphics2D g, BufferedImage img, double s) {
-		Color bg = new Color(img.getRGB(px(450, s), px(700, s)));
+		Color bg = new Color(img.getRGB(px(450,  s), px(700, s)));
 		g.setColor(bg);
 		g.fillRect(px(615, s), px(485, s), px(500, s), px(75, s)); // "Name:"
 		g.fillRect(px(615, s), px(565, s), px(500, s), px(80, s)); // "Company Name."
