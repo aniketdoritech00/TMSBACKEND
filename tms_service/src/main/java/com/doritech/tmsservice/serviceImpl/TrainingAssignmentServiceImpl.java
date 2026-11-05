@@ -478,7 +478,11 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 	 * 
 	 * return new ResponseEntity("Failed to create training assignment: " +
 	 * e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null); } }
+	 * 
+	 * 
 	 */
+	
+// ===================== Create Training Assignment ==========================
 
 	@Override
 	@Transactional("tmsTransactionManager")
@@ -753,7 +757,7 @@ public class TrainingAssignmentServiceImpl implements TrainingAssignmentService 
 		}
 	}
 
-// =========================================================================	
+// ===============================  GET By Id ===============================
 
 	@Override
 	@Transactional(value = "tmsTransactionManager", readOnly = true)

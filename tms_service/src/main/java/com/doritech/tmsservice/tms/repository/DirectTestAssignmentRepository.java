@@ -27,15 +27,27 @@ public interface DirectTestAssignmentRepository extends JpaRepository<DirectTest
 	boolean existsByTestSet_TestSetIdAndBatch_BatchIdAndDirectTestAssignmentIdNot(Long testSetId, Long batchId,
 			Long id);
 
-//	@Query("""
-//			SELECT DISTINCT d
-//			FROM DirectTestAssignment d
-//			WHERE d.userId = :userId
-//			   OR d.batchId IN (
-//			       SELECT ub.batchId
-//			       FROM UserBatch ub
-//			       WHERE ub.userId = :userId
-//			   )
-//			""")
-//	List<DirectTestAssignment> findAssignmentsForCurrentUser(@Param("userId") Long userId);
+	// Optional<DirectTestAssignment>
+	// findDirectTestAssignmentByTestSet_TestSetIdAndUserId(Long testSetId,Long
+	// memberUserId);
+
+	Optional<DirectTestAssignment> findDirectTestAssignmentByTestSet_TestSetIdAndUserId(Long testSetId, Long userId);
+
+	@Query("""
+			    SELECT COUNT(d) > 0
+			    FROM DirectTestAssignment d
+			    WHERE d.testSet.testSetId = :testSetId
+			    AND d.userId = :userId
+			""")
+	boolean existsIndividualDirectTestAssignment(@Param("testSetId") Long testSetId, @Param("userId") Long userId);
+
+	@Query("""
+			    SELECT COUNT(d) > 0
+			    FROM DirectTestAssignment d
+			    JOIN d.batch b
+			    JOIN UserBatch ub ON ub.batch.batchId = b.batchId
+			    WHERE d.testSet.testSetId = :testSetId
+			    AND ub.userId = :userId
+			""")
+	boolean existsBatchDirectTestAssignment(@Param("testSetId") Long testSetId, @Param("userId") Long userId);
 }
