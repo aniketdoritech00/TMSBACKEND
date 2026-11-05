@@ -1,2 +1,5 @@
 tms_service/target/
 **/target/
+tms_service/.factorypath
+tms_service/.classpath
+tms_service/.settings/org.eclipse.wst.common.component
