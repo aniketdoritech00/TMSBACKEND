@@ -29,12 +29,36 @@ public class DirectTestAssignmentController {
 	public ResponseEntity createDirectTestAssignment(@RequestBody DirectTestAssignmentRequest request) {
 		return directTestAssignmentService.createDirectTestAssignment(request);
 	}
-	
-	// ==================== GET All Direct_Test_Sets ===================
-		@GetMapping("/my-direct-test-sets")
-		public ResponseEntity getMyDirectTestSets() {
-			return directTestAssignmentService.getMyDirectTestSets();
-		}
- 
-	
+
+	// ==================== Get all with current user ===================
+	@GetMapping("/get-all-testset-current-user")
+	public ResponseEntity getMyDirectTestSetsForCurrentUser() {
+		return directTestAssignmentService.getMyDirectTestSets();
+	}
+
+	// ==================== GET All Direct_Test_Sets ===============
+	@GetMapping("/get-all-direct-test")
+	public ResponseEntity getAllDirectTestSet(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+		return directTestAssignmentService.getAllDirectTestSet(page, size);
+	}
+
+	// =================== Get direct Test By id=======================
+	@GetMapping("/get-direct-test-byId/{id}")
+	public ResponseEntity getDirectTestSetsById(@PathVariable Long id) {
+		return directTestAssignmentService.getDirectTestSetsById(id);
+	}
+
+	// ================== Delete direct test set by Id =====================
+	@DeleteMapping("/delete-by-id/{id}")
+	public ResponseEntity deleteById(@PathVariable Long id) {
+		return directTestAssignmentService.deleteById(id);
+	}
+
+	// ================== update direct test set assignment API ===================
+	@PutMapping("/update/{id}")
+	public ResponseEntity updateDirectTestAssignment(@PathVariable Long id,
+			@RequestBody DirectTestAssignmentRequest request) {
+		return directTestAssignmentService.updateDirectTestAssignment(id, request);
+	}
 }
