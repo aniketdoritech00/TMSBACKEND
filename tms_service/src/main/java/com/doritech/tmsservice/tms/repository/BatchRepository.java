@@ -20,8 +20,5 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
 	Optional<Batch> findByBatchCodeAndBatchIdNot(String batchCode, Long batchId);
 
 	Page<Batch> findAll(Specification<Batch> specification, Pageable pageable);
-    //JpaSpecificationExecutor<Batch> 
-
-
 
 }
